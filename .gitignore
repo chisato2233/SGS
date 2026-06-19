@@ -1,0 +1,63 @@
+# Unreal Engine generated files
+/Binaries/
+/DerivedDataCache/
+/Intermediate/
+/Saved/
+
+# Local build/package output
+/Build/Receipts/
+/Packaged/
+/Packages/
+/Releases/
+/StagedBuilds/
+
+# Unreal automation and crash artifacts
+*.automation.csproj
+*.automation.json
+*.crash
+*.dmp
+*.log
+
+# Visual Studio / Rider / JetBrains / VS Code local state
+.vs/
+.idea/
+.vscode/
+*.sln
+*.suo
+*.user
+*.userosscache
+*.sdf
+*.opensdf
+*.VC.db
+*.VC.VC.opendb
+*.rsuser
+*.DotSettings.user
+
+# Xcode / macOS local state
+*.xcworkspace/
+*.xcuserstate
+*.xcuserdata/
+.DS_Store
+
+# Compiled objects and libraries
+*.a
+*.dll
+*.dylib
+*.exe
+*.exp
+*.lib
+*.o
+*.pdb
+*.so
+
+# Caches and temporary files
+*.cache
+*.tmp
+*.temp
+Thumbs.db
+
+# Keep project sources, configs, docs, and assets tracked:
+# /Config/
+# /Content/
+# /Source/
+# *.uproject
