@@ -57,6 +57,7 @@ Source/Doc/Plan/
 
 | 序号 | 标题 | 状态 | 说明 |
 |---|---|---|---|
+| 0004 | 对局数据模型 | In Progress | 卡牌/牌区/玩家状态 + 通用移牌/摸牌/弃牌/伤害/回复/距离原语 + 事件（`USGSGameContext`）|
 | 0003 | 权威对局骨架 | In Progress | 服务器侧回合阶段机闭环 + 决策代理 + 事件总线 + 占位 AI + GameMode 入口 |
 | 0002 | 核心逻辑：架构/分层/路线图 | In Progress | 服务器权威 + 多人/AI 并存 + 异步结算；分层规范 + `Core/` 基础层 + 后续 Plan 路线图 |
 | 0001 | 导入太阳神三国杀素材 | In Progress | QSanguosha 卡牌/武将/配音/音乐/UI 素材导入 `Content/ImportedAssets/` |

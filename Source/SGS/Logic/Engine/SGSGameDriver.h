@@ -8,7 +8,7 @@
 #include "Logic/Players/SGSDecisionAgent.h"
 #include "SGSGameDriver.generated.h"
 
-class USGSSeat;
+class USGSGameContext;
 
 // 服务器权威的对局驱动器：推进回合/阶段、在出牌阶段向决策代理请求动作。
 //
@@ -23,11 +23,13 @@ class SGS_API USGSGameDriver : public UObject
 	GENERATED_BODY()
 
 public:
-	// 服务器：按给定决策代理（每个代理对应一个座位）开始一局。
-	void StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents);
+	// 服务器：按给定决策代理（每个代理对应一个座位）开始一局。RandomSeed 用于可复现洗牌。
+	void StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents, int32 RandomSeed = 0);
 
-	// 事件总线：观察者在此订阅对局事件。
+	// 事件总线：观察者在此订阅对局生命周期事件。
 	FSGSOnGameEvent& OnGameEvent() { return GameEventDelegate; }
+
+	USGSGameContext* GetContext() const { return Context; }
 
 	bool IsGameOver() const { return bGameOver; }
 	int32 GetTurnsPlayed() const { return TurnsPlayed; }
@@ -52,7 +54,7 @@ private:
 	static ESGSPhase NextPhase(ESGSPhase Phase);
 
 	UPROPERTY()
-	TArray<TObjectPtr<USGSSeat>> Seats;
+	TObjectPtr<USGSGameContext> Context;
 
 	int32 CurrentSeatIndex = INDEX_NONE;
 	ESGSPhase CurrentPhase = ESGSPhase::None;
@@ -69,4 +71,10 @@ private:
 
 	// 骨架期终止条件占位：跑满这么多个回合即结束。胜负条件实现后替换（见 Plan 0002 路线图）。
 	static constexpr int32 MaxTurnsForSkeleton = 8;
+
+	// 摸牌阶段固定摸牌数（标准规则）。
+	static constexpr int32 DrawCountPerTurn = 2;
+
+	// 起始手牌数（标准规则）。
+	static constexpr int32 StartingHandSize = 4;
 };
