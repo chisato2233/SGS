@@ -57,6 +57,7 @@ Source/Doc/Plan/
 
 | 序号 | 标题 | 状态 | 说明 |
 |---|---|---|---|
+| 0001 | 导入太阳神三国杀素材 | In Progress | QSanguosha 卡牌/武将/配音/音乐/UI 素材导入 `Content/ImportedAssets/` |
 | 0000 | 原始需求档案 | — | 用户原始需求的时间线记录 |
 
 <!-- 新计划登记示例：
