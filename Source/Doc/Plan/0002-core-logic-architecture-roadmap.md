@@ -98,7 +98,8 @@ Source/SGS/
 | Plan | 主题 | 关键交付 |
 |---|---|---|
 | 0002（本） | 架构 / 分层 / 路线图 / `Core` | 架构定调 + 基础层 |
-| 0003 | 权威对局骨架 | GameMode/GameState/PlayerState/Controller；`ISGSDecisionAgent`；事件总线 + 回合阶段机最小闭环（空回合能跑完） |
+| 0003 | 权威对局骨架（服务器侧逻辑闭环） | GameMode + 驱动器 + `ISGSDecisionAgent` + 事件总线 + 回合阶段机（空回合能跑完）。**复制/RPC/PlayerController 因无编译环境拆出，见 0003N** |
+| 0003N | 网络层：复制 + RPC 决策通道 | GameState/PlayerState 复制（手牌定向）、PlayerController、真人决策 RPC。**需可编译的 UE 环境** |
 | 0004 | 牌堆与手牌 | 牌库/弃牌堆、摸牌/弃牌、手牌定向复制 |
 | 0005 | 基础牌：杀 / 闪 / 桃 | 出杀→请求闪→结算伤害→濒死求桃 的完整异步决策链 |
 | 0006 | 判定 + 延时锦囊 | 判定区、判定流程；乐不思蜀/闪电 |
@@ -125,3 +126,4 @@ Source/SGS/
 - 2026-06-19：确定分层（`Core/Logic/Game/AI/Data/UI`）与单向依赖；本计划只落地 `Core/`，其余层各自首个 Plan 时再建目录。
 - 2026-06-19：`ETriggerEvent` 取值与事件总线解析顺序延后到 Plan 0003 定稿，避免过度规约。
 - 2026-06-19：⚠️ 待用户确认的 2 个开放项（不阻塞）：(a) 监听服务器起步是否可接受（vs 一开始就上专用服务器）；(b) 是否允许在 `SGS.Build.cs` 后续按需加 `GameplayTags`（势力/牌标签）。当前按"可接受/允许"推进。
+- 2026-06-19：路线图调整——因 Cloud 环境无 UE 编译器，Plan 0003 收缩为"服务器侧逻辑闭环"，复制/RPC/PlayerController 拆出为 **0003N（网络层）**，待具备可编译 UE 环境再做。
