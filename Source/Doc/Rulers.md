@@ -100,7 +100,7 @@
 - `check()` —— 不可恢复的不变量违反（断言）
 - `ensure()` —— 「不该发生但能继续」的诊断
 - `UE_LOG(LogCategory, Verbosity, TEXT("..."))` —— 业务日志
-- 日志分类：`LogSGS`（通用）/ `LogSGSCard` / `LogSGSSkill` / `LogSGSTurn` / `LogSGSNet`（网络/复制/RPC）/ `LogSGSAI` / `LogSGSUI`
+- 日志分类：`LogSGS`（通用）/ `LogSGSCard` / `LogSGSSkill` / `LogSGSTurn` / `LogSGSCombat`（伤害/回复/濒死）/ `LogSGSNet`（网络/复制/RPC）/ `LogSGSAI` / `LogSGSUI`
 - **不用 C++ 异常**（UE 默认禁）
 
 ### 2.7 头文件组织顺序（规范化模板）
@@ -164,6 +164,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogSGS, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogSGSCard, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogSGSSkill, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogSGSTurn, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogSGSCombat, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogSGSNet, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogSGSAI, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogSGSUI, Log, All);
