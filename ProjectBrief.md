@@ -24,7 +24,7 @@
 | 模块依赖 | `Core`, `CoreUObject`, `Engine`, `InputCore`, `EnhancedInput` |
 | 网络 | **服务器权威**：UE 复制（GameState/PlayerState）+ 可靠 RPC（决策请求/应答通道）。Engine 自带网络；监听服务器起步，预留专用服务器。 |
 | AI | 服务器侧**决策代理**，与真人共用 `ISGSDecisionAgent` 接口接入；AI 逻辑**参考 QSanguosha（概念移植，非代码拷贝）**。 |
-| UI | UMG（计划引入；需要时在 `SGS.Build.cs` 添加 `UMG`/`Slate`/`SlateCore`） |
+| UI | Native Code-first UI（Slate/UMG 纯代码；SGSUI 薄封装；CommonUI 按需评估；不使用 Designer 拖控件） |
 | 输入 | Enhanced Input |
 | 渲染 | Substrate + DX12 SM6（UE5.7 默认；卡牌游戏对渲染要求低，不重点投入） |
 | 编辑器目标 | `SGS.Target.cs` / `SGSEditor.Target.cs`（BuildSettings V6，IncludeOrder Unreal5_7） |
@@ -39,7 +39,7 @@
 **服务器权威 + 表现解耦**。游戏逻辑只在服务器执行，客户端只显示与采集输入；真人与 AI 通过同一决策接口接入：
 
 ```text
-客户端表现层 (UMG / Actor)        只显示与采集输入；收复制状态、发玩家指令
+客户端表现层 (Slate/UMG wrapper / Actor) 只显示与采集输入；收复制状态、发玩家指令
    ↑ 复制状态/事件   ↓ 玩家指令(RPC)
 ─────────────────  网络边界（仅在此跨网）  ─────────────────
 服务器权威逻辑层 (C++ / UObject)   回合阶段机、技能结算、判定、事件总线（核心，单一真相源）
@@ -65,14 +65,16 @@
 
 Agent 开始工作时按以下顺序获取上下文：
 
+0. **`AGENTS.md`（Codex 专用）** — 只作为自动发现/工具适配层；它必须指回本文件，不承载项目事实。
 1. **本文件 `ProjectBrief.md`** — 了解项目全貌、技术栈、当前状态。
 2. **`Source/Doc/Rulers.md`** — 项目级编码约束与工作流，所有 Agent 必读。
 3. **`Source/Doc/Plan/README.md`** — 了解计划系统的使用方式与索引。
 4. **`Source/Doc/Plan/` 下的相关计划文档** — 找到与当前任务对应的计划，按其执行。
-5. **代码结构图谱** — 由用户使用 **graphify** 维护。需要理解既有代码结构/依赖关系时，以 graphify 的产物为准，**不要在文档里重复手写代码结构**，避免与代码脱节。
+5. **代码结构图谱** — 由 **graphify** 维护，项目级产物位于 `graphify-out/`。需要理解既有代码结构/依赖关系时，以 graphify 的产物为准，**不要在文档里重复手写代码结构**，避免与代码脱节。
 
 职责边界：
 - `ProjectBrief.md` → 长期稳定信息（变化慢）。
+- `AGENTS.md` → Codex 入口适配与 graphify 使用规则（指回 ProjectBrief，不另立事实源）。
 - `Source/Doc/Plan/*` → 每次开发的具体方案与进度（变化快）。
 - graphify → 代码层面的结构/依赖（随代码变化，自动维护）。
 
@@ -88,11 +90,13 @@ Agent 开始工作时按以下顺序获取上下文：
   - [x] 导入 QSanguosha 素材（`Content/ImportedAssets/`，CC BY-NC-ND，非商用）。见 Plan 0001。
   - [x] **架构定调**：服务器权威 + 决策代理（真人/AI 并存）+ 异步非阻塞结算。见 Plan 0002。
   - [x] 代码分层骨架 + `Core/` 基础层（`SGSLogChannels`、`SGSTypes`）。见 Plan 0002。
+  - [x] **UI 路线定调**：Native Code-first UI（Slate/UMG/CommonUI 按需组合 + SGSUI 薄封装），不使用 WebView/React/Vue 作为主 UI，不自研 Gameface。见 Plan 0011。
+  - [x] Codex 入口适配：`AGENTS.md` 接入项目文档启动协议，graphify 图谱初始化到 `graphify-out/`。
 - **进行中**：
   - [~] Plan 0003：权威对局骨架（回合阶段机闭环 + 决策代理 + 事件总线 + 占位 AI + GameMode）。复制/RPC 拆到 0003N（需可编译 UE 环境）。
   - [~] Plan 0004：对局数据模型（卡牌/牌区/玩家状态 + 移牌/摸牌/弃牌/伤害/回复/距离原语 + 事件，`USGSGameContext`）。
 - **下一步（按 Plan 0002 路线图）**：
-  - [ ] 0005 杀/闪/桃（濒死/求桃）→ 0006 判定/延时锦囊 → 0007 即时锦囊 → 0008 装备 → 0009 武将技 → 0010 AI 代理 → 0011 UI → 0003N 网络层 → 0012 联机打磨。
+  - [ ] 0005 杀/闪/桃（濒死/求桃）→ 0006 判定/延时锦囊 → 0007 即时锦囊 → 0008 装备 → 0009 武将技 → 0010 AI 代理 → 0011 Native Code-first UI → 0003N 网络层 → 0012 联机打磨。
   - [ ] 待接入可编译 UE 环境后补编译验证 + 标准牌库 DataTable 内容。
 
 > **每次有实质进展后，负责的 Agent 都应更新本节**（阶段、已完成项、下一步）。这是跨 Agent 状态同步的关键。

@@ -6,6 +6,40 @@
 
 ---
 
+## #6 — 2026-06-19 — 将 AGENTS 融入当前文档系统并提交
+
+**原话：**
+> 将AGENTS融入当前的文档系统，你可能需要阅读ProjectBrief，该改动的改动，然后提交git
+
+**要点拆解：**
+- `AGENTS.md` 应成为 Codex/Agent 自动发现适配层，而不是新的项目事实源。
+- `AGENTS.md` 需要指回 `ProjectBrief.md`、`Rulers.md`、`Source/Doc/Plan/` 启动协议。
+- graphify 的 Codex 接入、图谱产物和 Git 跟踪/忽略规则需要与现有文档系统一致。
+- 完成后提交 git。
+
+**关联计划：** 文档系统维护，无独立 Plan。
+
+---
+
+## #5 — 2026-06-19 — UI 技术路线选择：路线 B（Unreal Native Code-first）
+
+**原话：**
+> 路线B吧
+
+**上下文：**
+- 在讨论 WebView/React/Vue、RmlUi、NoesisGUI、Slate/UMG 与「自研 Gameface」风险后，用户选择路线 B。
+- 路线 B 含义：继续留在 Unreal 原生 UI 体系内，但不裸写混乱 UI；基于 Slate/UMG/CommonUI 按需组合，做 SGS 专用的轻量代码优先 UI 层。
+
+**要点拆解：**
+- 不把 React/Vue/WebView/CEF 作为主 UI 技术栈。
+- 不自研完整 Gameface/浏览器级 UI runtime。
+- 目标是：纯代码、现代、美观、组件化、状态驱动，但控制框架复杂度。
+- SGSUI 只做薄封装：主题 token、通用组件、游戏组件、动画预设、状态/动作桥接。
+
+**关联计划：** `0011-native-code-first-ui.md`。
+
+---
+
 ## #4 — 2026-06-19 — 启动核心逻辑长计划（多人 + AI）
 
 **原话：**

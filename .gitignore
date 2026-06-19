@@ -56,6 +56,9 @@
 *.temp
 Thumbs.db
 
+# graphify local caches; keep graphify-out/graph.json and manifest trackable
+/graphify-out/cache/
+
 # Keep project sources, configs, docs, and assets tracked:
 # /Config/
 # /Content/

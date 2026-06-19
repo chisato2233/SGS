@@ -20,6 +20,7 @@
 
 > **不必读全库**。这是文档体系存在的全部理由。
 > `ProjectBrief.md` = 项目是什么；`plan.md` = 本期为什么这么做；graphify = 代码现在长什么样。三者职责互补，不重复。
+> `AGENTS.md` 仅为 Codex 的自动发现适配层，必须指回 `ProjectBrief.md`，不得另立项目事实源。
 
 ### 1.2 提交协议
 
@@ -82,7 +83,8 @@
 `Core, CoreUObject, Engine, InputCore, EnhancedInput`
 
 按需追加：
-- `UMG`, `Slate`, `SlateCore` —— 启用 UMG 纯 C++ 时
+- `UMG`, `Slate`, `SlateCore` —— 启用 Native Code-first UI / SGSUI 时
+- `CommonUI` —— 只有在 UI Plan 明确需要菜单栈、输入路由、手柄/键鼠提示等能力时才启用，并同步记录插件/模块变更
 - `GameplayTags` —— 势力 / 卡牌标签
 - `DeveloperSettings` —— 项目级配置
 
@@ -146,7 +148,7 @@ private:
 以下约束**全局生效，不可违反**：
 
 1. **不用 GAS**：技能 / 判定 / 结算一律自研。不引入 `GameplayAbilities` 模块。
-2. **UMG 纯 C++**：`UWidget` 子类在 `NativeConstruct` 中用 `WidgetTree->ConstructWidget` 拼装。**不在编辑器 Designer 中拖控件**。少量必须在编辑器建的 Widget 资产（用于绑定动画）必须有充分理由并记录在对应 Plan 中。
+2. **Native Code-first UI**：UI 主路线为 Unreal 原生代码优先体系（Slate 为主要自定义控件底座，UMG 仅作视口/生命周期/对象系统适配，CommonUI 按需引入）。**不在编辑器 Designer 中拖控件**；如使用 `UWidget`/`UUserWidget`，必须在 C++ 中拼装控件树。项目不以 WebView/React/Vue/Noesis/Gameface 作为主 UI 技术栈，也不自研完整 Gameface/浏览器级 UI runtime，除非新 Plan 明确推翻本约束。SGSUI 只做薄封装：theme/token、通用组件、游戏组件、动画预设、状态/动作桥接；UI 只显示状态和采集输入，不承载游戏规则结算。
 3. **服务器权威 + 多人/AI 并存**：游戏逻辑只在服务器执行，是唯一真相源；客户端只显示与采集输入。状态用 UE 复制（`GameState`/`PlayerState`），私密信息（如手牌）**只复制给拥有者**；玩家指令走可靠 RPC。真人与 AI 一律通过 `ISGSDecisionAgent` 接入，逻辑层**不感知**对端是人还是 AI。等待决策时逻辑层**异步挂起**，不阻塞游戏线程（应答 / 超时 → 默认或 AI 托管后恢复）。逻辑层**不反向依赖**表现层与具体网络实现。<br>（本条于 2026-06-19 由「当前阶段单机、不写复制代码」改定，原因见 Plan 0002 / RawRequirements #4。）
 4. **数据驱动优先**：卡牌 / 武将属性走 `DataTable`，效果走 C++ 效果类 + 注册表。新卡 / 新技能优先复用现成 Effect 类，除非现有 Effect 类不够用，否则**不**为单张卡写新 C++ 类。
 5. **结算不依赖 wallclock**：所有时序一律按「回合 / 阶段 / 出牌次序」推进。`FTimerHandle`、`Tick` 中的 `DeltaTime` 累加都不可用于游戏逻辑（仅可用于纯表现层动画）。
@@ -183,8 +185,8 @@ DECLARE_LOG_CATEGORY_EXTERN(LogSGSUI, Log, All);
 ## 6. Git 工作流
 
 - 仓库根目录为项目根（`SGS.uproject` 所在目录）。新会话开始、提交前、切换任务前都先看 `git status --short --branch`。
-- 默认跟踪：`Source/`（含 `Source/Doc/`）、`Config/`、`.uproject`、`.vsconfig`、`.gitignore`、`.gitattributes`、项目级 IDE 任务脚本。
-- 默认忽略：`Binaries/`、`Intermediate/`、`Saved/`、`DerivedDataCache/`、`.vs/`、`.sln` / `.vcxproj*` 等 UE/IDE 生成物。
+- 默认跟踪：`Source/`（含 `Source/Doc/`）、`Config/`、`.uproject`、`.vsconfig`、`.gitignore`、`.gitattributes`、`AGENTS.md`、`.codex/hooks.json`、`graphify-out/.graphify_root`、`graphify-out/graph.json`、`graphify-out/manifest.json`、项目级 IDE/Agent 任务脚本。
+- 默认忽略：`Binaries/`、`Intermediate/`、`Saved/`、`DerivedDataCache/`、`.vs/`、`.sln` / `.vcxproj*`、`graphify-out/cache/` 等 UE/IDE/graphify 缓存生成物。
 - UE 二进制资产（`.uasset` / `.umap` / 贴图 / 音频 / DCC 源文件等）走 Git LFS（规则见根目录 `.gitattributes`）。
 - 提交前只 stage 本次任务相关文件；不要把用户未要求的本地改动顺手塞进提交。
 - 任何 `git reset`、`git checkout -- <path>`、批量删除、改写历史操作都必须先确认意图；不要为了「干净」丢弃未知改动。
@@ -213,5 +215,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogSGSUI, Log, All);
 
 ## Last Updated
 
+2026-06-19 — UI 路线定为 Native Code-first UI（Slate/UMG/CommonUI 按需组合 + SGSUI 薄封装）：不使用 WebView/React/Vue/Noesis/Gameface 作为主 UI，不自研完整 Gameface；硬约束 #2 由「UMG 纯 C++」升级为「Native Code-first UI」。见 Plan 0011。
+2026-06-19 — Codex 入口适配纳入文档系统：`AGENTS.md` 只作为自动发现/graphify 规则入口，必须指回 `ProjectBrief.md`；`graphify-out/graph.json` 与 manifest 作为项目级图谱产物跟踪，cache 忽略。
 2026-06-19 — 架构转向：硬约束 #3 由「单机不写复制」改为「服务器权威 + 多人/AI 并存（决策代理 + 异步非阻塞）」；新增 `LogSGSNet`/`LogSGSAI` 日志分类；日志头文件路径定为 `Source/SGS/Core/`。见 Plan 0002。
 2026-06-19 — 从外部项目模板适配为 SGS（三国杀）：模块名 Stuff→SGS、修正文档路径、删除「模块活文档」系统（改由 graphify 维护代码结构）、删除外部游戏术语表、明确不用 GAS / UMG 纯 C++ / 单机不写复制 / 回合制结算约束。
