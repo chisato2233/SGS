@@ -1,21 +1,15 @@
 #include "Logic/Engine/SGSGameDriver.h"
 
+#include "Logic/Engine/SGSGameContext.h"
 #include "Logic/Players/SGSSeat.h"
 #include "Core/SGSLogChannels.h"
 
-void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents)
+void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents, int32 RandomSeed)
 {
-	Seats.Reset();
-	for (int32 Index = 0; Index < InAgents.Num(); ++Index)
-	{
-		USGSSeat* Seat = NewObject<USGSSeat>(this);
-		Seat->SeatIndex = Index;
-		Seat->DisplayName = FString::Printf(TEXT("Seat%d"), Index);
-		Seat->DecisionAgent = InAgents[Index];
-		Seats.Add(Seat);
-	}
+	Context = NewObject<USGSGameContext>(this);
+	Context->Initialize(InAgents, RandomSeed);
 
-	if (Seats.Num() == 0)
+	if (Context->NumSeats() == 0)
 	{
 		UE_LOG(LogSGSTurn, Warning, TEXT("StartGame: no seats provided; nothing to run."));
 		bGameOver = true;
@@ -26,6 +20,12 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 	bWaitingForDecision = false;
 	TurnsPlayed = 0;
 	CurrentSeatIndex = 0;
+
+	// 发起始手牌（牌堆为空时不发牌；牌库数据接入后自然生效）。
+	for (int32 SeatIndex = 0; SeatIndex < Context->NumSeats(); ++SeatIndex)
+	{
+		Context->DrawCards(SeatIndex, StartingHandSize);
+	}
 
 	Broadcast(ESGSGameEvent::GameStarted);
 	BeginTurn();
@@ -60,10 +60,17 @@ void USGSGameDriver::EnterCurrentPhase()
 {
 	Broadcast(ESGSGameEvent::PhaseBegan);
 
+	if (CurrentPhase == ESGSPhase::Draw)
+	{
+		Context->DrawCards(CurrentSeatIndex, DrawCountPerTurn);
+		AdvanceAfterPhase();
+		return;
+	}
+
 	if (CurrentPhase == ESGSPhase::Play)
 	{
-		const USGSSeat* Seat = Seats[CurrentSeatIndex];
-		ISGSDecisionAgent* Agent = Seat->DecisionAgent.GetInterface();
+		const USGSSeat* Seat = Context->GetSeat(CurrentSeatIndex);
+		ISGSDecisionAgent* Agent = Seat != nullptr ? Seat->DecisionAgent.GetInterface() : nullptr;
 		if (Agent == nullptr)
 		{
 			UE_LOG(LogSGSTurn, Warning, TEXT("Seat %d has no decision agent; treating as pass."), CurrentSeatIndex);
@@ -85,7 +92,8 @@ void USGSGameDriver::EnterCurrentPhase()
 		return;
 	}
 
-	// 骨架期其余阶段无结算内容，立即结束并推进。
+	// 其余阶段（回合开始/判定/弃牌/回合结束）在本期无结算内容，立即结束并推进。
+	// 判定/弃牌限制等将在后续 Plan 接入。
 	AdvanceAfterPhase();
 }
 
@@ -123,11 +131,12 @@ void USGSGameDriver::AdvanceAfterPhase()
 		}
 
 		// 推进到下一名存活座位。
-		const int32 SeatCount = Seats.Num();
+		const int32 SeatCount = Context->NumSeats();
 		for (int32 Step = 1; Step <= SeatCount; ++Step)
 		{
 			const int32 Candidate = (CurrentSeatIndex + Step) % SeatCount;
-			if (Seats[Candidate]->bIsAlive)
+			const USGSSeat* CandidateSeat = Context->GetSeat(Candidate);
+			if (CandidateSeat != nullptr && CandidateSeat->bIsAlive)
 			{
 				CurrentSeatIndex = Candidate;
 				BeginTurn();
@@ -152,11 +161,11 @@ void USGSGameDriver::EndGame()
 
 void USGSGameDriver::Broadcast(ESGSGameEvent Event)
 {
-	FSGSEventContext Context;
-	Context.Event = Event;
-	Context.SeatIndex = CurrentSeatIndex;
-	Context.Phase = CurrentPhase;
-	GameEventDelegate.Broadcast(Context);
+	FSGSEventContext EventContext;
+	EventContext.Event = Event;
+	EventContext.SeatIndex = CurrentSeatIndex;
+	EventContext.Phase = CurrentPhase;
+	GameEventDelegate.Broadcast(EventContext);
 }
 
 ESGSPhase USGSGameDriver::NextPhase(ESGSPhase Phase)
