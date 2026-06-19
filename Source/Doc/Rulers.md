@@ -100,7 +100,7 @@
 - `check()` —— 不可恢复的不变量违反（断言）
 - `ensure()` —— 「不该发生但能继续」的诊断
 - `UE_LOG(LogCategory, Verbosity, TEXT("..."))` —— 业务日志
-- 日志分类：`LogSGS`（通用）/ `LogSGSCard` / `LogSGSSkill` / `LogSGSTurn` / `LogSGSUI`
+- 日志分类：`LogSGS`（通用）/ `LogSGSCard` / `LogSGSSkill` / `LogSGSTurn` / `LogSGSNet`（网络/复制/RPC）/ `LogSGSAI` / `LogSGSUI`
 - **不用 C++ 异常**（UE 默认禁）
 
 ### 2.7 头文件组织顺序（规范化模板）
@@ -147,7 +147,7 @@ private:
 
 1. **不用 GAS**：技能 / 判定 / 结算一律自研。不引入 `GameplayAbilities` 模块。
 2. **UMG 纯 C++**：`UWidget` 子类在 `NativeConstruct` 中用 `WidgetTree->ConstructWidget` 拼装。**不在编辑器 Designer 中拖控件**。少量必须在编辑器建的 Widget 资产（用于绑定动画）必须有充分理由并记录在对应 Plan 中。
-3. **当前阶段单机，不写多人复制代码**：所有类不要加 `Replicated` / RPC 标记 / `bReplicates`。（`ProjectBrief.md` 提到未来可能联机，届时再单独评估；当前不写。）
+3. **服务器权威 + 多人/AI 并存**：游戏逻辑只在服务器执行，是唯一真相源；客户端只显示与采集输入。状态用 UE 复制（`GameState`/`PlayerState`），私密信息（如手牌）**只复制给拥有者**；玩家指令走可靠 RPC。真人与 AI 一律通过 `ISGSDecisionAgent` 接入，逻辑层**不感知**对端是人还是 AI。等待决策时逻辑层**异步挂起**，不阻塞游戏线程（应答 / 超时 → 默认或 AI 托管后恢复）。逻辑层**不反向依赖**表现层与具体网络实现。<br>（本条于 2026-06-19 由「当前阶段单机、不写复制代码」改定，原因见 Plan 0002 / RawRequirements #4。）
 4. **数据驱动优先**：卡牌 / 武将属性走 `DataTable`，效果走 C++ 效果类 + 注册表。新卡 / 新技能优先复用现成 Effect 类，除非现有 Effect 类不够用，否则**不**为单张卡写新 C++ 类。
 5. **结算不依赖 wallclock**：所有时序一律按「回合 / 阶段 / 出牌次序」推进。`FTimerHandle`、`Tick` 中的 `DeltaTime` 累加都不可用于游戏逻辑（仅可用于纯表现层动画）。
 
@@ -157,13 +157,15 @@ private:
 
 C++ 业务命名空间（可选用）：`SGS::Card::`, `SGS::Turn::` 等。MVP 阶段不强制。
 
-日志分类**必须**在 `Source/SGS/SGSLogChannels.h` 集中声明：
+日志分类**必须**在 `Source/SGS/Core/SGSLogChannels.h` 集中声明：
 
 ```cpp
 DECLARE_LOG_CATEGORY_EXTERN(LogSGS, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogSGSCard, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogSGSSkill, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogSGSTurn, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogSGSNet, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogSGSAI, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogSGSUI, Log, All);
 ```
 
@@ -210,4 +212,5 @@ DECLARE_LOG_CATEGORY_EXTERN(LogSGSUI, Log, All);
 
 ## Last Updated
 
+2026-06-19 — 架构转向：硬约束 #3 由「单机不写复制」改为「服务器权威 + 多人/AI 并存（决策代理 + 异步非阻塞）」；新增 `LogSGSNet`/`LogSGSAI` 日志分类；日志头文件路径定为 `Source/SGS/Core/`。见 Plan 0002。
 2026-06-19 — 从外部项目模板适配为 SGS（三国杀）：模块名 Stuff→SGS、修正文档路径、删除「模块活文档」系统（改由 graphify 维护代码结构）、删除外部游戏术语表、明确不用 GAS / UMG 纯 C++ / 单机不写复制 / 回合制结算约束。
