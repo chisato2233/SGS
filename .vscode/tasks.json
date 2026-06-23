@@ -1,0 +1,93 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "SGS: Resolve Unreal Engine",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\Tools\\Unreal.ps1",
+        "-Action",
+        "Resolve"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "SGS: Build Editor (Development)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\Tools\\Unreal.ps1",
+        "-Action",
+        "Build",
+        "-Configuration",
+        "Development"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "SGS: Build Editor (DebugGame)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\Tools\\Unreal.ps1",
+        "-Action",
+        "Build",
+        "-Configuration",
+        "DebugGame"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "SGS: Launch Editor (no build)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\Tools\\Unreal.ps1",
+        "-Action",
+        "Launch",
+        "-Configuration",
+        "Development"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "SGS: Build + Launch Editor",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\Tools\\Unreal.ps1",
+        "-Action",
+        "BuildAndLaunch",
+        "-Configuration",
+        "Development"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": "$msCompile"
+    }
+  ]
+}

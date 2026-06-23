@@ -185,9 +185,10 @@ DECLARE_LOG_CATEGORY_EXTERN(LogSGSUI, Log, All);
 ## 6. Git 工作流
 
 - 仓库根目录为项目根（`SGS.uproject` 所在目录）。新会话开始、提交前、切换任务前都先看 `git status --short --branch`。
-- 默认跟踪：`Source/`（含 `Source/Doc/`）、`Config/`、`.uproject`、`.vsconfig`、`.gitignore`、`.gitattributes`、`AGENTS.md`、`.codex/hooks.json`、`graphify-out/.graphify_root`、`graphify-out/graph.json`、`graphify-out/manifest.json`、项目级 IDE/Agent 任务脚本。
+- 默认跟踪：`Source/`（含 `Source/Doc/`）、`Config/`、`.uproject`、`.vsconfig`、`.gitignore`、`.gitattributes`、`AGENTS.md`、`.codex/hooks.json`、`.githooks/`、`graphify-out/.graphify_root`、`graphify-out/graph.json`、`graphify-out/manifest.json`、项目级 IDE/Agent 任务脚本。
 - 默认忽略：`Binaries/`、`Intermediate/`、`Saved/`、`DerivedDataCache/`、`.vs/`、`.sln` / `.vcxproj*`、`graphify-out/cache/` 等 UE/IDE/graphify 缓存生成物。
-- UE 二进制资产（`.uasset` / `.umap` / 贴图 / 音频 / DCC 源文件等）走 Git LFS（规则见根目录 `.gitattributes`）。
+- Git LFS 仅用于单文件大小 >= 50 MiB 的大文件；不要按扩展名把所有二进制资产一概放入 LFS。`.gitattributes` 只保留文本归一化和脚本生成的显式大文件 LFS 条目。
+- 提交前必须运行 `powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\CheckLargeFiles.ps1 -Scope Staged`；本地 `.githooks/pre-commit` 执行同一检查。若检查失败，运行同脚本加 `-Fix` 为对应大文件写入显式 LFS 规则并重新 stage。
 - 提交前只 stage 本次任务相关文件；不要把用户未要求的本地改动顺手塞进提交。
 - 任何 `git reset`、`git checkout -- <path>`、批量删除、改写历史操作都必须先确认意图；不要为了「干净」丢弃未知改动。
 
@@ -216,6 +217,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogSGSUI, Log, All);
 ## Last Updated
 
 2026-06-19 — UI 路线定为 Native Code-first UI（Slate/UMG/CommonUI 按需组合 + SGSUI 薄封装）：不使用 WebView/React/Vue/Noesis/Gameface 作为主 UI，不自研完整 Gameface；硬约束 #2 由「UMG 纯 C++」升级为「Native Code-first UI」。见 Plan 0011。
+2026-06-23 — Git LFS 策略改为仅托管单文件 >= 50 MiB 的大文件；提交前通过 `Tools/CheckLargeFiles.ps1` / `.githooks/pre-commit` 检查，按需生成显式 per-file LFS 条目。
 2026-06-19 — Codex 入口适配纳入文档系统：`AGENTS.md` 只作为自动发现/graphify 规则入口，必须指回 `ProjectBrief.md`；`graphify-out/graph.json` 与 manifest 作为项目级图谱产物跟踪，cache 忽略。
 2026-06-19 — 架构转向：硬约束 #3 由「单机不写复制」改为「服务器权威 + 多人/AI 并存（决策代理 + 异步非阻塞）」；新增 `LogSGSNet`/`LogSGSAI` 日志分类；日志头文件路径定为 `Source/SGS/Core/`。见 Plan 0002。
 2026-06-19 — 从外部项目模板适配为 SGS（三国杀）：模块名 Stuff→SGS、修正文档路径、删除「模块活文档」系统（改由 graphify 维护代码结构）、删除外部游戏术语表、明确不用 GAS / UMG 纯 C++ / 单机不写复制 / 回合制结算约束。

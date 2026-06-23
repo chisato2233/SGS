@@ -21,7 +21,11 @@
 # Visual Studio / Rider / JetBrains / VS Code local state
 .vs/
 .idea/
-.vscode/
+.vscode/*
+!.vscode/
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 *.sln
 *.suo
 *.user
@@ -58,6 +62,14 @@ Thumbs.db
 
 # graphify local caches; keep graphify-out/graph.json and manifest trackable
 /graphify-out/cache/
+
+# Accidental editor-generated assets from opening/importing the current project.
+# Keep raw QSanguosha media tracked; curated UE .uasset imports should be done in a later Plan.
+/Content/ImportedAssets/QSanguosha/**/*.uasset
+/Content/Map/Blank1.umap
+/Content/Map/Blank1_*.uasset
+/Content/__ExternalActors__/Map/Blank1/
+/Content/__ExternalObjects__/Map/Blank1/
 
 # Keep project sources, configs, docs, and assets tracked:
 # /Config/

@@ -18,6 +18,7 @@
 - 代码结构和依赖关系由 graphify 维护，不在文档里手写类图/依赖图。
 - 修改代码后运行 `graphify update .` 更新图谱；只改说明性文档时按需要更新。
 - 提交前遵守 `Source/Doc/Rulers.md` 的 Git 工作流。
+- Agent 创建 git commit 前必须运行 `powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\CheckLargeFiles.ps1 -Scope Staged`。本地 `.githooks/pre-commit` 会执行同一检查；若发现单文件 >= 50 MiB 且未进 LFS，先按脚本提示处理再提交。
 
 ## graphify
 

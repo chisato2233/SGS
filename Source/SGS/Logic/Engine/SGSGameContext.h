@@ -4,6 +4,7 @@
 #include "UObject/Object.h"
 #include "UObject/ScriptInterface.h"
 #include "Math/RandomStream.h"
+#include "Core/SGSTypes.h"
 #include "Logic/Cards/SGSCardTypes.h"
 #include "SGSGameContext.generated.h"
 

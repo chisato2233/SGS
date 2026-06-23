@@ -544,7 +544,7 @@
       "label": "USGSGameContext()",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.h",
-      "source_location": "L43",
+      "source_location": "L44",
       "_origin": "ast"
     },
     {
@@ -552,7 +552,7 @@
       "label": "SGS_API",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.h",
-      "source_location": "L43",
+      "source_location": "L44",
       "_origin": "ast"
     },
     {
@@ -836,6 +836,126 @@
       "_origin": "ast"
     },
     {
+      "id": "tools_checklargefiles",
+      "label": "CheckLargeFiles.ps1",
+      "file_type": "code",
+      "source_file": "Tools/CheckLargeFiles.ps1",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "tools_checklargefiles_invoke_git",
+      "label": "Invoke-Git()",
+      "file_type": "code",
+      "source_file": "Tools/CheckLargeFiles.ps1",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "tools_checklargefiles_format_bytesize",
+      "label": "Format-ByteSize()",
+      "file_type": "code",
+      "source_file": "Tools/CheckLargeFiles.ps1",
+      "source_location": "L27",
+      "_origin": "ast"
+    },
+    {
+      "id": "tools_checklargefiles_get_reporelativepath",
+      "label": "Get-RepoRelativePath()",
+      "file_type": "code",
+      "source_file": "Tools/CheckLargeFiles.ps1",
+      "source_location": "L45",
+      "_origin": "ast"
+    },
+    {
+      "id": "tools_checklargefiles_get_candidatepaths",
+      "label": "Get-CandidatePaths()",
+      "file_type": "code",
+      "source_file": "Tools/CheckLargeFiles.ps1",
+      "source_location": "L51",
+      "_origin": "ast"
+    },
+    {
+      "id": "tools_checklargefiles_test_lfsattribute",
+      "label": "Test-LfsAttribute()",
+      "file_type": "code",
+      "source_file": "Tools/CheckLargeFiles.ps1",
+      "source_location": "L67",
+      "_origin": "ast"
+    },
+    {
+      "id": "tools_checklargefiles_test_stagedlfspointer",
+      "label": "Test-StagedLfsPointer()",
+      "file_type": "code",
+      "source_file": "Tools/CheckLargeFiles.ps1",
+      "source_location": "L78",
+      "_origin": "ast"
+    },
+    {
+      "id": "tools_unreal",
+      "label": "Unreal.ps1",
+      "file_type": "code",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "tools_unreal_get_projectpath",
+      "label": "Get-ProjectPath()",
+      "file_type": "code",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L17",
+      "_origin": "ast"
+    },
+    {
+      "id": "tools_unreal_get_engineassociation",
+      "label": "Get-EngineAssociation()",
+      "file_type": "code",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L33",
+      "_origin": "ast"
+    },
+    {
+      "id": "tools_unreal_test_engineroot",
+      "label": "Test-EngineRoot()",
+      "file_type": "code",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L44",
+      "_origin": "ast"
+    },
+    {
+      "id": "tools_unreal_resolve_engineroot",
+      "label": "Resolve-EngineRoot()",
+      "file_type": "code",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L56",
+      "_origin": "ast"
+    },
+    {
+      "id": "tools_unreal_get_targetname",
+      "label": "Get-TargetName()",
+      "file_type": "code",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L110",
+      "_origin": "ast"
+    },
+    {
+      "id": "tools_unreal_invoke_build",
+      "label": "Invoke-Build()",
+      "file_type": "code",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L122",
+      "_origin": "ast"
+    },
+    {
+      "id": "tools_unreal_invoke_editor",
+      "label": "Invoke-Editor()",
+      "file_type": "code",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L150",
+      "_origin": "ast"
+    },
+    {
       "id": "agents",
       "label": "AGENTS.md",
       "file_type": "document",
@@ -864,7 +984,7 @@
       "label": "graphify",
       "file_type": "document",
       "source_file": "AGENTS.md",
-      "source_location": "L22",
+      "source_location": "L23",
       "_origin": "ast"
     },
     {
@@ -1744,7 +1864,7 @@
       "label": "7. 提交粒度",
       "file_type": "document",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L196",
+      "source_location": "L197",
       "_origin": "ast"
     },
     {
@@ -1752,7 +1872,7 @@
       "label": "8. 文件 / 目录创建准则",
       "file_type": "document",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L207",
+      "source_location": "L208",
       "_origin": "ast"
     },
     {
@@ -1760,7 +1880,7 @@
       "label": "Last Updated",
       "file_type": "document",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L216",
+      "source_location": "L217",
       "_origin": "ast"
     }
   ],
@@ -3027,7 +3147,7 @@
     },
     {
       "source": "source_sgs_logic_engine_sgsgamecontext_h_engine_sgsgamecontext",
-      "target": "sgscardtypes",
+      "target": "sgstypes",
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -3037,7 +3157,7 @@
     },
     {
       "source": "source_sgs_logic_engine_sgsgamecontext_h_engine_sgsgamecontext",
-      "target": "sgsgamecontext",
+      "target": "sgscardtypes",
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -3047,11 +3167,21 @@
     },
     {
       "source": "source_sgs_logic_engine_sgsgamecontext_h_engine_sgsgamecontext",
+      "target": "sgsgamecontext",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Engine/SGSGameContext.h",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "source_sgs_logic_engine_sgsgamecontext_h_engine_sgsgamecontext",
       "target": "engine_sgsgamecontext_usgsgamecontext",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.h",
-      "source_location": "L43",
+      "source_location": "L44",
       "weight": 1.0
     },
     {
@@ -3060,7 +3190,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.h",
-      "source_location": "L43",
+      "source_location": "L44",
       "weight": 1.0,
       "context": "return_type"
     },
@@ -3739,6 +3869,150 @@
       "weight": 1.0
     },
     {
+      "source": "tools_checklargefiles",
+      "target": "tools_checklargefiles_invoke_git",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tools/CheckLargeFiles.ps1",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_checklargefiles",
+      "target": "tools_checklargefiles_format_bytesize",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tools/CheckLargeFiles.ps1",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_checklargefiles",
+      "target": "tools_checklargefiles_get_reporelativepath",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tools/CheckLargeFiles.ps1",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_checklargefiles",
+      "target": "tools_checklargefiles_get_candidatepaths",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tools/CheckLargeFiles.ps1",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_checklargefiles",
+      "target": "tools_checklargefiles_test_lfsattribute",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tools/CheckLargeFiles.ps1",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_checklargefiles",
+      "target": "tools_checklargefiles_test_stagedlfspointer",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tools/CheckLargeFiles.ps1",
+      "source_location": "L78",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_checklargefiles_get_candidatepaths",
+      "target": "tools_checklargefiles_invoke_git",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "Tools/CheckLargeFiles.ps1",
+      "source_location": "L54",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_unreal",
+      "target": "tools_unreal_get_projectpath",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_unreal",
+      "target": "tools_unreal_get_engineassociation",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_unreal",
+      "target": "tools_unreal_test_engineroot",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_unreal",
+      "target": "tools_unreal_resolve_engineroot",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_unreal",
+      "target": "tools_unreal_get_targetname",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L110",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_unreal",
+      "target": "tools_unreal_invoke_build",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_unreal",
+      "target": "tools_unreal_invoke_editor",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L150",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_unreal_resolve_engineroot",
+      "target": "tools_unreal_get_engineassociation",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "tools_unreal_resolve_engineroot",
+      "target": "tools_unreal_test_engineroot",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "Tools/Unreal.ps1",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
       "source": "agents",
       "target": "agents_agents_md_codex_入口适配层",
       "relation": "contains",
@@ -3762,7 +4036,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "AGENTS.md",
-      "source_location": "L22",
+      "source_location": "L23",
       "weight": 1.0
     },
     {
@@ -4653,7 +4927,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L196",
+      "source_location": "L197",
       "weight": 1.0
     },
     {
@@ -4662,7 +4936,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L207",
+      "source_location": "L208",
       "weight": 1.0
     },
     {
@@ -4671,7 +4945,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L216",
+      "source_location": "L217",
       "weight": 1.0
     },
     {
@@ -4704,7 +4978,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.h",
-      "source_location": "L64",
+      "source_location": "L65",
       "weight": 1.0
     },
     {
