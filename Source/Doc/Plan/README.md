@@ -57,6 +57,7 @@ Source/Doc/Plan/
 
 | 序号 | 标题 | 状态 | 说明 |
 |---|---|---|---|
+| 0012 | SGS 基础工具库开发计划 | In Progress | P0+P1 基础工具库：错误/结果、Command、RandomAudit、IndexedStore、TargetQuery、Timing/ActiveEffect、EffectPipeline、ReplayLog 地基；M0 已决策引入 GAS |
 | 0011 | Native Code-first UI 架构 | Ready | Slate/UMG/CommonUI 按需组合 + SGSUI 薄封装；不使用 WebView/React/Vue 作为主 UI，不自研 Gameface |
 | 0004 | 对局数据模型 | In Progress | 卡牌/牌区/玩家状态 + 通用移牌/摸牌/弃牌/伤害/回复/距离原语 + 事件（`USGSGameContext`）|
 | 0003 | 权威对局骨架 | In Progress | 服务器侧回合阶段机闭环 + 决策代理 + 事件总线 + 占位 AI + GameMode 入口 |

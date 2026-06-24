@@ -61,6 +61,7 @@
 - **函数**：PascalCase（`ApplyDamage`, `DrawCards`）
 - **变量**：PascalCase（`CurrentHealth`），bool 加 `b` 前缀（`bIsAlive`）
 - **常量**：PascalCase（`DefaultHandLimit`），枚举值 `EFoo::Bar` 形式
+- **默认避免封闭枚举建模规则概念**：卡牌游戏策划会改写看似固定的集合；不要轻易用 `enum class` / `UENUM` 表达阶段、回合类型、座次语义、花色、卡牌名、技能名、效果类型、状态类型、目标类型等规则/内容概念。阶段可能被插入、跳过、换序、替换；回合可能被插入或只包含若干阶段；座次可能交换、重分配，角色也可能移除游戏但仍存活；花色甚至可能由技能新建。此类概念默认使用 `FName` / DataTable RowName、GameplayTag、数据资产、注册表、策略对象或规则类等开放式标识与行为封装。只有当集合属于技术层内部、可证明封闭稳定、不会被卡牌/技能/模式扩展，并且确实需要编译期分支时，才允许使用枚举；新增枚举前必须在对应 Plan 记录理由与兼容性影响。
 
 ### 2.2 头文件
 
@@ -80,15 +81,15 @@
 ### 2.4 模块依赖
 
 `Source/SGS/SGS.Build.cs` 当前已含：
-`Core, CoreUObject, Engine, InputCore, EnhancedInput`
+`Core, CoreUObject, Engine, InputCore, EnhancedInput, GameplayAbilities, GameplayTasks, GameplayTags`
 
 按需追加：
 - `UMG`, `Slate`, `SlateCore` —— 启用 Native Code-first UI / SGSUI 时
 - `CommonUI` —— 只有在 UI Plan 明确需要菜单栈、输入路由、手柄/键鼠提示等能力时才启用，并同步记录插件/模块变更
-- `GameplayTags` —— 势力 / 卡牌标签
 - `DeveloperSettings` —— 项目级配置
+- `GameplayAbilitiesEditor` —— 只有在后续专门做 GAS 编辑器工具 / 调试工具时才启用，且不得进入 Runtime 依赖
 
-❌ **不添加 `GameplayAbilities` / `GameplayTasks` / `GameplayAbilitiesEditor`**（不上 GAS）
+GAS 运行时模块已启用：`GameplayAbilities` / `GameplayTasks` / `GameplayTags`。不得用蓝图 Ability 承载核心规则；核心规则仍以 C++ 服务器权威实现。
 
 ### 2.5 注释规则
 
@@ -147,10 +148,10 @@ private:
 
 以下约束**全局生效，不可违反**：
 
-1. **不用 GAS**：技能 / 判定 / 结算一律自研。不引入 `GameplayAbilities` 模块。
+1. **引入 GAS，但不外包 SGS 规则核心**：启用 `GameplayAbilities` / `GameplayTasks` / `GameplayTags`，用于 Attribute、GameplayEffect、GameplayTag、GameplayCue / 表现桥接以及可复用效果载体。动作命令、牌区移动、判定流程、随机审计、回放日志、响应窗口、三国杀式结算顺序和服务器权威校验仍由 SGS 自研管线控制。不得用蓝图 Ability 编写核心规则；GAS 只能作为 C++ 规则层可控的底座与适配层。
 2. **Native Code-first UI**：UI 主路线为 Unreal 原生代码优先体系（Slate 为主要自定义控件底座，UMG 仅作视口/生命周期/对象系统适配，CommonUI 按需引入）。**不在编辑器 Designer 中拖控件**；如使用 `UWidget`/`UUserWidget`，必须在 C++ 中拼装控件树。项目不以 WebView/React/Vue/Noesis/Gameface 作为主 UI 技术栈，也不自研完整 Gameface/浏览器级 UI runtime，除非新 Plan 明确推翻本约束。SGSUI 只做薄封装：theme/token、通用组件、游戏组件、动画预设、状态/动作桥接；UI 只显示状态和采集输入，不承载游戏规则结算。
 3. **服务器权威 + 多人/AI 并存**：游戏逻辑只在服务器执行，是唯一真相源；客户端只显示与采集输入。状态用 UE 复制（`GameState`/`PlayerState`），私密信息（如手牌）**只复制给拥有者**；玩家指令走可靠 RPC。真人与 AI 一律通过 `ISGSDecisionAgent` 接入，逻辑层**不感知**对端是人还是 AI。等待决策时逻辑层**异步挂起**，不阻塞游戏线程（应答 / 超时 → 默认或 AI 托管后恢复）。逻辑层**不反向依赖**表现层与具体网络实现。<br>（本条于 2026-06-19 由「当前阶段单机、不写复制代码」改定，原因见 Plan 0002 / RawRequirements #4。）
-4. **数据驱动优先**：卡牌 / 武将属性走 `DataTable`，效果走 C++ 效果类 + 注册表。新卡 / 新技能优先复用现成 Effect 类，除非现有 Effect 类不够用，否则**不**为单张卡写新 C++ 类。
+4. **数据驱动优先**：卡牌 / 武将静态定义走 `DataTable` / `DataAsset`；属性、标签、持续 / 即时状态优先映射到 GAS Attribute / GameplayTag / GameplayEffect；SGS 自研效果管线负责卡牌结算语义、响应窗口和审计。新卡 / 新技能优先复用现成 Effect / GAS Adapter / 规则组件，除非现有能力不够用，否则**不**为单张卡写新 C++ 类。
 5. **结算不依赖 wallclock**：所有时序一律按「回合 / 阶段 / 出牌次序」推进。`FTimerHandle`、`Tick` 中的 `DeltaTime` 累加都不可用于游戏逻辑（仅可用于纯表现层动画）。
 
 ---
@@ -218,6 +219,8 @@ DECLARE_LOG_CATEGORY_EXTERN(LogSGSUI, Log, All);
 
 2026-06-19 — UI 路线定为 Native Code-first UI（Slate/UMG/CommonUI 按需组合 + SGSUI 薄封装）：不使用 WebView/React/Vue/Noesis/Gameface 作为主 UI，不自研完整 Gameface；硬约束 #2 由「UMG 纯 C++」升级为「Native Code-first UI」。见 Plan 0011。
 2026-06-23 — Git LFS 策略改为仅托管单文件 >= 50 MiB 的大文件；提交前通过 `Tools/CheckLargeFiles.ps1` / `.githooks/pre-commit` 检查，按需生成显式 per-file LFS 条目。
+2026-06-23 — 编码规范升级为「默认避免封闭枚举建模规则概念」：阶段、回合、座次、花色、技能/卡牌/效果/状态等规则与内容概念默认使用开放式标识、注册表、数据资产或规则类；枚举仅限可证明封闭稳定的技术层内部集合。
+2026-06-23 — GAS 策略改定：启用 `GameplayAbilities` / `GameplayTasks` / `GameplayTags`，但仅作为属性、标签、GameplayEffect、GameplayCue 与效果载体底座；SGS Command、随机审计、回放、牌区与三国杀式结算顺序仍由自研规则管线控制。见 Plan 0012。
 2026-06-19 — Codex 入口适配纳入文档系统：`AGENTS.md` 只作为自动发现/graphify 规则入口，必须指回 `ProjectBrief.md`；`graphify-out/graph.json` 与 manifest 作为项目级图谱产物跟踪，cache 忽略。
 2026-06-19 — 架构转向：硬约束 #3 由「单机不写复制」改为「服务器权威 + 多人/AI 并存（决策代理 + 异步非阻塞）」；新增 `LogSGSNet`/`LogSGSAI` 日志分类；日志头文件路径定为 `Source/SGS/Core/`。见 Plan 0002。
 2026-06-19 — 从外部项目模板适配为 SGS（三国杀）：模块名 Stuff→SGS、修正文档路径、删除「模块活文档」系统（改由 graphify 维护代码结构）、删除外部游戏术语表、明确不用 GAS / UMG 纯 C++ / 单机不写复制 / 回合制结算约束。

@@ -46,18 +46,18 @@ private:
 
 	void BeginTurn();
 	void EndGame();
-	void Broadcast(ESGSGameEvent Event);
+	void Broadcast(FSGSGameEvent Event);
 
 	// 出牌阶段动作的应答回调（可能同步或跨帧触发）。
 	void OnPlayActionDecided(const FSGSPlayPhaseDecision& Decision);
 
-	static ESGSPhase NextPhase(ESGSPhase Phase);
+	static FSGSPhase NextPhase(FSGSPhase Phase);
 
 	UPROPERTY()
 	TObjectPtr<USGSGameContext> Context;
 
 	int32 CurrentSeatIndex = INDEX_NONE;
-	ESGSPhase CurrentPhase = ESGSPhase::None;
+	FSGSPhase CurrentPhase = SGSGameplayTags::Phase_None.GetTag();
 	int32 TurnsPlayed = 0;
 	int32 PendingRequestId = 0;
 

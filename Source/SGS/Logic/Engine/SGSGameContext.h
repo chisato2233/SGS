@@ -19,9 +19,9 @@ class ISGSDecisionAgent;
 struct FSGSCardMoveInfo
 {
 	TArray<TObjectPtr<USGSCard>> Cards;
-	ESGSCardZone FromZone = ESGSCardZone::None;
+	FSGSCardZone FromZone = SGSGameplayTags::CardZone_None.GetTag();
 	int32 FromSeat = INDEX_NONE;
-	ESGSCardZone ToZone = ESGSCardZone::None;
+	FSGSCardZone ToZone = SGSGameplayTags::CardZone_None.GetTag();
 	int32 ToSeat = INDEX_NONE;
 };
 
@@ -55,11 +55,11 @@ public:
 	USGSCardPile* GetDiscardPile() const { return DiscardPile; }
 
 	// 造一张牌并放入牌堆底。CardId 自增分配。完整牌库应由 DataTable 驱动批量建库。
-	USGSCard* CreateCard(FName CardName, ESGSSuit Suit, int32 Number);
+	USGSCard* CreateCard(FName CardName, FSGSSuit Suit, int32 Number);
 	void ShuffleDrawPile();
 
 	// 通用移动原语：所有换区都应走这里（装备区除外，见 Plan 0008）。广播 OnCardsMoved。
-	void MoveCards(const TArray<USGSCard*>& Cards, ESGSCardZone FromZone, int32 FromSeat, ESGSCardZone ToZone, int32 ToSeat);
+	void MoveCards(const TArray<USGSCard*>& Cards, FSGSCardZone FromZone, int32 FromSeat, FSGSCardZone ToZone, int32 ToSeat);
 
 	// 摸牌：牌堆顶 → 座位手牌；牌堆空时把弃牌堆洗回再摸。返回实际摸到的牌。
 	TArray<USGSCard*> DrawCards(int32 SeatIndex, int32 Count);
@@ -83,7 +83,7 @@ public:
 
 private:
 	bool IsValidSeat(int32 Index) const { return Seats.IsValidIndex(Index); }
-	USGSCardPile* GetPileForZone(ESGSCardZone Zone, int32 SeatIndex) const;
+	USGSCardPile* GetPileForZone(FSGSCardZone Zone, int32 SeatIndex) const;
 	void ReshuffleDiscardIntoDraw();
 
 	UPROPERTY()

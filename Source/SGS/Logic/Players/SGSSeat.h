@@ -26,8 +26,8 @@ public:
 	UPROPERTY()
 	FString DisplayName;
 
-	UPROPERTY()
-	ESGSFaction Faction = ESGSFaction::None;
+	UPROPERTY(meta = (Categories = "SGS.Faction"))
+	FGameplayTag Faction;
 
 	// ---- 生命 ----
 	// bIsAlive 由对局逻辑在体力归零并完成濒死结算后置否（濒死/求桃见 Plan 0005）。
@@ -49,7 +49,7 @@ public:
 
 	// 装备区：每栏至多一张。
 	UPROPERTY()
-	TMap<ESGSEquipSlot, TObjectPtr<USGSCard>> Equipment;
+	TMap<FGameplayTag, TObjectPtr<USGSCard>> Equipment;
 
 	// ---- 决策 ----
 	UPROPERTY()

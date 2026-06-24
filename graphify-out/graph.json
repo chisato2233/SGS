@@ -84,6 +84,38 @@
       "_origin": "ast"
     },
     {
+      "id": "source_sgs_core_sgsgameplaytags_cpp_core_sgsgameplaytags",
+      "label": "SGSGameplayTags.cpp",
+      "file_type": "code",
+      "source_file": "Source/SGS/Core/SGSGameplayTags.cpp",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "source_sgs_core_sgsgameplaytags_h_core_sgsgameplaytags",
+      "label": "SGSGameplayTags.h",
+      "file_type": "code",
+      "source_file": "Source/SGS/Core/SGSGameplayTags.h",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "core_sgsgameplaytags_sgsgameplaytags",
+      "label": "SGSGameplayTags()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Core/SGSGameplayTags.h",
+      "source_location": "L8",
+      "_origin": "ast"
+    },
+    {
+      "id": "namespace",
+      "label": "namespace",
+      "file_type": "code",
+      "source_file": "Source/SGS/Core/SGSGameplayTags.h",
+      "source_location": "L8",
+      "_origin": "ast"
+    },
+    {
       "id": "source_sgs_core_sgslogchannels_cpp_core_sgslogchannels",
       "label": "SGSLogChannels.cpp",
       "file_type": "code",
@@ -108,27 +140,51 @@
       "_origin": "ast"
     },
     {
+      "id": "core_sgstypes_sgsmatchesexacttag",
+      "label": "SGSMatchesExactTag()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Core/SGSTypes.h",
+      "source_location": "L19",
+      "_origin": "ast"
+    },
+    {
+      "id": "fgameplaytag",
+      "label": "FGameplayTag",
+      "file_type": "code",
+      "source_file": "Source/SGS/Core/SGSTypes.h",
+      "source_location": "L19",
+      "_origin": "ast"
+    },
+    {
+      "id": "fnativegameplaytag",
+      "label": "FNativeGameplayTag",
+      "file_type": "code",
+      "source_file": "Source/SGS/Core/SGSTypes.h",
+      "source_location": "L19",
+      "_origin": "ast"
+    },
+    {
       "id": "core_sgstypes_sgssuittocolor",
       "label": "SGSSuitToColor()",
       "file_type": "code",
       "source_file": "Source/SGS/Core/SGSTypes.h",
-      "source_location": "L64",
+      "source_location": "L25",
       "_origin": "ast"
     },
     {
-      "id": "esgscardcolor",
-      "label": "ESGSCardColor",
+      "id": "fsgscardcolor",
+      "label": "FSGSCardColor",
       "file_type": "code",
       "source_file": "Source/SGS/Core/SGSTypes.h",
-      "source_location": "L64",
+      "source_location": "L25",
       "_origin": "ast"
     },
     {
-      "id": "source_sgs_core_sgstypes_h_esgssuit",
-      "label": "ESGSSuit",
+      "id": "source_sgs_core_sgstypes_h_fsgssuit",
+      "label": "FSGSSuit",
       "file_type": "code",
       "source_file": "Source/SGS/Core/SGSTypes.h",
-      "source_location": "L64",
+      "source_location": "L25",
       "_origin": "ast"
     },
     {
@@ -248,7 +304,7 @@
       "label": "AddToTop()",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L11",
+      "source_location": "L10",
       "_origin": "ast"
     },
     {
@@ -256,7 +312,7 @@
       "label": "AddToBottom()",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L19",
+      "source_location": "L16",
       "_origin": "ast"
     },
     {
@@ -264,7 +320,7 @@
       "label": "AddManyToBottom()",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L27",
+      "source_location": "L22",
       "_origin": "ast"
     },
     {
@@ -272,7 +328,7 @@
       "label": "TArray",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L27",
+      "source_location": "L22",
       "_origin": "ast"
     },
     {
@@ -280,7 +336,7 @@
       "label": "TakeFromTop()",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L35",
+      "source_location": "L28",
       "_origin": "ast"
     },
     {
@@ -288,7 +344,7 @@
       "label": "int32",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L35",
+      "source_location": "L28",
       "_origin": "ast"
     },
     {
@@ -296,7 +352,7 @@
       "label": "RemoveCard()",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L53",
+      "source_location": "L43",
       "_origin": "ast"
     },
     {
@@ -304,7 +360,7 @@
       "label": "Shuffle()",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L58",
+      "source_location": "L47",
       "_origin": "ast"
     },
     {
@@ -312,7 +368,7 @@
       "label": "FRandomStream",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L58",
+      "source_location": "L47",
       "_origin": "ast"
     },
     {
@@ -436,8 +492,8 @@
       "_origin": "ast"
     },
     {
-      "id": "source_sgs_logic_engine_sgsgamecontext_cpp_esgssuit",
-      "label": "ESGSSuit",
+      "id": "source_sgs_logic_engine_sgsgamecontext_cpp_fsgssuit",
+      "label": "FSGSSuit",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
       "source_location": "L36",
@@ -468,8 +524,8 @@
       "_origin": "ast"
     },
     {
-      "id": "esgscardzone",
-      "label": "ESGSCardZone",
+      "id": "fsgscardzone",
+      "label": "FSGSCardZone",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
       "source_location": "L54",
@@ -480,7 +536,7 @@
       "label": "MoveCards()",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L80",
+      "source_location": "L85",
       "_origin": "ast"
     },
     {
@@ -488,7 +544,7 @@
       "label": "DrawCards()",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L120",
+      "source_location": "L125",
       "_origin": "ast"
     },
     {
@@ -496,7 +552,7 @@
       "label": "DiscardFromHand()",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L171",
+      "source_location": "L176",
       "_origin": "ast"
     },
     {
@@ -504,7 +560,7 @@
       "label": "ReshuffleDiscardIntoDraw()",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L176",
+      "source_location": "L181",
       "_origin": "ast"
     },
     {
@@ -512,7 +568,7 @@
       "label": "ApplyDamage()",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L190",
+      "source_location": "L195",
       "_origin": "ast"
     },
     {
@@ -520,7 +576,7 @@
       "label": "Heal()",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L224",
+      "source_location": "L229",
       "_origin": "ast"
     },
     {
@@ -528,7 +584,7 @@
       "label": "GetDistance()",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L243",
+      "source_location": "L248",
       "_origin": "ast"
     },
     {
@@ -668,8 +724,8 @@
       "_origin": "ast"
     },
     {
-      "id": "esgsgameevent",
-      "label": "ESGSGameEvent",
+      "id": "fsgsgameevent",
+      "label": "FSGSGameEvent",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Engine/SGSGameDriver.cpp",
       "source_location": "L162",
@@ -684,8 +740,8 @@
       "_origin": "ast"
     },
     {
-      "id": "esgsphase",
-      "label": "ESGSPhase",
+      "id": "fsgsphase",
+      "label": "FSGSPhase",
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Engine/SGSGameDriver.cpp",
       "source_location": "L171",
@@ -724,14 +780,6 @@
       "_origin": "ast"
     },
     {
-      "id": "engine_sgsgameevents_esgsgameevent",
-      "label": "ESGSGameEvent()",
-      "file_type": "code",
-      "source_file": "Source/SGS/Logic/Engine/SGSGameEvents.h",
-      "source_location": "L9",
-      "_origin": "ast"
-    },
-    {
       "id": "players_sgsdecisionagent",
       "label": "SGSDecisionAgent.h",
       "file_type": "code",
@@ -761,14 +809,6 @@
       "file_type": "code",
       "source_file": "Source/SGS/Logic/Players/SGSDecisionTypes.h",
       "source_location": "L1",
-      "_origin": "ast"
-    },
-    {
-      "id": "players_sgsdecisiontypes_esgsplayactiontype",
-      "label": "ESGSPlayActionType()",
-      "file_type": "code",
-      "source_file": "Source/SGS/Logic/Players/SGSDecisionTypes.h",
-      "source_location": "L9",
       "_origin": "ast"
     },
     {
@@ -1072,7 +1112,7 @@
       "label": "4. 文档与代码结构导航（Agent 必读）",
       "file_type": "document",
       "source_file": "ProjectBrief.md",
-      "source_location": "L64",
+      "source_location": "L65",
       "_origin": "ast"
     },
     {
@@ -1080,7 +1120,7 @@
       "label": "5. 当前项目状态",
       "file_type": "document",
       "source_file": "ProjectBrief.md",
-      "source_location": "L83",
+      "source_location": "L84",
       "_origin": "ast"
     },
     {
@@ -1088,7 +1128,7 @@
       "label": "6. 协作约定（所有 Agent 遵守）",
       "file_type": "document",
       "source_file": "ProjectBrief.md",
-      "source_location": "L106",
+      "source_location": "L109",
       "_origin": "ast"
     },
     {
@@ -1108,11 +1148,35 @@
       "_origin": "ast"
     },
     {
+      "id": "plan_0000_rawrequirements_9_2026_06_23_基于开放规则概念重构项目",
+      "label": "#9 — 2026-06-23 — 基于开放规则概念重构项目",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
+      "source_location": "L9",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0000_rawrequirements_8_2026_06_23_改定规则_引入_gas",
+      "label": "#8 — 2026-06-23 — 改定规则：引入 GAS",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
+      "source_location": "L27",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0000_rawrequirements_7_2026_06_23_sgs_基础工具库开发计划",
+      "label": "#7 — 2026-06-23 — SGS 基础工具库开发计划",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
+      "source_location": "L42",
+      "_origin": "ast"
+    },
+    {
       "id": "plan_0000_rawrequirements_6_2026_06_19_将_agents_融入当前文档系统并提交",
       "label": "#6 — 2026-06-19 — 将 AGENTS 融入当前文档系统并提交",
       "file_type": "document",
       "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
-      "source_location": "L9",
+      "source_location": "L62",
       "_origin": "ast"
     },
     {
@@ -1120,7 +1184,7 @@
       "label": "#5 — 2026-06-19 — UI 技术路线选择：路线 B（Unreal Native Code-first）",
       "file_type": "document",
       "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
-      "source_location": "L24",
+      "source_location": "L77",
       "_origin": "ast"
     },
     {
@@ -1128,7 +1192,7 @@
       "label": "#4 — 2026-06-19 — 启动核心逻辑长计划（多人 + AI）",
       "file_type": "document",
       "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
-      "source_location": "L43",
+      "source_location": "L96",
       "_origin": "ast"
     },
     {
@@ -1136,7 +1200,7 @@
       "label": "#3 — 2026-06-19 — 导入太阳神三国杀素材",
       "file_type": "document",
       "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
-      "source_location": "L59",
+      "source_location": "L112",
       "_origin": "ast"
     },
     {
@@ -1144,7 +1208,7 @@
       "label": "#2 — 2026-06-19 — 建立文档系统",
       "file_type": "document",
       "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
-      "source_location": "L77",
+      "source_location": "L130",
       "_origin": "ast"
     },
     {
@@ -1152,7 +1216,7 @@
       "label": "#1 — 2026-06-19 — 项目立项与引擎选择",
       "file_type": "document",
       "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
-      "source_location": "L92",
+      "source_location": "L145",
       "_origin": "ast"
     },
     {
@@ -1320,7 +1384,7 @@
       "label": "6. 验收标准",
       "file_type": "document",
       "source_file": "Source/Doc/Plan/0002-core-logic-architecture-roadmap.md",
-      "source_location": "L115",
+      "source_location": "L116",
       "_origin": "ast"
     },
     {
@@ -1328,7 +1392,7 @@
       "label": "7. 进度与决策记录",
       "file_type": "document",
       "source_file": "Source/Doc/Plan/0002-core-logic-architecture-roadmap.md",
-      "source_location": "L122",
+      "source_location": "L123",
       "_origin": "ast"
     },
     {
@@ -1596,6 +1660,214 @@
       "_origin": "ast"
     },
     {
+      "id": "plan_0012_sgs_foundation_toolkit",
+      "label": "0012-sgs-foundation-toolkit.md",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_0012_sgs_基础工具库开发计划",
+      "label": "0012 — SGS 基础工具库开发计划",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_1_目标",
+      "label": "1. 目标",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_2_背景与约束",
+      "label": "2. 背景与约束",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L24",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_2_1_与_gas_的关系",
+      "label": "2.1 与 GAS 的关系",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L37",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_3_方案设计",
+      "label": "3. 方案设计",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L65",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_3_1_优先级总览",
+      "label": "3.1 优先级总览",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L67",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_3_2_core_utility",
+      "label": "3.2 Core Utility",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L83",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_3_3_动作命令系统",
+      "label": "3.3 动作命令系统",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L97",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_3_4_随机审计系统",
+      "label": "3.4 随机审计系统",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L115",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_3_5_stable_handle_indexedstore",
+      "label": "3.5 Stable Handle / IndexedStore",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L132",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_3_6_targetquery",
+      "label": "3.6 TargetQuery",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L156",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_3_7_timing_duration_activeeffecttimeline",
+      "label": "3.7 Timing / Duration / ActiveEffectTimeline",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L173",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_3_8_gas_attribute_modifier_adapter",
+      "label": "3.8 GAS Attribute / Modifier Adapter",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L190",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_3_9_effectpipeline",
+      "label": "3.9 EffectPipeline",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L203",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_3_10_replaylog_地基",
+      "label": "3.10 ReplayLog 地基",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L221",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_4_任务拆解",
+      "label": "4. 任务拆解",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L237",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_m0_gas_决策记录",
+      "label": "M0：GAS 决策记录",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L239",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_m1_core_utility",
+      "label": "M1：Core Utility",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L245",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_m2_command_randomaudit",
+      "label": "M2：Command + RandomAudit",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L252",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_m3_indexedstore_targetquery",
+      "label": "M3：IndexedStore + TargetQuery",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L260",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_m4_timing_activeeffect_attribute_modifier",
+      "label": "M4：Timing + ActiveEffect + Attribute/Modifier",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L268",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_m5_effectpipeline_replaylog",
+      "label": "M5：EffectPipeline + ReplayLog",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L276",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_p2_按需小迭代",
+      "label": "P2 按需小迭代",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L284",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_5_验收标准",
+      "label": "5. 验收标准",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L290",
+      "_origin": "ast"
+    },
+    {
+      "id": "plan_0012_sgs_foundation_toolkit_6_进度与决策记录",
+      "label": "6. 进度与决策记录",
+      "file_type": "document",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L300",
+      "_origin": "ast"
+    },
+    {
       "id": "plan_readme",
       "label": "README.md",
       "file_type": "document",
@@ -1784,7 +2056,7 @@
       "label": "2.2 头文件",
       "file_type": "document",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L65",
+      "source_location": "L66",
       "_origin": "ast"
     },
     {
@@ -1792,7 +2064,7 @@
       "label": "2.3 反射与对象",
       "file_type": "document",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L72",
+      "source_location": "L73",
       "_origin": "ast"
     },
     {
@@ -1800,7 +2072,7 @@
       "label": "2.4 模块依赖",
       "file_type": "document",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L80",
+      "source_location": "L81",
       "_origin": "ast"
     },
     {
@@ -1808,7 +2080,7 @@
       "label": "2.5 注释规则",
       "file_type": "document",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L93",
+      "source_location": "L94",
       "_origin": "ast"
     },
     {
@@ -1816,7 +2088,7 @@
       "label": "2.6 错误处理",
       "file_type": "document",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L100",
+      "source_location": "L101",
       "_origin": "ast"
     },
     {
@@ -1824,7 +2096,7 @@
       "label": "2.7 头文件组织顺序（规范化模板）",
       "file_type": "document",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L108",
+      "source_location": "L109",
       "_origin": "ast"
     },
     {
@@ -1832,7 +2104,7 @@
       "label": "3. 项目硬约束",
       "file_type": "document",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L146",
+      "source_location": "L147",
       "_origin": "ast"
     },
     {
@@ -1840,7 +2112,7 @@
       "label": "4. 命名空间与日志分类",
       "file_type": "document",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L158",
+      "source_location": "L159",
       "_origin": "ast"
     },
     {
@@ -1848,7 +2120,7 @@
       "label": "5. 测试策略",
       "file_type": "document",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L177",
+      "source_location": "L178",
       "_origin": "ast"
     },
     {
@@ -1856,7 +2128,7 @@
       "label": "6. Git 工作流",
       "file_type": "document",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L185",
+      "source_location": "L186",
       "_origin": "ast"
     },
     {
@@ -1864,7 +2136,7 @@
       "label": "7. 提交粒度",
       "file_type": "document",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L197",
+      "source_location": "L198",
       "_origin": "ast"
     },
     {
@@ -1872,7 +2144,7 @@
       "label": "8. 文件 / 目录创建准则",
       "file_type": "document",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L208",
+      "source_location": "L209",
       "_origin": "ast"
     },
     {
@@ -1880,7 +2152,7 @@
       "label": "Last Updated",
       "file_type": "document",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L217",
+      "source_location": "L218",
       "_origin": "ast"
     }
   ],
@@ -2041,6 +2313,55 @@
       "weight": 1.0
     },
     {
+      "source": "source_sgs_core_sgsgameplaytags_cpp_core_sgsgameplaytags",
+      "target": "sgsgameplaytags",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Core/SGSGameplayTags.cpp",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "source_sgs_core_sgsgameplaytags_h_core_sgsgameplaytags",
+      "target": "coreminimal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Core/SGSGameplayTags.h",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "source_sgs_core_sgsgameplaytags_h_core_sgsgameplaytags",
+      "target": "nativegameplaytags",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Core/SGSGameplayTags.h",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "source_sgs_core_sgsgameplaytags_h_core_sgsgameplaytags",
+      "target": "core_sgsgameplaytags_sgsgameplaytags",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Core/SGSGameplayTags.h",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "core_sgsgameplaytags_sgsgameplaytags",
+      "target": "namespace",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Core/SGSGameplayTags.h",
+      "source_location": "L8",
+      "weight": 1.0,
+      "context": "return_type"
+    },
+    {
       "source": "source_sgs_core_sgslogchannels_cpp_core_sgslogchannels",
       "target": "sgslogchannels",
       "relation": "imports",
@@ -2072,7 +2393,7 @@
     },
     {
       "source": "core_sgstypes",
-      "target": "sgstypes",
+      "target": "sgsgameplaytags",
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -2082,32 +2403,71 @@
     },
     {
       "source": "core_sgstypes",
+      "target": "core_sgstypes_sgsmatchesexacttag",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Core/SGSTypes.h",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "core_sgstypes_sgsmatchesexacttag",
+      "target": "fgameplaytag",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Core/SGSTypes.h",
+      "source_location": "L19",
+      "weight": 1.0,
+      "context": "parameter_type"
+    },
+    {
+      "source": "core_sgstypes_sgsmatchesexacttag",
+      "target": "fnativegameplaytag",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Core/SGSTypes.h",
+      "source_location": "L19",
+      "weight": 1.0,
+      "context": "parameter_type"
+    },
+    {
+      "source": "core_sgstypes",
       "target": "core_sgstypes_sgssuittocolor",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Core/SGSTypes.h",
-      "source_location": "L64",
+      "source_location": "L25",
       "weight": 1.0
     },
     {
       "source": "core_sgstypes_sgssuittocolor",
-      "target": "esgscardcolor",
+      "target": "fsgscardcolor",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Core/SGSTypes.h",
-      "source_location": "L64",
+      "source_location": "L25",
       "weight": 1.0,
       "context": "return_type"
     },
     {
       "source": "core_sgstypes_sgssuittocolor",
-      "target": "source_sgs_core_sgstypes_h_esgssuit",
+      "target": "source_sgs_core_sgstypes_h_fsgssuit",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Core/SGSTypes.h",
-      "source_location": "L64",
+      "source_location": "L25",
       "weight": 1.0,
       "context": "parameter_type"
+    },
+    {
+      "source": "core_sgstypes_sgssuittocolor",
+      "target": "core_sgstypes_sgsmatchesexacttag",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Core/SGSTypes.h",
+      "source_location": "L27",
+      "weight": 1.0
     },
     {
       "source": "source_sgs_game_sgsgamemode_cpp_game_sgsgamemode",
@@ -2400,7 +2760,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L11",
+      "source_location": "L10",
       "weight": 1.0
     },
     {
@@ -2409,7 +2769,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L11",
+      "source_location": "L10",
       "weight": 1.0,
       "context": "parameter_type"
     },
@@ -2419,7 +2779,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L19",
+      "source_location": "L16",
       "weight": 1.0
     },
     {
@@ -2428,7 +2788,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L19",
+      "source_location": "L16",
       "weight": 1.0,
       "context": "parameter_type"
     },
@@ -2438,7 +2798,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L27",
+      "source_location": "L22",
       "weight": 1.0
     },
     {
@@ -2447,7 +2807,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L27",
+      "source_location": "L22",
       "weight": 1.0,
       "context": "parameter_type"
     },
@@ -2457,7 +2817,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L27",
+      "source_location": "L22",
       "weight": 1.0,
       "context": "generic_arg"
     },
@@ -2467,7 +2827,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L35",
+      "source_location": "L28",
       "weight": 1.0
     },
     {
@@ -2476,7 +2836,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L35",
+      "source_location": "L28",
       "weight": 1.0,
       "context": "return_type"
     },
@@ -2486,7 +2846,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L35",
+      "source_location": "L28",
       "weight": 1.0,
       "context": "generic_arg"
     },
@@ -2496,7 +2856,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L35",
+      "source_location": "L28",
       "weight": 1.0,
       "context": "parameter_type"
     },
@@ -2506,7 +2866,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L53",
+      "source_location": "L43",
       "weight": 1.0
     },
     {
@@ -2515,7 +2875,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L53",
+      "source_location": "L43",
       "weight": 1.0,
       "context": "parameter_type"
     },
@@ -2525,7 +2885,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L58",
+      "source_location": "L47",
       "weight": 1.0
     },
     {
@@ -2534,7 +2894,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L58",
+      "source_location": "L47",
       "weight": 1.0,
       "context": "parameter_type"
     },
@@ -2545,7 +2905,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Cards/SGSCardPile.cpp",
-      "source_location": "L31",
+      "source_location": "L24",
       "weight": 1.0
     },
     {
@@ -2609,7 +2969,7 @@
     },
     {
       "source": "cards_sgscardtypes",
-      "target": "sgscardtypes",
+      "target": "gameplaytagcontainer",
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -2776,7 +3136,7 @@
     },
     {
       "source": "engine_sgsgamecontext_createcard",
-      "target": "source_sgs_logic_engine_sgsgamecontext_cpp_esgssuit",
+      "target": "source_sgs_logic_engine_sgsgamecontext_cpp_fsgssuit",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
@@ -2824,7 +3184,7 @@
     },
     {
       "source": "engine_sgsgamecontext_getpileforzone",
-      "target": "esgscardzone",
+      "target": "fsgscardzone",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
@@ -2848,7 +3208,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L80",
+      "source_location": "L85",
       "weight": 1.0
     },
     {
@@ -2857,7 +3217,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L80",
+      "source_location": "L85",
       "weight": 1.0,
       "context": "parameter_type"
     },
@@ -2867,17 +3227,17 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L80",
+      "source_location": "L85",
       "weight": 1.0,
       "context": "generic_arg"
     },
     {
       "source": "engine_sgsgamecontext_movecards",
-      "target": "esgscardzone",
+      "target": "fsgscardzone",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L80",
+      "source_location": "L85",
       "weight": 1.0,
       "context": "parameter_type"
     },
@@ -2887,7 +3247,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L80",
+      "source_location": "L85",
       "weight": 1.0,
       "context": "parameter_type"
     },
@@ -2897,7 +3257,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L120",
+      "source_location": "L125",
       "weight": 1.0
     },
     {
@@ -2906,7 +3266,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L120",
+      "source_location": "L125",
       "weight": 1.0,
       "context": "return_type"
     },
@@ -2916,7 +3276,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L120",
+      "source_location": "L125",
       "weight": 1.0,
       "context": "generic_arg"
     },
@@ -2926,7 +3286,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L120",
+      "source_location": "L125",
       "weight": 1.0,
       "context": "parameter_type"
     },
@@ -2936,7 +3296,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L171",
+      "source_location": "L176",
       "weight": 1.0
     },
     {
@@ -2945,7 +3305,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L171",
+      "source_location": "L176",
       "weight": 1.0,
       "context": "parameter_type"
     },
@@ -2955,7 +3315,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L171",
+      "source_location": "L176",
       "weight": 1.0,
       "context": "parameter_type"
     },
@@ -2965,7 +3325,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L171",
+      "source_location": "L176",
       "weight": 1.0,
       "context": "generic_arg"
     },
@@ -2975,7 +3335,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L176",
+      "source_location": "L181",
       "weight": 1.0
     },
     {
@@ -2984,7 +3344,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L190",
+      "source_location": "L195",
       "weight": 1.0
     },
     {
@@ -2993,7 +3353,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L190",
+      "source_location": "L195",
       "weight": 1.0,
       "context": "parameter_type"
     },
@@ -3003,7 +3363,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L224",
+      "source_location": "L229",
       "weight": 1.0
     },
     {
@@ -3012,7 +3372,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L224",
+      "source_location": "L229",
       "weight": 1.0,
       "context": "parameter_type"
     },
@@ -3022,7 +3382,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L243",
+      "source_location": "L248",
       "weight": 1.0
     },
     {
@@ -3031,7 +3391,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L243",
+      "source_location": "L248",
       "weight": 1.0,
       "context": "return_type"
     },
@@ -3042,7 +3402,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L63",
+      "source_location": "L66",
       "weight": 1.0
     },
     {
@@ -3052,7 +3412,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L87",
+      "source_location": "L92",
       "weight": 1.0
     },
     {
@@ -3062,7 +3422,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L124",
+      "source_location": "L129",
       "weight": 1.0
     },
     {
@@ -3072,7 +3432,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L134",
+      "source_location": "L139",
       "weight": 1.0
     },
     {
@@ -3082,7 +3442,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L173",
+      "source_location": "L178",
       "weight": 1.0
     },
     {
@@ -3092,7 +3452,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L197",
+      "source_location": "L202",
       "weight": 1.0
     },
     {
@@ -3102,7 +3462,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L231",
+      "source_location": "L236",
       "weight": 1.0
     },
     {
@@ -3358,7 +3718,7 @@
     },
     {
       "source": "engine_sgsgamedriver_broadcast",
-      "target": "esgsgameevent",
+      "target": "fsgsgameevent",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameDriver.cpp",
@@ -3377,7 +3737,7 @@
     },
     {
       "source": "engine_sgsgamedriver_nextphase",
-      "target": "esgsphase",
+      "target": "fsgsphase",
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Engine/SGSGameDriver.cpp",
@@ -3635,15 +3995,6 @@
       "weight": 1.0
     },
     {
-      "source": "engine_sgsgameevents",
-      "target": "engine_sgsgameevents_esgsgameevent",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Engine/SGSGameEvents.h",
-      "source_location": "L9",
-      "weight": 1.0
-    },
-    {
       "source": "players_sgsdecisionagent",
       "target": "coreminimal",
       "relation": "imports",
@@ -3714,11 +4065,12 @@
     },
     {
       "source": "players_sgsdecisiontypes",
-      "target": "players_sgsdecisiontypes_esgsplayactiontype",
-      "relation": "contains",
+      "target": "sgstypes",
+      "relation": "imports",
+      "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Players/SGSDecisionTypes.h",
-      "source_location": "L9",
+      "source_location": "L4",
       "weight": 1.0
     },
     {
@@ -4117,7 +4469,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "ProjectBrief.md",
-      "source_location": "L64",
+      "source_location": "L65",
       "weight": 1.0
     },
     {
@@ -4126,7 +4478,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "ProjectBrief.md",
-      "source_location": "L83",
+      "source_location": "L84",
       "weight": 1.0
     },
     {
@@ -4135,7 +4487,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "ProjectBrief.md",
-      "source_location": "L106",
+      "source_location": "L109",
       "weight": 1.0
     },
     {
@@ -4149,7 +4501,7 @@
     },
     {
       "source": "plan_0000_rawrequirements_0000_原始需求档案",
-      "target": "plan_0000_rawrequirements_6_2026_06_19_将_agents_融入当前文档系统并提交",
+      "target": "plan_0000_rawrequirements_9_2026_06_23_基于开放规则概念重构项目",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
@@ -4158,34 +4510,34 @@
     },
     {
       "source": "plan_0000_rawrequirements_0000_原始需求档案",
+      "target": "plan_0000_rawrequirements_8_2026_06_23_改定规则_引入_gas",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0000_rawrequirements_0000_原始需求档案",
+      "target": "plan_0000_rawrequirements_7_2026_06_23_sgs_基础工具库开发计划",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0000_rawrequirements_0000_原始需求档案",
+      "target": "plan_0000_rawrequirements_6_2026_06_19_将_agents_融入当前文档系统并提交",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0000_rawrequirements_0000_原始需求档案",
       "target": "plan_0000_rawrequirements_5_2026_06_19_ui_技术路线选择_路线_b_unreal_native_code_first",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
-      "source_location": "L24",
-      "weight": 1.0
-    },
-    {
-      "source": "plan_0000_rawrequirements_0000_原始需求档案",
-      "target": "plan_0000_rawrequirements_4_2026_06_19_启动核心逻辑长计划_多人_ai",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
-      "source_location": "L43",
-      "weight": 1.0
-    },
-    {
-      "source": "plan_0000_rawrequirements_0000_原始需求档案",
-      "target": "plan_0000_rawrequirements_3_2026_06_19_导入太阳神三国杀素材",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
-      "source_location": "L59",
-      "weight": 1.0
-    },
-    {
-      "source": "plan_0000_rawrequirements_0000_原始需求档案",
-      "target": "plan_0000_rawrequirements_2_2026_06_19_建立文档系统",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
@@ -4194,11 +4546,38 @@
     },
     {
       "source": "plan_0000_rawrequirements_0000_原始需求档案",
+      "target": "plan_0000_rawrequirements_4_2026_06_19_启动核心逻辑长计划_多人_ai",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
+      "source_location": "L96",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0000_rawrequirements_0000_原始需求档案",
+      "target": "plan_0000_rawrequirements_3_2026_06_19_导入太阳神三国杀素材",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0000_rawrequirements_0000_原始需求档案",
+      "target": "plan_0000_rawrequirements_2_2026_06_19_建立文档系统",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
+      "source_location": "L130",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0000_rawrequirements_0000_原始需求档案",
       "target": "plan_0000_rawrequirements_1_2026_06_19_项目立项与引擎选择",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Plan/0000-RawRequirements.md",
-      "source_location": "L92",
+      "source_location": "L145",
       "weight": 1.0
     },
     {
@@ -4369,7 +4748,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Plan/0002-core-logic-architecture-roadmap.md",
-      "source_location": "L115",
+      "source_location": "L116",
       "weight": 1.0
     },
     {
@@ -4378,7 +4757,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Plan/0002-core-logic-architecture-roadmap.md",
-      "source_location": "L122",
+      "source_location": "L123",
       "weight": 1.0
     },
     {
@@ -4652,6 +5031,231 @@
       "weight": 1.0
     },
     {
+      "source": "plan_0012_sgs_foundation_toolkit",
+      "target": "plan_0012_sgs_foundation_toolkit_0012_sgs_基础工具库开发计划",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_0012_sgs_基础工具库开发计划",
+      "target": "plan_0012_sgs_foundation_toolkit_1_目标",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_0012_sgs_基础工具库开发计划",
+      "target": "plan_0012_sgs_foundation_toolkit_2_背景与约束",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_2_背景与约束",
+      "target": "plan_0012_sgs_foundation_toolkit_2_1_与_gas_的关系",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_0012_sgs_基础工具库开发计划",
+      "target": "plan_0012_sgs_foundation_toolkit_3_方案设计",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_3_方案设计",
+      "target": "plan_0012_sgs_foundation_toolkit_3_1_优先级总览",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_3_方案设计",
+      "target": "plan_0012_sgs_foundation_toolkit_3_2_core_utility",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L83",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_3_方案设计",
+      "target": "plan_0012_sgs_foundation_toolkit_3_3_动作命令系统",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L97",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_3_方案设计",
+      "target": "plan_0012_sgs_foundation_toolkit_3_4_随机审计系统",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L115",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_3_方案设计",
+      "target": "plan_0012_sgs_foundation_toolkit_3_5_stable_handle_indexedstore",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L132",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_3_方案设计",
+      "target": "plan_0012_sgs_foundation_toolkit_3_6_targetquery",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L156",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_3_方案设计",
+      "target": "plan_0012_sgs_foundation_toolkit_3_7_timing_duration_activeeffecttimeline",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L173",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_3_方案设计",
+      "target": "plan_0012_sgs_foundation_toolkit_3_8_gas_attribute_modifier_adapter",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L190",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_3_方案设计",
+      "target": "plan_0012_sgs_foundation_toolkit_3_9_effectpipeline",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L203",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_3_方案设计",
+      "target": "plan_0012_sgs_foundation_toolkit_3_10_replaylog_地基",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L221",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_0012_sgs_基础工具库开发计划",
+      "target": "plan_0012_sgs_foundation_toolkit_4_任务拆解",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L237",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_4_任务拆解",
+      "target": "plan_0012_sgs_foundation_toolkit_m0_gas_决策记录",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L239",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_4_任务拆解",
+      "target": "plan_0012_sgs_foundation_toolkit_m1_core_utility",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L245",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_4_任务拆解",
+      "target": "plan_0012_sgs_foundation_toolkit_m2_command_randomaudit",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L252",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_4_任务拆解",
+      "target": "plan_0012_sgs_foundation_toolkit_m3_indexedstore_targetquery",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L260",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_4_任务拆解",
+      "target": "plan_0012_sgs_foundation_toolkit_m4_timing_activeeffect_attribute_modifier",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L268",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_4_任务拆解",
+      "target": "plan_0012_sgs_foundation_toolkit_m5_effectpipeline_replaylog",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L276",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_4_任务拆解",
+      "target": "plan_0012_sgs_foundation_toolkit_p2_按需小迭代",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L284",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_0012_sgs_基础工具库开发计划",
+      "target": "plan_0012_sgs_foundation_toolkit_5_验收标准",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L290",
+      "weight": 1.0
+    },
+    {
+      "source": "plan_0012_sgs_foundation_toolkit_0012_sgs_基础工具库开发计划",
+      "target": "plan_0012_sgs_foundation_toolkit_6_进度与决策记录",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/Doc/Plan/0012-sgs-foundation-toolkit.md",
+      "source_location": "L300",
+      "weight": 1.0
+    },
+    {
       "source": "plan_readme",
       "target": "plan_readme_plan_系统说明",
       "relation": "contains",
@@ -4837,7 +5441,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L65",
+      "source_location": "L66",
       "weight": 1.0
     },
     {
@@ -4846,7 +5450,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L72",
+      "source_location": "L73",
       "weight": 1.0
     },
     {
@@ -4855,7 +5459,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L80",
+      "source_location": "L81",
       "weight": 1.0
     },
     {
@@ -4864,7 +5468,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L93",
+      "source_location": "L94",
       "weight": 1.0
     },
     {
@@ -4873,7 +5477,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L100",
+      "source_location": "L101",
       "weight": 1.0
     },
     {
@@ -4882,7 +5486,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L108",
+      "source_location": "L109",
       "weight": 1.0
     },
     {
@@ -4891,7 +5495,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L146",
+      "source_location": "L147",
       "weight": 1.0
     },
     {
@@ -4900,7 +5504,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L158",
+      "source_location": "L159",
       "weight": 1.0
     },
     {
@@ -4909,7 +5513,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L177",
+      "source_location": "L178",
       "weight": 1.0
     },
     {
@@ -4918,7 +5522,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L185",
+      "source_location": "L186",
       "weight": 1.0
     },
     {
@@ -4927,7 +5531,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L197",
+      "source_location": "L198",
       "weight": 1.0
     },
     {
@@ -4936,7 +5540,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L208",
+      "source_location": "L209",
       "weight": 1.0
     },
     {
@@ -4945,7 +5549,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/Doc/Rulers.md",
-      "source_location": "L217",
+      "source_location": "L218",
       "weight": 1.0
     },
     {
@@ -4971,6 +5575,17 @@
       "weight": 1.0
     },
     {
+      "source": "engine_sgsgamecontext_getpileforzone",
+      "target": "core_sgstypes_sgsmatchesexacttag",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
       "source": "engine_sgsgamecontext_usgsgamecontext",
       "target": "engine_sgsgamecontext_drawcards",
       "relation": "calls",
@@ -4979,6 +5594,39 @@
       "confidence_score": 0.8,
       "source_file": "Source/SGS/Logic/Engine/SGSGameContext.h",
       "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "engine_sgsgamedriver_entercurrentphase",
+      "target": "core_sgstypes_sgsmatchesexacttag",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Source/SGS/Logic/Engine/SGSGameDriver.cpp",
+      "source_location": "L63",
+      "weight": 1.0
+    },
+    {
+      "source": "engine_sgsgamedriver_advanceafterphase",
+      "target": "core_sgstypes_sgsmatchesexacttag",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Source/SGS/Logic/Engine/SGSGameDriver.cpp",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "engine_sgsgamedriver_nextphase",
+      "target": "core_sgstypes_sgsmatchesexacttag",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "Source/SGS/Logic/Engine/SGSGameDriver.cpp",
+      "source_location": "L173",
       "weight": 1.0
     },
     {

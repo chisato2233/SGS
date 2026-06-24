@@ -21,14 +21,14 @@
 | 引擎 | Unreal Engine **5.7** |
 | 语言 | C++（核心逻辑） + 少量蓝图（仅用于美术/UI 绑定） |
 | 主模块 | `SGS`（Runtime，`Source/SGS/`） |
-| 模块依赖 | `Core`, `CoreUObject`, `Engine`, `InputCore`, `EnhancedInput` |
+| 模块依赖 | `Core`, `CoreUObject`, `Engine`, `InputCore`, `EnhancedInput`, `GameplayAbilities`, `GameplayTasks`, `GameplayTags` |
 | 网络 | **服务器权威**：UE 复制（GameState/PlayerState）+ 可靠 RPC（决策请求/应答通道）。Engine 自带网络；监听服务器起步，预留专用服务器。 |
 | AI | 服务器侧**决策代理**，与真人共用 `ISGSDecisionAgent` 接口接入；AI 逻辑**参考 QSanguosha（概念移植，非代码拷贝）**。 |
 | UI | Native Code-first UI（Slate/UMG 纯代码；SGSUI 薄封装；CommonUI 按需评估；不使用 Designer 拖控件） |
 | 输入 | Enhanced Input |
 | 渲染 | Substrate + DX12 SM6（UE5.7 默认；卡牌游戏对渲染要求低，不重点投入） |
 | 编辑器目标 | `SGS.Target.cs` / `SGSEditor.Target.cs`（BuildSettings V6，IncludeOrder Unreal5_7） |
-| 插件 | `ModelingToolsEditorMode`（编辑器专用，默认带的） |
+| 插件 | `GameplayAbilities`（运行时，GAS 底座）、`ModelingToolsEditorMode`（编辑器专用，默认带的） |
 
 > 改动技术栈（新增模块依赖、插件、第三方库）时，必须同步更新本表。
 
@@ -55,7 +55,8 @@
 - **异步、非阻塞**：等待玩家决策时逻辑层挂起而非阻塞游戏线程，应答或超时（→默认/AI 托管）后恢复。这是与 QSanguosha 阻塞式 RoomThread 的关键差异。
 - **回合阶段机**：准备 → 判定 → 摸牌 → 出牌 → 弃牌 → 结束。
 - **事件总线 + 触发器**：技能 = 「触发时机 + 条件 + 效果」，统一注册到事件系统，避免把逻辑写死。
-- **数据驱动**：卡牌/武将属性走 `DataTable`/`DataAsset`，效果走 C++ 效果类 + 注册表，方便扩展。
+- **GAS 边界**：引入 GAS 作为 Attribute、GameplayEffect、GameplayTag、GameplayCue / 表现桥接与可复用效果载体；动作命令、随机审计、回放日志、牌区移动、响应窗口和三国杀式结算顺序仍由 SGS C++ 规则管线控制。
+- **数据驱动**：卡牌/武将静态定义走 `DataTable`/`DataAsset`；属性、标签与持续/即时状态优先映射到 GAS，卡牌结算语义走 SGS C++ 效果管线与适配层。
 
 > 这里只放**稳定的架构愿景**。具体类设计、文件清单、接口签名都放进 `Source/Doc/Plan/` 的对应计划文档；代码结构由 graphify 维护。
 
@@ -92,11 +93,13 @@ Agent 开始工作时按以下顺序获取上下文：
   - [x] 代码分层骨架 + `Core/` 基础层（`SGSLogChannels`、`SGSTypes`）。见 Plan 0002。
   - [x] **UI 路线定调**：Native Code-first UI（Slate/UMG/CommonUI 按需组合 + SGSUI 薄封装），不使用 WebView/React/Vue 作为主 UI，不自研 Gameface。见 Plan 0011。
   - [x] Codex 入口适配：`AGENTS.md` 接入项目文档启动协议，graphify 图谱初始化到 `graphify-out/`。
+  - [x] **GAS 策略改定**：引入 GameplayAbilities/GameplayTasks/GameplayTags 作为属性、标签、GameplayEffect 与 Cue 底座；SGS 规则核心仍自研。见 Plan 0012。
 - **进行中**：
   - [~] Plan 0003：权威对局骨架（回合阶段机闭环 + 决策代理 + 事件总线 + 占位 AI + GameMode）。复制/RPC 拆到 0003N（需可编译 UE 环境）。
   - [~] Plan 0004：对局数据模型（卡牌/牌区/玩家状态 + 移牌/摸牌/弃牌/伤害/回复/距离原语 + 事件，`USGSGameContext`）。
+  - [~] Plan 0012：SGS 基础工具库（GAS 评估门已决策为引入 GAS；后续落地 Command、RandomAudit、IndexedStore、TargetQuery、Timing/ActiveEffect、EffectPipeline、ReplayLog 地基）。
 - **下一步（按 Plan 0002 路线图）**：
-  - [ ] 0005 杀/闪/桃（濒死/求桃）→ 0006 判定/延时锦囊 → 0007 即时锦囊 → 0008 装备 → 0009 武将技 → 0010 AI 代理 → 0011 Native Code-first UI → 0003N 网络层 → 0012 联机打磨。
+  - [ ] 0012 SGS 基础工具库 → 0005 杀/闪/桃（濒死/求桃）→ 0006 判定/延时锦囊 → 0007 即时锦囊 → 0008 装备 → 0009 武将技 → 0010 AI 代理 → 0011 Native Code-first UI → 0003N 网络层 → 0013 联机打磨。
   - [ ] 待接入可编译 UE 环境后补编译验证 + 标准牌库 DataTable 内容。
 
 > **每次有实质进展后，负责的 Agent 都应更新本节**（阶段、已完成项、下一步）。这是跨 Agent 状态同步的关键。

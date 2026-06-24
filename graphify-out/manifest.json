@@ -15,8 +15,8 @@
     "semantic_hash": ""
   },
   "Source/SGS/AI/SGSAutoPassAgent.cpp": {
-    "mtime": 1781872930.3899739,
-    "ast_hash": "011fd170414657fb289c5bf7a378b350",
+    "mtime": 1782214586.5416298,
+    "ast_hash": "7521926a191cfd11987cbc4682ee87d0",
     "semantic_hash": ""
   },
   "Source/SGS/AI/SGSAutoPassAgent.h": {
@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "Source/SGS/Core/SGSTypes.h": {
-    "mtime": 1781872930.4018764,
-    "ast_hash": "0362ce4d31a1c66bcd17530b000f050d",
+    "mtime": 1782214462.748458,
+    "ast_hash": "0d2c5d928a0304b4e2ecb85cb5645e0b",
     "semantic_hash": ""
   },
   "Source/SGS/Game/SGSGameMode.cpp": {
@@ -50,18 +50,18 @@
     "semantic_hash": ""
   },
   "Source/SGS/Logic/Cards/SGSCard.h": {
-    "mtime": 1781872930.4052958,
-    "ast_hash": "a4e54a0648c9a18219dab4cab73edc28",
+    "mtime": 1782214501.5335083,
+    "ast_hash": "198ebe50988da0ec850de399f21190ab",
     "semantic_hash": ""
   },
   "Source/SGS/Logic/Cards/SGSCardDef.h": {
-    "mtime": 1781872930.409317,
-    "ast_hash": "de6b23f21053bc4d9890b67355ffb684",
+    "mtime": 1782214508.7207842,
+    "ast_hash": "fe4f1fe528bdd41e55c28c67daaff085",
     "semantic_hash": ""
   },
   "Source/SGS/Logic/Cards/SGSCardPile.cpp": {
-    "mtime": 1781872930.409825,
-    "ast_hash": "664de58aa678bcb15ff7a2650284264c",
+    "mtime": 1782204109.0096686,
+    "ast_hash": "0c99a42b0d5da9ce86d444c0c49321ee",
     "semantic_hash": ""
   },
   "Source/SGS/Logic/Cards/SGSCardPile.h": {
@@ -70,33 +70,33 @@
     "semantic_hash": ""
   },
   "Source/SGS/Logic/Cards/SGSCardTypes.h": {
-    "mtime": 1781872930.41145,
-    "ast_hash": "c51edce0c4cf17068b08a29d9b0e5dbe",
+    "mtime": 1782214472.8622582,
+    "ast_hash": "b995e2d8b03fc37cd9154ec9d68882c9",
     "semantic_hash": ""
   },
   "Source/SGS/Logic/Engine/SGSGameContext.cpp": {
-    "mtime": 1781872930.4135077,
-    "ast_hash": "76ccfb1fd4133ac215ad2d4365b57dc7",
+    "mtime": 1782214548.729801,
+    "ast_hash": "42db2827c16d4899f23797518ced1897",
     "semantic_hash": ""
   },
   "Source/SGS/Logic/Engine/SGSGameContext.h": {
-    "mtime": 1781876985.912209,
-    "ast_hash": "fd746f4764c4c760c8108e37550363a5",
+    "mtime": 1782214527.8031752,
+    "ast_hash": "a48d55d21ccb9c5fa6f9fe94e4a3e4a9",
     "semantic_hash": ""
   },
   "Source/SGS/Logic/Engine/SGSGameDriver.cpp": {
-    "mtime": 1781872930.4150553,
-    "ast_hash": "6e289bffca89fe511e8b2cb038398592",
+    "mtime": 1782214581.646643,
+    "ast_hash": "57648168f33bd55cb13f47461f8ffa16",
     "semantic_hash": ""
   },
   "Source/SGS/Logic/Engine/SGSGameDriver.h": {
-    "mtime": 1781872930.4155693,
-    "ast_hash": "a4f61b6687a21219aef22701ee8ee19d",
+    "mtime": 1782214560.048063,
+    "ast_hash": "cda6023f03329a6448cc732a2298ba44",
     "semantic_hash": ""
   },
   "Source/SGS/Logic/Engine/SGSGameEvents.h": {
-    "mtime": 1781872930.4171107,
-    "ast_hash": "486061fce003455bec74ca31800f0bd7",
+    "mtime": 1782214493.4064558,
+    "ast_hash": "70e6ba7ddc6bbd40b517c08341752e72",
     "semantic_hash": ""
   },
   "Source/SGS/Logic/Players/SGSDecisionAgent.h": {
@@ -105,18 +105,18 @@
     "semantic_hash": ""
   },
   "Source/SGS/Logic/Players/SGSDecisionTypes.h": {
-    "mtime": 1781872930.41865,
-    "ast_hash": "338d0f8ef55df76ea9b0df6a5a3c6f15",
+    "mtime": 1782214483.7374282,
+    "ast_hash": "679e553c3a0ce09dbf8334a40928fa34",
     "semantic_hash": ""
   },
   "Source/SGS/Logic/Players/SGSSeat.h": {
-    "mtime": 1781872930.41917,
-    "ast_hash": "12df77f97dd90874cf684c0b5d4ed137",
+    "mtime": 1782214514.4241886,
+    "ast_hash": "766ba9a1ab930f628c805e84f15888bd",
     "semantic_hash": ""
   },
   "Source/SGS/SGS.Build.cs": {
-    "mtime": 1781876947.9916282,
-    "ast_hash": "73c76f70b6f62399b4be80b659d63e46",
+    "mtime": 1782213041.7743762,
+    "ast_hash": "132d26679e8f03bc1e53f2018b6879f8",
     "semantic_hash": ""
   },
   "Source/SGS/SGS.cpp": {
@@ -145,13 +145,13 @@
     "semantic_hash": ""
   },
   "ProjectBrief.md": {
-    "mtime": 1781876166.3282504,
-    "ast_hash": "fb620176a68faed5ae4f20cd7566d5e3",
+    "mtime": 1782213089.4909377,
+    "ast_hash": "5b76ff1e0694ba88d0dd46e8e8559116",
     "semantic_hash": ""
   },
   "Source/Doc/Plan/0000-RawRequirements.md": {
-    "mtime": 1781876166.3302548,
-    "ast_hash": "e98e4d44d4e024da85324b189df5ff55",
+    "mtime": 1782214702.7221854,
+    "ast_hash": "48873bb5c7ea1d72932f47c558073109",
     "semantic_hash": ""
   },
   "Source/Doc/Plan/0001-import-qsanguosha-assets.md": {
@@ -160,13 +160,13 @@
     "semantic_hash": ""
   },
   "Source/Doc/Plan/0002-core-logic-architecture-roadmap.md": {
-    "mtime": 1781875772.8400154,
-    "ast_hash": "a1fe5cedc0b4050c5ffa5c3734141ed2",
+    "mtime": 1782213138.385886,
+    "ast_hash": "a27ad566d573737612f6b870fc36ad15",
     "semantic_hash": ""
   },
   "Source/Doc/Plan/0003-authoritative-match-skeleton.md": {
-    "mtime": 1781872930.3857174,
-    "ast_hash": "d188b5f518b0de0d10aafd3f1d5def36",
+    "mtime": 1782214628.472796,
+    "ast_hash": "a9a79e04e8deaa68a38cfe6c189db747",
     "semantic_hash": ""
   },
   "Source/Doc/Plan/0004-card-and-board-model.md": {
@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "Source/Doc/Plan/README.md": {
-    "mtime": 1781875745.2236085,
-    "ast_hash": "a79c242b849da9bc41dab1f7e8674ab9",
+    "mtime": 1782213119.6252577,
+    "ast_hash": "ca27901a0717dab9cc87145616bc44b2",
     "semantic_hash": ""
   },
   "Source/Doc/Plan/_Template.md": {
@@ -190,8 +190,8 @@
     "semantic_hash": ""
   },
   "Source/Doc/Rulers.md": {
-    "mtime": 1782153625.5391254,
-    "ast_hash": "b79b872ed28b9c60f3e06f08be6fbff1",
+    "mtime": 1782213902.3711329,
+    "ast_hash": "a30d355ee8d8a089fdfcc8a6c83a4d8e",
     "semantic_hash": ""
   },
   "Content/ImportedAssets/QSanguosha/image/animate/dongzhuo.png": {
@@ -10757,6 +10757,41 @@
   "Tools/CheckLargeFiles.ps1": {
     "mtime": 1782153650.7229524,
     "ast_hash": "3f316ba9be49eadf5aa84ea1bc0afeac",
+    "semantic_hash": ""
+  },
+  ".githooks/post-checkout": {
+    "mtime": 1782153706.3816721,
+    "ast_hash": "ef678df1e004da305e21cdeead47876f",
+    "semantic_hash": ""
+  },
+  ".githooks/post-commit": {
+    "mtime": 1782153706.3860471,
+    "ast_hash": "4d58bc5ca88e7330533771a694429974",
+    "semantic_hash": ""
+  },
+  ".githooks/post-merge": {
+    "mtime": 1782153706.3901556,
+    "ast_hash": "675fe1c500a971841ba2e5abc1aeb579",
+    "semantic_hash": ""
+  },
+  ".githooks/pre-push": {
+    "mtime": 1782153706.3727434,
+    "ast_hash": "a9399d70a31d576f0435e776cae4934e",
+    "semantic_hash": ""
+  },
+  "Source/Doc/Plan/0012-sgs-foundation-toolkit.md": {
+    "mtime": 1782214665.9224951,
+    "ast_hash": "892dfc8dd88299b65dfac2423bd2d808",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Core/SGSGameplayTags.cpp": {
+    "mtime": 1782214439.736248,
+    "ast_hash": "3f61155088c2774a3d8eb1a1545a107c",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Core/SGSGameplayTags.h": {
+    "mtime": 1782214414.8267844,
+    "ast_hash": "f93cccc2ec3aca1c5872cc73d9b1c37c",
     "semantic_hash": ""
   }
 }

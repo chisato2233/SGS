@@ -19,12 +19,12 @@ public:
 	UPROPERTY()
 	FName CardName;
 
-	UPROPERTY()
-	ESGSSuit Suit = ESGSSuit::None;
+	UPROPERTY(meta = (Categories = "SGS.Suit"))
+	FGameplayTag Suit;
 
 	// 点数 1-13（A=1，J=11，Q=12，K=13）。
 	UPROPERTY()
 	int32 Number = 0;
 
-	ESGSCardColor GetColor() const { return SGSSuitToColor(Suit); }
+	FSGSCardColor GetColor() const { return SGSSuitToColor(Suit); }
 };

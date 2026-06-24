@@ -29,7 +29,7 @@
 - `Logic/Players/SGSDecisionTypes.h`：出牌阶段请求/应答数据 + 异步回调委托（纯 C++）。
 - `Logic/Players/SGSDecisionAgent.h`：`ISGSDecisionAgent` 接口——真人/AI 统一入口；约定**异步应答**。
 - `Logic/Players/SGSSeat.h`：座位模型（持有决策代理，不感知人/AI）。
-- `Logic/Engine/SGSGameEvents.h`：事件总线最小形态（`ESGSGameEvent` + 上下文 + C++ 多播委托）。
+- `Logic/Engine/SGSGameEvents.h`：事件总线最小形态（开放 `FSGSGameEvent` 标签 + 上下文 + C++ 多播委托）。
 - `Logic/Engine/SGSGameDriver.{h,cpp}`：对局驱动器——回合/阶段推进 + 出牌阶段异步决策。
 - `AI/SGSAutoPassAgent.{h,cpp}`：骨架期占位 AI（一律 Pass，同步应答）。
 - `Game/SGSGameMode.{h,cpp}`：服务器权威入口；`BeginPlay` 建纯 AI 座位并启动一局。

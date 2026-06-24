@@ -20,12 +20,12 @@ struct SGS_API FSGSCardDef : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FText DisplayName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	ESGSCardType CardType = ESGSCardType::None;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Categories = "SGS.CardType"))
+	FGameplayTag CardType;
 
 	// 装备牌专用：占用的装备栏。
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	ESGSEquipSlot EquipSlot = ESGSEquipSlot::None;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Categories = "SGS.EquipSlot"))
+	FGameplayTag EquipSlot;
 
 	// 武器专用：攻击范围（非武器忽略）。
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)

@@ -10,7 +10,16 @@ public class SGS : ModuleRules
 
 		PublicIncludePaths.Add(ModuleDirectory);
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
+		PublicDependencyModuleNames.AddRange(new string[] {
+			"Core",
+			"CoreUObject",
+			"Engine",
+			"InputCore",
+			"EnhancedInput",
+			"GameplayAbilities",
+			"GameplayTasks",
+			"GameplayTags"
+		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

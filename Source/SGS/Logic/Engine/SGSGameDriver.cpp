@@ -27,16 +27,16 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 		Context->DrawCards(SeatIndex, StartingHandSize);
 	}
 
-	Broadcast(ESGSGameEvent::GameStarted);
+	Broadcast(SGSGameplayTags::GameEvent_GameStarted.GetTag());
 	BeginTurn();
 	Pump();
 }
 
 void USGSGameDriver::BeginTurn()
 {
-	CurrentPhase = ESGSPhase::RoundStart;
+	CurrentPhase = SGSGameplayTags::Phase_RoundStart.GetTag();
 	UE_LOG(LogSGSTurn, Log, TEXT("Turn %d begins for seat %d."), TurnsPlayed, CurrentSeatIndex);
-	Broadcast(ESGSGameEvent::TurnBegan);
+	Broadcast(SGSGameplayTags::GameEvent_TurnBegan.GetTag());
 }
 
 void USGSGameDriver::Pump()
@@ -58,16 +58,16 @@ void USGSGameDriver::Pump()
 
 void USGSGameDriver::EnterCurrentPhase()
 {
-	Broadcast(ESGSGameEvent::PhaseBegan);
+	Broadcast(SGSGameplayTags::GameEvent_PhaseBegan.GetTag());
 
-	if (CurrentPhase == ESGSPhase::Draw)
+	if (SGSMatchesExactTag(CurrentPhase, SGSGameplayTags::Phase_Draw))
 	{
 		Context->DrawCards(CurrentSeatIndex, DrawCountPerTurn);
 		AdvanceAfterPhase();
 		return;
 	}
 
-	if (CurrentPhase == ESGSPhase::Play)
+	if (SGSMatchesExactTag(CurrentPhase, SGSGameplayTags::Phase_Play))
 	{
 		const USGSSeat* Seat = Context->GetSeat(CurrentSeatIndex);
 		ISGSDecisionAgent* Agent = Seat != nullptr ? Seat->DecisionAgent.GetInterface() : nullptr;
@@ -109,7 +109,7 @@ void USGSGameDriver::OnPlayActionDecided(const FSGSPlayPhaseDecision& Decision)
 	bWaitingForDecision = false;
 
 	// 骨架期仅支持 Pass。
-	UE_LOG(LogSGSTurn, Verbose, TEXT("Seat %d play action resolved (Pass)."), CurrentSeatIndex);
+	UE_LOG(LogSGSTurn, Verbose, TEXT("Seat %d play action resolved (%s)."), CurrentSeatIndex, *Decision.Action.ToString());
 
 	AdvanceAfterPhase();
 	Pump();
@@ -117,11 +117,11 @@ void USGSGameDriver::OnPlayActionDecided(const FSGSPlayPhaseDecision& Decision)
 
 void USGSGameDriver::AdvanceAfterPhase()
 {
-	Broadcast(ESGSGameEvent::PhaseEnded);
+	Broadcast(SGSGameplayTags::GameEvent_PhaseEnded.GetTag());
 
-	if (CurrentPhase == ESGSPhase::RoundEnd)
+	if (SGSMatchesExactTag(CurrentPhase, SGSGameplayTags::Phase_RoundEnd))
 	{
-		Broadcast(ESGSGameEvent::TurnEnded);
+		Broadcast(SGSGameplayTags::GameEvent_TurnEnded.GetTag());
 		++TurnsPlayed;
 
 		if (TurnsPlayed >= MaxTurnsForSkeleton)
@@ -156,10 +156,10 @@ void USGSGameDriver::EndGame()
 {
 	bGameOver = true;
 	UE_LOG(LogSGSTurn, Log, TEXT("Game over after %d turns."), TurnsPlayed);
-	Broadcast(ESGSGameEvent::GameEnded);
+	Broadcast(SGSGameplayTags::GameEvent_GameEnded.GetTag());
 }
 
-void USGSGameDriver::Broadcast(ESGSGameEvent Event)
+void USGSGameDriver::Broadcast(FSGSGameEvent Event)
 {
 	FSGSEventContext EventContext;
 	EventContext.Event = Event;
@@ -168,15 +168,28 @@ void USGSGameDriver::Broadcast(ESGSGameEvent Event)
 	GameEventDelegate.Broadcast(EventContext);
 }
 
-ESGSPhase USGSGameDriver::NextPhase(ESGSPhase Phase)
+FSGSPhase USGSGameDriver::NextPhase(FSGSPhase Phase)
 {
-	switch (Phase)
+	if (SGSMatchesExactTag(Phase, SGSGameplayTags::Phase_RoundStart))
 	{
-	case ESGSPhase::RoundStart: return ESGSPhase::Judge;
-	case ESGSPhase::Judge:      return ESGSPhase::Draw;
-	case ESGSPhase::Draw:       return ESGSPhase::Play;
-	case ESGSPhase::Play:       return ESGSPhase::Discard;
-	case ESGSPhase::Discard:    return ESGSPhase::RoundEnd;
-	default:                    return ESGSPhase::RoundEnd;
+		return SGSGameplayTags::Phase_Judge.GetTag();
 	}
+	if (SGSMatchesExactTag(Phase, SGSGameplayTags::Phase_Judge))
+	{
+		return SGSGameplayTags::Phase_Draw.GetTag();
+	}
+	if (SGSMatchesExactTag(Phase, SGSGameplayTags::Phase_Draw))
+	{
+		return SGSGameplayTags::Phase_Play.GetTag();
+	}
+	if (SGSMatchesExactTag(Phase, SGSGameplayTags::Phase_Play))
+	{
+		return SGSGameplayTags::Phase_Discard.GetTag();
+	}
+	if (SGSMatchesExactTag(Phase, SGSGameplayTags::Phase_Discard))
+	{
+		return SGSGameplayTags::Phase_RoundEnd.GetTag();
+	}
+
+	return SGSGameplayTags::Phase_RoundEnd.GetTag();
 }

@@ -33,7 +33,7 @@ USGSSeat* USGSGameContext::GetSeat(int32 Index) const
 	return Seats.IsValidIndex(Index) ? Seats[Index] : nullptr;
 }
 
-USGSCard* USGSGameContext::CreateCard(FName CardName, ESGSSuit Suit, int32 Number)
+USGSCard* USGSGameContext::CreateCard(FName CardName, FSGSSuit Suit, int32 Number)
 {
 	USGSCard* Card = NewObject<USGSCard>(this);
 	Card->CardId = NextCardId++;
@@ -51,33 +51,38 @@ void USGSGameContext::ShuffleDrawPile()
 	DrawPile->Shuffle(Rng);
 }
 
-USGSCardPile* USGSGameContext::GetPileForZone(ESGSCardZone Zone, int32 SeatIndex) const
+USGSCardPile* USGSGameContext::GetPileForZone(FSGSCardZone Zone, int32 SeatIndex) const
 {
-	switch (Zone)
+	if (SGSMatchesExactTag(Zone, SGSGameplayTags::CardZone_DrawPile))
 	{
-	case ESGSCardZone::DrawPile:
 		return DrawPile;
-	case ESGSCardZone::DiscardPile:
+	}
+	if (SGSMatchesExactTag(Zone, SGSGameplayTags::CardZone_DiscardPile))
+	{
 		return DiscardPile;
-	case ESGSCardZone::Hand:
+	}
+	if (SGSMatchesExactTag(Zone, SGSGameplayTags::CardZone_Hand))
+	{
 		if (const USGSSeat* Seat = GetSeat(SeatIndex))
 		{
 			return Seat->Hand;
 		}
 		return nullptr;
-	case ESGSCardZone::Judgement:
+	}
+	if (SGSMatchesExactTag(Zone, SGSGameplayTags::CardZone_Judgement))
+	{
 		if (const USGSSeat* Seat = GetSeat(SeatIndex))
 		{
 			return Seat->JudgementZone;
 		}
 		return nullptr;
-	default:
-		// Equipment（见 Plan 0008）、Processing、None 不由通用移动原语处理。
-		return nullptr;
 	}
+
+	// Equipment（见 Plan 0008）、Processing、None 和扩展区默认不由通用移动原语处理。
+	return nullptr;
 }
 
-void USGSGameContext::MoveCards(const TArray<USGSCard*>& Cards, ESGSCardZone FromZone, int32 FromSeat, ESGSCardZone ToZone, int32 ToSeat)
+void USGSGameContext::MoveCards(const TArray<USGSCard*>& Cards, FSGSCardZone FromZone, int32 FromSeat, FSGSCardZone ToZone, int32 ToSeat)
 {
 	if (Cards.Num() == 0)
 	{
@@ -111,8 +116,8 @@ void USGSGameContext::MoveCards(const TArray<USGSCard*>& Cards, ESGSCardZone Fro
 		Info.Cards.Add(Card);
 	}
 
-	UE_LOG(LogSGSCard, Verbose, TEXT("Moved %d card(s) from zone %d (seat %d) to zone %d (seat %d)."),
-		Info.Cards.Num(), static_cast<int32>(FromZone), FromSeat, static_cast<int32>(ToZone), ToSeat);
+	UE_LOG(LogSGSCard, Verbose, TEXT("Moved %d card(s) from zone %s (seat %d) to zone %s (seat %d)."),
+		Info.Cards.Num(), *FromZone.ToString(), FromSeat, *ToZone.ToString(), ToSeat);
 
 	CardsMovedDelegate.Broadcast(Info);
 }
@@ -149,9 +154,9 @@ TArray<USGSCard*> USGSGameContext::DrawCards(int32 SeatIndex, int32 Count)
 	if (Drawn.Num() > 0)
 	{
 		FSGSCardMoveInfo Info;
-		Info.FromZone = ESGSCardZone::DrawPile;
+		Info.FromZone = SGSGameplayTags::CardZone_DrawPile.GetTag();
 		Info.FromSeat = INDEX_NONE;
-		Info.ToZone = ESGSCardZone::Hand;
+		Info.ToZone = SGSGameplayTags::CardZone_Hand.GetTag();
 		Info.ToSeat = SeatIndex;
 		Info.Cards.Reserve(Drawn.Num());
 
@@ -170,7 +175,7 @@ TArray<USGSCard*> USGSGameContext::DrawCards(int32 SeatIndex, int32 Count)
 
 void USGSGameContext::DiscardFromHand(int32 SeatIndex, const TArray<USGSCard*>& Cards)
 {
-	MoveCards(Cards, ESGSCardZone::Hand, SeatIndex, ESGSCardZone::DiscardPile, INDEX_NONE);
+	MoveCards(Cards, SGSGameplayTags::CardZone_Hand.GetTag(), SeatIndex, SGSGameplayTags::CardZone_DiscardPile.GetTag(), INDEX_NONE);
 }
 
 void USGSGameContext::ReshuffleDiscardIntoDraw()
@@ -276,11 +281,11 @@ int32 USGSGameContext::GetDistance(int32 FromSeat, int32 ToSeat) const
 	// 坐骑修正：目标的 +1 马增大被算距离；攻击者的 -1 马减小到他人距离。
 	const USGSSeat* Target = Seats[ToSeat];
 	const USGSSeat* Source = Seats[FromSeat];
-	if (Target != nullptr && Target->Equipment.Contains(ESGSEquipSlot::DefenseHorse))
+	if (Target != nullptr && Target->Equipment.Contains(SGSGameplayTags::EquipSlot_DefenseHorse.GetTag()))
 	{
 		Distance += 1;
 	}
-	if (Source != nullptr && Source->Equipment.Contains(ESGSEquipSlot::OffenseHorse))
+	if (Source != nullptr && Source->Equipment.Contains(SGSGameplayTags::EquipSlot_OffenseHorse.GetTag()))
 	{
 		Distance -= 1;
 	}
