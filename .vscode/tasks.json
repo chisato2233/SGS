@@ -29,12 +29,30 @@
         "-Action",
         "Build",
         "-Configuration",
-        "Development"
+        "Development",
+        "-NoUBA"
       ],
       "group": {
         "kind": "build",
         "isDefault": true
       },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "SGS: Build Editor (Development, UBA)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\Tools\\Unreal.ps1",
+        "-Action",
+        "Build",
+        "-Configuration",
+        "Development"
+      ],
       "problemMatcher": "$msCompile"
     },
     {
@@ -50,7 +68,8 @@
         "-Action",
         "Build",
         "-Configuration",
-        "DebugGame"
+        "DebugGame",
+        "-NoUBA"
       ],
       "problemMatcher": "$msCompile"
     },
@@ -84,7 +103,8 @@
         "-Action",
         "BuildAndLaunch",
         "-Configuration",
-        "Development"
+        "Development",
+        "-NoUBA"
       ],
       "dependsOrder": "sequence",
       "problemMatcher": "$msCompile"

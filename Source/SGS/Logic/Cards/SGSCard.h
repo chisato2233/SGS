@@ -26,5 +26,8 @@ public:
 	UPROPERTY()
 	int32 Number = 0;
 
+	UPROPERTY(meta = (Categories = "SGS.CardType"))
+	FGameplayTag CardType = SGSGameplayTags::CardType_None.GetTag();
+
 	FSGSCardColor GetColor() const { return SGSSuitToColor(Suit); }
 };

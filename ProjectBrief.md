@@ -2,7 +2,7 @@
 
 > **本文件是所有 Agent 的唯一起点。** 任何 Agent 在开始任何工作前，必须先完整阅读本文件。
 > 本文件只记录**长期稳定**的信息：项目概览、技术栈、文档导航、当前状态、协作约定。
-> 具体某一次开发的细节方案放在 `Source/Doc/Plan/`，不要写进本文件。
+> 具体某一次开发的细节方案放在 `Source/Doc/Plan/`；已完成计划归档到 `Source/Doc/Plan/Archive/`。不要把计划细节写进本文件。
 
 ---
 
@@ -70,13 +70,14 @@ Agent 开始工作时按以下顺序获取上下文：
 1. **本文件 `ProjectBrief.md`** — 了解项目全貌、技术栈、当前状态。
 2. **`Source/Doc/Rulers.md`** — 项目级编码约束与工作流，所有 Agent 必读。
 3. **`Source/Doc/Plan/README.md`** — 了解计划系统的使用方式与索引。
-4. **`Source/Doc/Plan/` 下的相关计划文档** — 找到与当前任务对应的计划，按其执行。
+4. **`Source/Doc/Plan/` 下的相关计划文档** — 找到与当前任务对应的活跃计划，按其执行；历史决策按 README 索引到 `Source/Doc/Plan/Archive/` 查询。
 5. **代码结构图谱** — 由 **graphify** 维护，项目级产物位于 `graphify-out/`。需要理解既有代码结构/依赖关系时，以 graphify 的产物为准，**不要在文档里重复手写代码结构**，避免与代码脱节。
 
 职责边界：
 - `ProjectBrief.md` → 长期稳定信息（变化慢）。
 - `AGENTS.md` → Codex 入口适配与 graphify 使用规则（指回 ProjectBrief，不另立事实源）。
-- `Source/Doc/Plan/*` → 每次开发的具体方案与进度（变化快）。
+- `Source/Doc/Plan/*` → 当前活跃开发的具体方案与进度（变化快）。
+- `Source/Doc/Plan/Archive/*` → 已完成计划的历史决策与验收记录（只追溯，不作为当前工作面）。
 - graphify → 代码层面的结构/依赖（随代码变化，自动维护）。
 
 ---
@@ -93,13 +94,13 @@ Agent 开始工作时按以下顺序获取上下文：
   - [x] 代码分层骨架 + `Core/` 基础层（`SGSLogChannels`、`SGSTypes`）。见 Plan 0002。
   - [x] **UI 路线定调**：Native Code-first UI（Slate/UMG/CommonUI 按需组合 + SGSUI 薄封装），不使用 WebView/React/Vue 作为主 UI，不自研 Gameface。见 Plan 0011。
   - [x] Codex 入口适配：`AGENTS.md` 接入项目文档启动协议，graphify 图谱初始化到 `graphify-out/`。
-  - [x] **GAS 策略改定**：引入 GameplayAbilities/GameplayTasks/GameplayTags 作为属性、标签、GameplayEffect 与 Cue 底座；SGS 规则核心仍自研。见 Plan 0012。
+  - [x] **GAS 策略改定**：引入 GameplayAbilities/GameplayTasks/GameplayTags 作为属性、标签、GameplayEffect 与 Cue 底座；SGS 规则核心仍自研。见归档 Plan `Source/Doc/Plan/Archive/0012-sgs-foundation-toolkit.md`。
+  - [x] **SGS 基础工具库 P0/P1**：M1 Core Utility、M2 Command + RandomAudit、M3 IndexedStore + TargetQuery、M4 Timing/ActiveEffect/GAS Adapter、M5 EffectPipeline + ReplayLog 已完成；P2 工具保留为按需小迭代。见归档 Plan `Source/Doc/Plan/Archive/0012-sgs-foundation-toolkit.md`。
 - **进行中**：
   - [~] Plan 0003：权威对局骨架（回合阶段机闭环 + 决策代理 + 事件总线 + 占位 AI + GameMode）。复制/RPC 拆到 0003N（需可编译 UE 环境）。
   - [~] Plan 0004：对局数据模型（卡牌/牌区/玩家状态 + 移牌/摸牌/弃牌/伤害/回复/距离原语 + 事件，`USGSGameContext`）。
-  - [~] Plan 0012：SGS 基础工具库（GAS 评估门已决策为引入 GAS；后续落地 Command、RandomAudit、IndexedStore、TargetQuery、Timing/ActiveEffect、EffectPipeline、ReplayLog 地基）。
 - **下一步（按 Plan 0002 路线图）**：
-  - [ ] 0012 SGS 基础工具库 → 0005 杀/闪/桃（濒死/求桃）→ 0006 判定/延时锦囊 → 0007 即时锦囊 → 0008 装备 → 0009 武将技 → 0010 AI 代理 → 0011 Native Code-first UI → 0003N 网络层 → 0013 联机打磨。
+  - [ ] 0005 杀/闪/桃（濒死/求桃）→ 0006 判定/延时锦囊 → 0007 即时锦囊 → 0008 装备 → 0009 武将技 → 0010 AI 代理 → 0011 Native Code-first UI → 0003N 网络层 → 0013 联机打磨。
   - [ ] 待接入可编译 UE 环境后补编译验证 + 标准牌库 DataTable 内容。
 
 > **每次有实质进展后，负责的 Agent 都应更新本节**（阶段、已完成项、下一步）。这是跨 Agent 状态同步的关键。
@@ -110,6 +111,7 @@ Agent 开始工作时按以下顺序获取上下文：
 
 1. **先读后做**：开工前按第 4 节顺序读文档。
 2. **计划先行**：动手写代码前，应在 `Source/Doc/Plan/` 有对应计划文档（新需求先建计划）。
-3. **状态回写**：完成工作后更新第 5 节「当前项目状态」，并把对应 Plan 文档状态改为 `Done`/`In Progress`。
-4. **原始需求留档**：用户键入的原始需求记录在 `Source/Doc/Plan/0000-RawRequirements.md`，按时间追加，不要修改历史条目。
-5. **不重复 graphify**：代码结构相关交给 graphify，文档里只写「意图/方案/为什么」。
+3. **工程质量优先**：Plan 和实现默认面向真实游戏使用路径，必须考虑健壮性、可扩展性、失败路径与后续接入点；不得用脚手架、空实现或假数据冒充完成。
+4. **状态回写**：完成工作后更新第 5 节「当前项目状态」，并把对应 Plan 文档状态改为 `Done`/`In Progress`；已完成且不再作为当前工作面的 Plan 要按 `Source/Doc/Plan/README.md` 移入 `Archive/` 并标记为 `Archived`。
+5. **原始需求留档**：用户键入的原始需求记录在 `Source/Doc/Plan/0000-RawRequirements.md`，按时间追加，不要修改历史条目。
+6. **不重复 graphify**：代码结构相关交给 graphify，文档里只写「意图/方案/为什么」。

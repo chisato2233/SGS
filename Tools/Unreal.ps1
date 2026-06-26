@@ -9,6 +9,7 @@ param(
     [string]$Project = "",
     [string]$EngineRoot = "",
     [string]$ExtraEditorArgs = "-log",
+    [switch]$NoUBA,
     [switch]$Wait
 )
 
@@ -125,7 +126,8 @@ function Invoke-Build {
         [string]$ProjectPath,
         [string]$TargetName,
         [string]$BuildPlatform,
-        [string]$BuildConfiguration
+        [string]$BuildConfiguration,
+        [bool]$DisableUBA
     )
 
     $BuildBat = Join-Path $Root "Engine\Build\BatchFiles\Build.bat"
@@ -137,6 +139,9 @@ function Invoke-Build {
         "-WaitMutex",
         "-FromMsBuild"
     )
+    if ($DisableUBA) {
+        $Args += "-NoUBA"
+    }
 
     Write-Host "Building $TargetName $BuildPlatform $BuildConfiguration"
     Write-Host "$BuildBat $($Args -join ' ')"
@@ -192,13 +197,13 @@ switch ($Action) {
         return
     }
     "Build" {
-        Invoke-Build -Root $EngineRootPath -ProjectPath $ProjectPath -TargetName $TargetName -BuildPlatform $Platform -BuildConfiguration $Configuration
+        Invoke-Build -Root $EngineRootPath -ProjectPath $ProjectPath -TargetName $TargetName -BuildPlatform $Platform -BuildConfiguration $Configuration -DisableUBA:$NoUBA.IsPresent
     }
     "Launch" {
         Invoke-Editor -Root $EngineRootPath -ProjectPath $ProjectPath -EditorConfiguration $Configuration -EditorArgs $ExtraEditorArgs -WaitForExit:$Wait.IsPresent
     }
     "BuildAndLaunch" {
-        Invoke-Build -Root $EngineRootPath -ProjectPath $ProjectPath -TargetName $TargetName -BuildPlatform $Platform -BuildConfiguration $Configuration
+        Invoke-Build -Root $EngineRootPath -ProjectPath $ProjectPath -TargetName $TargetName -BuildPlatform $Platform -BuildConfiguration $Configuration -DisableUBA:$NoUBA.IsPresent
         Invoke-Editor -Root $EngineRootPath -ProjectPath $ProjectPath -EditorConfiguration $Configuration -EditorArgs $ExtraEditorArgs -WaitForExit:$Wait.IsPresent
     }
 }

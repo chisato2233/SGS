@@ -3,6 +3,7 @@
 #include "Logic/Engine/SGSGameContext.h"
 #include "Logic/Players/SGSSeat.h"
 #include "Core/SGSLogChannels.h"
+#include "Logic/Effects/SGSStandardEffectSteps.h"
 
 void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents, int32 RandomSeed)
 {
@@ -20,12 +21,29 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 	bWaitingForDecision = false;
 	TurnsPlayed = 0;
 	CurrentSeatIndex = 0;
+	PendingRequestId = 0;
+	PendingCommandId = FSGSCommandId();
+	NextCommandIdValue = 0;
+	NextTimingSequence = 0;
+	CommandRouter.Reset();
+	EffectPipeline.Reset();
+	ActiveEffectTimeline.Reset();
+	ReplayLog.Reset();
 
 	// 发起始手牌（牌堆为空时不发牌；牌库数据接入后自然生效）。
 	for (int32 SeatIndex = 0; SeatIndex < Context->NumSeats(); ++SeatIndex)
 	{
-		Context->DrawCards(SeatIndex, StartingHandSize);
+		CurrentSeatIndex = SeatIndex;
+		EffectPipeline.Reset();
+		EffectPipeline.Enqueue(SGSStandardEffectSteps::MakeDrawCardsStep(SeatIndex, StartingHandSize));
+		FSGSEffectContext EffectContext = MakeEffectContext();
+		if (FSGSStatus Status = EffectPipeline.Run(EffectContext); Status.HasError())
+		{
+			UE_LOG(LogSGSTurn, Error, TEXT("Starting hand effect pipeline failed: %s"), *Status.GetError().ToLogString());
+		}
+		SyncReplayLog();
 	}
+	CurrentSeatIndex = 0;
 
 	Broadcast(SGSGameplayTags::GameEvent_GameStarted.GetTag());
 	BeginTurn();
@@ -62,27 +80,39 @@ void USGSGameDriver::EnterCurrentPhase()
 
 	if (SGSMatchesExactTag(CurrentPhase, SGSGameplayTags::Phase_Draw))
 	{
-		Context->DrawCards(CurrentSeatIndex, DrawCountPerTurn);
+		ExecuteDrawPhaseThroughPipeline();
 		AdvanceAfterPhase();
 		return;
 	}
 
 	if (SGSMatchesExactTag(CurrentPhase, SGSGameplayTags::Phase_Play))
 	{
+		FSGSPlayPhaseRequest Request;
+		Request.CommandId = AllocateCommandId();
+		Request.SeatIndex = CurrentSeatIndex;
+		Request.RequestId = ++PendingRequestId;
+		Request.Phase = CurrentPhase;
+		PendingCommandId = Request.CommandId;
+
 		const USGSSeat* Seat = Context->GetSeat(CurrentSeatIndex);
 		ISGSDecisionAgent* Agent = Seat != nullptr ? Seat->DecisionAgent.GetInterface() : nullptr;
 		if (Agent == nullptr)
 		{
 			UE_LOG(LogSGSTurn, Warning, TEXT("Seat %d has no decision agent; treating as pass."), CurrentSeatIndex);
+			const FSGSCommand FallbackCommand = MakeFallbackPassCommand(TEXT("NoDecisionAgent"));
+			CommandRouter.RecordLifecycle(
+				FallbackCommand,
+				SGSCommandLifecycle::Fallbacked(),
+				true,
+				FSGSError(),
+				TEXT("Seat has no decision agent."));
+			SubmitPlayPhaseCommandWithFallback(FallbackCommand);
+			PendingCommandId = FSGSCommandId();
 			AdvanceAfterPhase();
 			return;
 		}
 
 		bWaitingForDecision = true;
-
-		FSGSPlayPhaseRequest Request;
-		Request.SeatIndex = CurrentSeatIndex;
-		Request.RequestId = ++PendingRequestId;
 
 		FSGSPlayPhaseDecisionDelegate OnDecided;
 		OnDecided.BindUObject(this, &USGSGameDriver::OnPlayActionDecided);
@@ -107,12 +137,99 @@ void USGSGameDriver::OnPlayActionDecided(const FSGSPlayPhaseDecision& Decision)
 	}
 
 	bWaitingForDecision = false;
-
-	// 骨架期仅支持 Pass。
-	UE_LOG(LogSGSTurn, Verbose, TEXT("Seat %d play action resolved (%s)."), CurrentSeatIndex, *Decision.Action.ToString());
+	SubmitPlayPhaseCommandWithFallback(Decision.Command);
+	PendingCommandId = FSGSCommandId();
 
 	AdvanceAfterPhase();
 	Pump();
+}
+
+void USGSGameDriver::SubmitPlayPhaseCommandWithFallback(const FSGSCommand& Command)
+{
+	const FSGSCommandExecutionContext ExecutionContext = MakeCommandExecutionContext();
+	if (FSGSStatus Status = CommandRouter.SubmitCommand(Command, ExecutionContext); Status.HasError())
+	{
+		UE_LOG(LogSGSTurn, Warning, TEXT("Invalid play command: %s. Falling back to pass."),
+			*Status.GetError().ToLogString());
+
+		const FSGSCommand FallbackCommand = MakeFallbackPassCommand(TEXT("InvalidCommand"));
+		CommandRouter.RecordLifecycle(
+			FallbackCommand,
+			SGSCommandLifecycle::Fallbacked(),
+			true,
+			Status.GetError(),
+			TEXT("Server-authority fallback pass."));
+		if (FSGSStatus FallbackStatus = CommandRouter.SubmitCommand(FallbackCommand, ExecutionContext); FallbackStatus.HasError())
+		{
+			UE_LOG(LogSGSTurn, Error, TEXT("Fallback pass command failed: %s"), *FallbackStatus.GetError().ToLogString());
+		}
+	}
+	SyncReplayLog();
+}
+
+FSGSCommandExecutionContext USGSGameDriver::MakeCommandExecutionContext() const
+{
+	FSGSCommandExecutionContext ExecutionContext;
+	ExecutionContext.GameContext = Context;
+	ExecutionContext.ExpectedCommandId = PendingCommandId;
+	ExecutionContext.ExpectedRequestId = PendingRequestId;
+	ExecutionContext.ExpectedSeatIndex = CurrentSeatIndex;
+	ExecutionContext.ExpectedPhase = CurrentPhase;
+	return ExecutionContext;
+}
+
+FSGSCommand USGSGameDriver::MakeFallbackPassCommand(FName Reason) const
+{
+	return FSGSCommand::MakePass(
+		PendingCommandId,
+		PendingRequestId,
+		CurrentSeatIndex,
+		CurrentPhase,
+		FName(TEXT("ServerFallback")),
+		Reason);
+}
+
+FSGSEffectContext USGSGameDriver::MakeEffectContext(FSGSCommandId CommandId)
+{
+	FSGSEffectContext EffectContext;
+	EffectContext.GameContext = Context;
+	EffectContext.ReplayLog = &ReplayLog;
+	EffectContext.ActiveEffects = &ActiveEffectTimeline;
+	EffectContext.CommandId = CommandId;
+	EffectContext.TimingPoint = MakeCurrentTimingPoint(SGSTimingSteps::Resolve());
+	return EffectContext;
+}
+
+FSGSTimingPoint USGSGameDriver::MakeCurrentTimingPoint(FName Step)
+{
+	return FSGSTimingPoint::Make(
+		NextTimingSequence++,
+		TurnsPlayed,
+		CurrentSeatIndex,
+		TurnsPlayed * 100 + CurrentSeatIndex,
+		CurrentPhase,
+		Step);
+}
+
+void USGSGameDriver::ExecuteDrawPhaseThroughPipeline()
+{
+	EffectPipeline.Reset();
+	EffectPipeline.Enqueue(SGSStandardEffectSteps::MakeDrawCardsStep(CurrentSeatIndex, DrawCountPerTurn));
+	FSGSEffectContext EffectContext = MakeEffectContext();
+	if (FSGSStatus Status = EffectPipeline.Run(EffectContext); Status.HasError())
+	{
+		UE_LOG(LogSGSTurn, Error, TEXT("Draw phase effect pipeline failed: %s"), *Status.GetError().ToLogString());
+	}
+	SyncReplayLog();
+}
+
+void USGSGameDriver::SyncReplayLog()
+{
+	ReplayLog.SetCommandLog(CommandRouter.GetLogEntries());
+	if (Context != nullptr)
+	{
+		ReplayLog.SetRandomLog(Context->GetRandomAudit().GetEntries());
+	}
 }
 
 void USGSGameDriver::AdvanceAfterPhase()
@@ -192,4 +309,9 @@ FSGSPhase USGSGameDriver::NextPhase(FSGSPhase Phase)
 	}
 
 	return SGSGameplayTags::Phase_RoundEnd.GetTag();
+}
+
+FSGSCommandId USGSGameDriver::AllocateCommandId()
+{
+	return FSGSCommandId(++NextCommandIdValue);
 }

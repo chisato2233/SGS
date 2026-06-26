@@ -32,13 +32,13 @@
 ### 3.1 卡牌
 - `FSGSCardDef`（DataTable 行）：牌名、显示名、大类、装备栏、武器攻击范围、坐骑距离修正。完整标准牌库由 DataTable 资产维护。
 - `USGSCard`（运行态）：唯一 `CardId` + 牌名 + 花色 + 点数；颜色由花色推导。
-- `USGSCardPile`：有序牌区（索引 0 为顶），含增删/取顶/移除/洗牌（Fisher–Yates + 可复现随机流）。
+- 牌区顺序由 Plan 0012 的 CardStore / `CardsByPile` 表达；`USGSCardPile` 已删除，不再保留平行 UObject 牌堆容器。
 
 ### 3.2 玩家状态
-- 扩展 `USGSSeat`：体力/上限、势力、手牌区、判定区、装备区（按栏 `TMap`）。
+- 扩展 `USGSSeat`：体力/上限、势力、装备区（按栏 `TMap`）。手牌区与判定区由 `USGSGameContext` 的 CardStore 索引表达。
 
 ### 3.3 对局模型 + 原语（`USGSGameContext`）
-- 持有牌堆/弃牌堆/座位/全部牌 + 可复现随机流。
+- 持有座位、全部牌、CardStore / `CardsByPile` 牌区事实源 + 可复现随机审计。
 - 原语：`MoveCards`（通用换区）、`DrawCards`（空时洗回弃牌堆）、`DiscardFromHand`、`ApplyDamage`、`Heal`、`GetDistance`（存活环形最短 + 坐骑修正，最小 1）。
 - 事件：`OnCardsMoved` / `OnDamage` / `OnHealthChanged` / `OnSeatDying`（C++ 多播，供触发系统订阅）。
 
@@ -56,7 +56,7 @@
 ## 4. 任务拆解
 
 - [x] 新增 `LogSGSCombat` 日志分类（同步 Rulers）
-- [x] 卡牌模型：`SGSCardTypes` / `SGSCardDef` / `SGSCard` / `SGSCardPile`
+- [x] 卡牌模型：`SGSCardTypes` / `SGSCardDef` / `SGSCard`；牌区由 Plan 0012 的 CardStore / `CardsByPile` 表达
 - [x] 扩展 `USGSSeat` 玩家运行态
 - [x] `USGSGameContext`：模型 + 原语 + 事件
 - [x] 重构 `USGSGameDriver` 用 Context；摸牌阶段/起手接入
@@ -77,3 +77,4 @@
 - 2026-06-19：距离用「存活座位环形最短 + 坐骑栏修正」；坐骑判定直接看装备栏 Key，无需查 def。
 - 2026-06-19：装备移动/濒死/弃牌选择/牌库内容按 3.5 有意延后。
 - 2026-06-19：⚠️ 全部未编译，人工审查为准。
+- 2026-06-27：Plan 0012 完成后，早期 `USGSCardPile` 设计被删除；牌区状态统一迁移到 `USGSGameContext` 的 CardStore / `CardsByPile`，避免 Store 与 UObject 牌堆双事实源。

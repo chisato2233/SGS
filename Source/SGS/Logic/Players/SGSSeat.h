@@ -9,7 +9,6 @@
 #include "SGSSeat.generated.h"
 
 class USGSCard;
-class USGSCardPile;
 
 // 一个座位（一名玩家在牌桌上的占位）。服务器侧权威对象。
 // 座位不关心其决策来自真人还是 AI——只持有一个决策代理。
@@ -39,13 +38,6 @@ public:
 
 	UPROPERTY()
 	int32 Health = 0;
-
-	// ---- 牌区 ----
-	UPROPERTY()
-	TObjectPtr<USGSCardPile> Hand;
-
-	UPROPERTY()
-	TObjectPtr<USGSCardPile> JudgementZone;
 
 	// 装备区：每栏至多一张。
 	UPROPERTY()

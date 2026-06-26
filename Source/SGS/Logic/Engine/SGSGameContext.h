@@ -1,16 +1,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/SGSIndexedStore.h"
 #include "UObject/Object.h"
 #include "UObject/ScriptInterface.h"
-#include "Math/RandomStream.h"
+#include "Core/SGSRandomAudit.h"
 #include "Core/SGSTypes.h"
 #include "Logic/Cards/SGSCardTypes.h"
+#include "Logic/Queries/SGSTargetQueryTypes.h"
 #include "SGSGameContext.generated.h"
 
 class USGSSeat;
 class USGSCard;
-class USGSCardPile;
 class ISGSDecisionAgent;
 
 // ---- 事件载荷（C++ 多播，不暴露蓝图）----
@@ -32,6 +33,24 @@ struct FSGSDamageInfo
 	int32 Amount = 0;
 };
 
+struct SGS_API FSGSCardState
+{
+	TObjectPtr<USGSCard> Card = nullptr;
+	int32 CardId = INDEX_NONE;
+	FName CardName = NAME_None;
+	FSGSCardType CardType = SGSGameplayTags::CardType_None.GetTag();
+	FSGSSuit Suit = SGSGameplayTags::Suit_None.GetTag();
+	int32 Number = 0;
+	FSGSCardZone Zone = SGSGameplayTags::CardZone_None.GetTag();
+	int32 OwnerSeat = INDEX_NONE;
+	int32 ZoneOrder = INDEX_NONE;
+
+	FSGSCardPileKey GetPileKey() const
+	{
+		return FSGSCardPileKey(Zone, OwnerSeat);
+	}
+};
+
 DECLARE_MULTICAST_DELEGATE_OneParam(FSGSOnCardsMoved, const FSGSCardMoveInfo& /*Move*/);
 DECLARE_MULTICAST_DELEGATE_OneParam(FSGSOnDamage, const FSGSDamageInfo& /*Damage*/);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FSGSOnHealthChanged, int32 /*SeatIndex*/, int32 /*NewHealth*/);
@@ -51,11 +70,11 @@ public:
 
 	int32 NumSeats() const { return Seats.Num(); }
 	USGSSeat* GetSeat(int32 Index) const;
-	USGSCardPile* GetDrawPile() const { return DrawPile; }
-	USGSCardPile* GetDiscardPile() const { return DiscardPile; }
+	TArray<USGSCard*> GetCardsInZone(FSGSCardZone Zone, int32 SeatIndex = INDEX_NONE) const;
+	const FSGSRandomAudit& GetRandomAudit() const { return RandomAudit; }
 
 	// 造一张牌并放入牌堆底。CardId 自增分配。完整牌库应由 DataTable 驱动批量建库。
-	USGSCard* CreateCard(FName CardName, FSGSSuit Suit, int32 Number);
+	USGSCard* CreateCard(FName CardName, FSGSSuit Suit, int32 Number, FSGSCardType CardType = FGameplayTag());
 	void ShuffleDrawPile();
 
 	// 通用移动原语：所有换区都应走这里（装备区除外，见 Plan 0008）。广播 OnCardsMoved。
@@ -75,6 +94,9 @@ public:
 
 	// 攻击者 FromSeat 到 ToSeat 的距离：存活座位环形最短 + 坐骑修正，最小为 1。
 	int32 GetDistance(int32 FromSeat, int32 ToSeat) const;
+	FSGSSeatQueryResult QuerySeats(const FSGSSeatQuery& Query) const;
+	FSGSCardQueryResult QueryCards(const FSGSCardQuery& Query) const;
+	bool CheckInvariants() const;
 
 	FSGSOnCardsMoved& OnCardsMoved() { return CardsMovedDelegate; }
 	FSGSOnDamage& OnDamage() { return DamageDelegate; }
@@ -82,25 +104,49 @@ public:
 	FSGSOnSeatDying& OnSeatDying() { return SeatDyingDelegate; }
 
 private:
+	using FCardStore = TSGSIndexedStore<FSGSCardState>;
+
 	bool IsValidSeat(int32 Index) const { return Seats.IsValidIndex(Index); }
-	USGSCardPile* GetPileForZone(FSGSCardZone Zone, int32 SeatIndex) const;
+	void RegisterCardIndexes();
+	void RebuildSeatIndexes();
+	FSGSStableHandle MakeSeatHandle(int32 SeatIndex) const;
+	FSGSStableHandle MakeCardHandle(const USGSCard* Card) const;
+	bool CanViewCardZone(FSGSCardZone Zone, int32 ZoneSeat, int32 ViewerSeat) const;
+	FSGSCardPileKey MakePileKey(FSGSCardZone Zone, int32 SeatIndex) const;
+	int32 CountCardsInPile(FSGSCardPileKey Key) const;
+	TArray<FSGSStableHandle> GetCardHandlesInPile(FSGSCardPileKey Key) const;
+	TArray<USGSCard*> GetCardsInPile(FSGSCardPileKey Key) const;
+	FSGSStatus NormalizePileOrder(FSGSCardPileKey Key);
+	FSGSStatus MoveCardHandle(FSGSStableHandle Handle, FSGSCardZone ToZone, int32 ToSeat, int32 ToOrder);
+	void ShufflePileInStore(FSGSCardPileKey Key, FName Purpose, FString Context);
 	void ReshuffleDiscardIntoDraw();
 
 	UPROPERTY()
 	TArray<TObjectPtr<USGSSeat>> Seats;
-
-	UPROPERTY()
-	TObjectPtr<USGSCardPile> DrawPile;
-
-	UPROPERTY()
-	TObjectPtr<USGSCardPile> DiscardPile;
 
 	// 持有全部牌，避免被 GC，并作为牌的全集。
 	UPROPERTY()
 	TArray<TObjectPtr<USGSCard>> AllCards;
 
 	int32 NextCardId = 0;
-	FRandomStream Rng;
+	FCardStore CardStore;
+	TSharedPtr<FCardStore::TUniqueIndex<int32>> CardsById;
+	TSharedPtr<FCardStore::TNonUniqueIndex<int32>> CardsByOwnerSeat;
+	TSharedPtr<FCardStore::TNonUniqueIndex<FSGSCardZone>> CardsByZone;
+	TSharedPtr<FCardStore::TOrderedIndex<FSGSCardPileKey>> CardsByPile;
+	TSharedPtr<FCardStore::TNonUniqueIndex<FName>> CardsByName;
+	TSharedPtr<FCardStore::TNonUniqueIndex<FSGSCardType>> CardsByType;
+	TSharedPtr<FCardStore::TNonUniqueIndex<FSGSSuit>> CardsBySuit;
+	TSharedPtr<FCardStore::TNonUniqueIndex<int32>> CardsByNumber;
+	TSharedPtr<FCardStore::TNonUniqueIndex<FSGSCardPileKey>> CardsByOwnerZone;
+	TSharedPtr<FCardStore::TNonUniqueIndex<FSGSCardZoneNameKey>> CardsByZoneName;
+	TSharedPtr<FCardStore::TNonUniqueIndex<FSGSCardZoneTypeKey>> CardsByZoneType;
+
+	TArray<int32> AllSeatIndices;
+	TArray<int32> AliveSeatIndices;
+	TMultiMap<FGameplayTag, int32> SeatIndicesByFaction;
+
+	FSGSRandomAudit RandomAudit;
 
 	FSGSOnCardsMoved CardsMovedDelegate;
 	FSGSOnDamage DamageDelegate;

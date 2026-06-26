@@ -3,8 +3,12 @@
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
 #include "UObject/ScriptInterface.h"
+#include "Core/SGSError.h"
 #include "Core/SGSTypes.h"
+#include "Logic/Commands/SGSCommandRouter.h"
+#include "Logic/Effects/SGSEffectPipeline.h"
 #include "Logic/Engine/SGSGameEvents.h"
+#include "Logic/Timing/SGSActiveEffectTimeline.h"
 #include "Logic/Players/SGSDecisionAgent.h"
 #include "SGSGameDriver.generated.h"
 
@@ -33,6 +37,8 @@ public:
 
 	bool IsGameOver() const { return bGameOver; }
 	int32 GetTurnsPlayed() const { return TurnsPlayed; }
+	const TArray<FSGSCommandLogEntry>& GetCommandLog() const { return CommandRouter.GetLogEntries(); }
+	const FSGSReplayLog& GetReplayLog() const { return ReplayLog; }
 
 private:
 	// 蹦床循环：连续推进所有「同步完成」的阶段，遇到挂起（等待决策）或对局结束即停。
@@ -50,8 +56,16 @@ private:
 
 	// 出牌阶段动作的应答回调（可能同步或跨帧触发）。
 	void OnPlayActionDecided(const FSGSPlayPhaseDecision& Decision);
+	void SubmitPlayPhaseCommandWithFallback(const FSGSCommand& Command);
+	FSGSCommandExecutionContext MakeCommandExecutionContext() const;
+	FSGSCommand MakeFallbackPassCommand(FName Reason) const;
+	FSGSEffectContext MakeEffectContext(FSGSCommandId CommandId = FSGSCommandId());
+	FSGSTimingPoint MakeCurrentTimingPoint(FName Step);
+	void ExecuteDrawPhaseThroughPipeline();
+	void SyncReplayLog();
 
 	static FSGSPhase NextPhase(FSGSPhase Phase);
+	FSGSCommandId AllocateCommandId();
 
 	UPROPERTY()
 	TObjectPtr<USGSGameContext> Context;
@@ -60,6 +74,9 @@ private:
 	FSGSPhase CurrentPhase = SGSGameplayTags::Phase_None.GetTag();
 	int32 TurnsPlayed = 0;
 	int32 PendingRequestId = 0;
+	FSGSCommandId PendingCommandId;
+	int32 NextCommandIdValue = 0;
+	int64 NextTimingSequence = 0;
 
 	bool bGameOver = false;
 	bool bWaitingForDecision = false;
@@ -68,6 +85,10 @@ private:
 	bool bPumping = false;
 
 	FSGSOnGameEvent GameEventDelegate;
+	FSGSCommandRouter CommandRouter;
+	FSGSEffectPipeline EffectPipeline;
+	FSGSActiveEffectTimeline ActiveEffectTimeline;
+	FSGSReplayLog ReplayLog;
 
 	// 骨架期终止条件占位：跑满这么多个回合即结束。胜负条件实现后替换（见 Plan 0002 路线图）。
 	static constexpr int32 MaxTurnsForSkeleton = 8;
