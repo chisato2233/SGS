@@ -1,16 +1,16 @@
-# Graph Report - SGS  (2026-06-28)
+# Graph Report - SGS  (2026-06-30)
 
 ## Corpus Check
-- 97 files · ~2,894,605 words
+- 113 files · ~2,896,736 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1040 nodes · 1688 edges · 237 communities (48 shown, 189 thin omitted)
-- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 70 edges (avg confidence: 0.8)
+- 1084 nodes · 1786 edges · 239 communities (50 shown, 189 thin omitted)
+- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 76 edges (avg confidence: 0.79)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `3673edae`
+- Built from commit: `97765bd9`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -26,7 +26,7 @@
 - [[_COMMUNITY_Card Game Context|Card Game Context]]
 - [[_COMMUNITY_Native UI System|Native UI System]]
 - [[_COMMUNITY_Open Rule Tags|Open Rule Tags]]
-- [[_COMMUNITY_Command Replay Toolkit|Command Replay Toolkit]]
+- [[_COMMUNITY_Community 11|Community 11]]
 - [[_COMMUNITY_Plan System|Plan System]]
 - [[_COMMUNITY_GAS Timing Bridge|GAS Timing Bridge]]
 - [[_COMMUNITY_Project Rules|Project Rules]]
@@ -36,10 +36,10 @@
 - [[_COMMUNITY_Assets And License|Assets And License]]
 - [[_COMMUNITY_Project Rules|Project Rules]]
 - [[_COMMUNITY_Command Replay Toolkit|Command Replay Toolkit]]
-- [[_COMMUNITY_GAS Timing Bridge|GAS Timing Bridge]]
+- [[_COMMUNITY_Community 21|Community 21]]
 - [[_COMMUNITY_Native UI System|Native UI System]]
 - [[_COMMUNITY_Plan System|Plan System]]
-- [[_COMMUNITY_Decision Flow|Decision Flow]]
+- [[_COMMUNITY_Community 24|Community 24]]
 - [[_COMMUNITY_Open Rule Tags|Open Rule Tags]]
 - [[_COMMUNITY_Store Query Model|Store Query Model]]
 - [[_COMMUNITY_Graphify Uproject|Graphify Uproject]]
@@ -52,7 +52,6 @@
 - [[_COMMUNITY_Build Tooling|Build Tooling]]
 - [[_COMMUNITY_Project Rules|Project Rules]]
 - [[_COMMUNITY_Card Game Context|Card Game Context]]
-- [[_COMMUNITY_Card Game Context|Card Game Context]]
 - [[_COMMUNITY_Engineroot Invoke|Engineroot Invoke]]
 - [[_COMMUNITY_Card Turn|Card Turn]]
 - [[_COMMUNITY_Assets And License|Assets And License]]
@@ -60,6 +59,7 @@
 - [[_COMMUNITY_Tringbuffer Tsgsbimap|Tringbuffer Tsgsbimap]]
 - [[_COMMUNITY_Startup Protocol|Startup Protocol]]
 - [[_COMMUNITY_Modulemanager|Modulemanager]]
+- [[_COMMUNITY_Community 45|Community 45]]
 - [[_COMMUNITY_Community 46|Community 46]]
 - [[_COMMUNITY_Community 47|Community 47]]
 - [[_COMMUNITY_Community 48|Community 48]]
@@ -222,6 +222,7 @@
 - [[_COMMUNITY_Community 205|Community 205]]
 - [[_COMMUNITY_Community 206|Community 206]]
 - [[_COMMUNITY_Community 207|Community 207]]
+- [[_COMMUNITY_Community 208|Community 208]]
 - [[_COMMUNITY_Community 209|Community 209]]
 - [[_COMMUNITY_Community 210|Community 210]]
 - [[_COMMUNITY_Community 211|Community 211]]
@@ -262,20 +263,20 @@
 6. `0000 — 原始需求档案` - 13 edges
 7. `3. 方案设计` - 13 edges
 8. `NNNN — <计划标题>` - 13 edges
-9. `SubmitCommand()` - 12 edges
+9. `RunTest()` - 12 edges
 10. `RunInternal()` - 11 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `ISGSDecisionAgent()` --references--> `Unified Decision Agent Interface`  [INFERRED]
-  Source/SGS/Logic/Players/SGSDecisionAgent.h → ProjectBrief.md
-- `FSGSCommandRouter()` --references--> `Command Random Replay Determinism`  [INFERRED]
-  Source/SGS/Logic/Commands/SGSCommandRouter.cpp → Source/Doc/Plan/Archive/0012-sgs-foundation-toolkit.md
-- `FSGSEffectPipeline()` --references--> `EffectPipeline Rule Execution`  [INFERRED]
-  Source/SGS/Logic/Effects/SGSEffectPipeline.h → Source/Doc/Plan/Archive/0012-sgs-foundation-toolkit.md
 - `FSGSReplayLog()` --references--> `Plan 0012 Foundation Toolkit`  [INFERRED]
-  Source/SGS/Logic/Effects/SGSReplayLog.h → Source/Doc/Plan/Archive/0012-sgs-foundation-toolkit.md
+  Source/SGS/Server/Effects/SGSReplayLog.h → Source/Doc/Plan/Archive/0012-sgs-foundation-toolkit.md
+- `FSGSGASActiveEffectAdapter()` --references--> `GAS Timing Effect Bridge`  [INFERRED]
+  Source/SGS/Server/Timing/SGSGASActiveEffectAdapter.h → Source/Doc/Plan/Archive/0012-sgs-foundation-toolkit.md
+- `FSGSEffectPipeline()` --references--> `EffectPipeline Rule Execution`  [INFERRED]
+  Source/SGS/Server/Effects/SGSEffectPipeline.h → Source/Doc/Plan/Archive/0012-sgs-foundation-toolkit.md
 - `USGSGameContext()` --references--> `CardStore / CardsByPile Fact Source`  [INFERRED]
-  Source/SGS/Logic/Engine/SGSGameContext.h → Source/Doc/Plan/0004-card-and-board-model.md
+  Source/SGS/Server/Engine/SGSGameContext.h → Source/Doc/Plan/0004-card-and-board-model.md
+- `USGSGameDriver()` --references--> `Authoritative Async Decision Loop`  [INFERRED]
+  Source/SGS/Server/Engine/SGSGameDriver.h → Source/Doc/Plan/0003-authoritative-match-skeleton.md
 
 ## Import Cycles
 - None detected.
@@ -288,15 +289,15 @@
 - **Store Query Fact Source** — sgs_store_target_query, sgs_cardstore_fact_source, sgs_game_state_to_ui_intent_loop [EXTRACTED 1.00]
 - **GAS Timing Effect Bridge** — sgs_gas_boundary, sgs_gas_timing_effect_bridge, sgs_effect_pipeline [INFERRED 0.85]
 
-## Communities (237 total, 189 thin omitted)
+## Communities (239 total, 189 thin omitted)
 
 ### Community 0 - "Card Game Context"
 Cohesion: 0.06
 Nodes (70): Initialize(), InitializeReplay(), SetCommandLog(), SetRandomLog(), ApplyDamage(), CanViewCardZone(), CheckInvariants(), CountCardsInPile() (+62 more)
 
 ### Community 1 - "Command Replay Toolkit"
-Cohesion: 0.13
-Nodes (29): IsValidCode(), AllocateStepId(), AppendStepEvent(), Enqueue(), EnqueueFront(), EnqueueManyFront(), Failure(), PopFront() (+21 more)
+Cohesion: 0.08
+Nodes (48): CheckInvariants(), FindTypeSpec(), FormatPayloadForLog(), RecordLifecycle(), RegisterCommandType(), Reset(), SubmitCommand(), ValidateCommon() (+40 more)
 
 ### Community 2 - "Project Rules"
 Cohesion: 0.08
@@ -312,7 +313,7 @@ Nodes (25): 0000 — 原始需求档案, #10 — 2026-06-24 — 纠偏 Plan 0012
 
 ### Community 8 - "Card Game Context"
 Cohesion: 0.13
-Nodes (9): Coreminimal, Interface, Object, USGSSeat(), Scriptinterface, Sgsautopassagent, Sgsdecisionagent, Sgsdecisiontypes (+1 more)
+Nodes (4): Coreminimal, ISGSDecisionAgent(), Interface, Sgsdecisiontypes
 
 ### Community 9 - "Native UI System"
 Cohesion: 0.14
@@ -321,10 +322,6 @@ Nodes (24): 0011 — Native Code-first UI 架构, 1. 目标, 2. 背景与约束,
 ### Community 10 - "Open Rule Tags"
 Cohesion: 0.16
 Nodes (20): FSGSCardPileKey(), GetTypeHash(), FSGSCommandId(), FSGSEffectStepId(), FSGSStableHandle(), GetTypeHash(), Invalid(), LexToString() (+12 more)
-
-### Community 11 - "Command Replay Toolkit"
-Cohesion: 0.18
-Nodes (20): CheckInvariants(), FindHandCardState(), FindHandler(), FSGSCommandRouter(), FSGSPassCommandHandler, FSGSRespondCardCommandHandler, FSGSUseCardCommandHandler, RecordLifecycle() (+12 more)
 
 ### Community 12 - "Plan System"
 Cohesion: 0.24
@@ -339,8 +336,8 @@ Cohesion: 0.20
 Nodes (9): 1. 启动协议, 2. 文档分层, 3. 架构宪法, 4. 编码宪法, 5. 工作流宪法, 6. 规则建模硬约束, 7. 领域细则路由, 8. 变更协议 (+1 more)
 
 ### Community 16 - "Open Rule Tags"
-Cohesion: 0.15
-Nodes (9): SGSDeckDefinitions(), SGSGameplayTags(), SGSStandardEffectSteps(), namespace, Nativegameplaytags, Sgseffectpipeline, SGSActiveEffectExpireReasons(), SGSDurationKinds() (+1 more)
+Cohesion: 0.17
+Nodes (10): SGSCommandTypes(), SGSGameplayTags(), namespace, Nativegameplaytags, Sgsindexedstore, FSGSActiveEffectTimeline(), SGSActiveEffectExpireReasons(), SGSActiveEffectStackPolicies() (+2 more)
 
 ### Community 19 - "Project Rules"
 Cohesion: 0.18
@@ -350,29 +347,29 @@ Nodes (14): AGENTS.md — Codex 入口适配层, Archived, Build.bat, CardsByPil
 Cohesion: 0.16
 Nodes (17): 3.1 优先级总览, 3.2 Core Utility, 3.3 动作命令系统, 3.4 随机审计系统, Code, CommandId, CommandType, FName (+9 more)
 
-### Community 21 - "GAS Timing Bridge"
-Cohesion: 0.17
-Nodes (13): class, FSGSEffectPipeline(), FSGSReplayLog(), Command Random Replay Determinism, Data Driven Rules, EffectPipeline Rule Execution, SGS-GAS Boundary, GAS Timing Effect Bridge (+5 more)
+### Community 21 - "Community 21"
+Cohesion: 0.20
+Nodes (3): SGSCommandLifecycle(), Sgscommand, FSGSCommandRouter()
 
 ### Community 23 - "Plan System"
 Cohesion: 0.29
 Nodes (13): 1. 目标, 2. 背景与约束, 3. 方案设计, 4. 工程质量门, 5. 任务拆解, 6. 验收标准, 7. 进度与决策记录, Abandoned (+5 more)
 
-### Community 24 - "Decision Flow"
-Cohesion: 0.29
-Nodes (3): ISGSCommandHandler(), SGSCommandLifecycle(), Sgscommand
+### Community 24 - "Community 24"
+Cohesion: 0.25
+Nodes (6): FTableRowBase(), Datatable, SGSStandardEffectSteps(), Sgscarddef, Sgscardtypes, Sgseffectpipeline
 
 ### Community 25 - "Open Rule Tags"
 Cohesion: 0.21
 Nodes (12): 0012 — SGS 基础工具库开发计划, 1. 目标, 2. 背景与约束, 5. 验收标准, Archived, GameplayAbilities, GameplayTags, GameplayTasks (+4 more)
 
 ### Community 26 - "Store Query Model"
-Cohesion: 0.32
-Nodes (11): CheckInvariants(), Contains(), Find(), GetName(), IIndex(), Rebuild(), KeyType, Optional (+3 more)
+Cohesion: 0.20
+Nodes (17): Execute(), ExecuteTyped(), FormatPayloadSummary(), FSGSCommandExecutionContext(), Validate(), CheckInvariants(), Contains(), Find() (+9 more)
 
 ### Community 28 - "Decision Flow"
-Cohesion: 0.10
-Nodes (19): USGSCard(), FTableRowBase(), USGSGameContext(), USGSGameDriver(), AGameModeBase(), ASGSPlayerController(), Gamemodebase, ISGSDecisionAgent() (+11 more)
+Cohesion: 0.11
+Nodes (18): USGSCard(), USGSGameContext(), USGSGameDriver(), AGameModeBase(), ASGSPlayerController(), Gamemodebase, USGSSeat(), SGS_API (+10 more)
 
 ### Community 29 - "Command Replay Toolkit"
 Cohesion: 0.20
@@ -383,8 +380,8 @@ Cohesion: 0.15
 Nodes (12): 0004 — 对局数据模型：卡牌、牌区、玩家状态与基础操作, 1. 目标, 2. 背景与约束, 3.1 卡牌, 3.2 玩家状态, 3.3 对局模型 + 原语（`USGSGameContext`）, 3.4 与驱动器集成, 3.5 有意延后（避免在无编译环境下写半成品） (+4 more)
 
 ### Community 32 - "Card Game Context"
-Cohesion: 0.11
-Nodes (46): RandIndex(), RandRange(), TryRandIndex(), TryRandRange(), AppendEvent(), AdvanceAfterPhase(), AllocateCommandId(), ApplySlashDamageOrDying() (+38 more)
+Cohesion: 0.10
+Nodes (55): AdvanceAfterPhase(), AllocateCommandId(), ApplySlashDamageOrDying(), BeginDyingPeachWindow(), BeginTurn(), Broadcast(), BuildInitialDeck(), EndGame() (+47 more)
 
 ### Community 33 - "GAS Timing Bridge"
 Cohesion: 0.38
@@ -402,10 +399,6 @@ Nodes (8): 2.1 与 GAS 的关系, M0：GAS 决策记录, ProjectBrief.md, Rulers
 Cohesion: 0.40
 Nodes (4): 使用约束（必读）, 残留风险提示, 目录结构, 素材来源与许可（Attribution）
 
-### Community 37 - "Card Game Context"
-Cohesion: 0.15
-Nodes (4): Datatable, Sgscarddef, Sgscardtypes, Sgstypes
-
 ### Community 38 - "Engineroot Invoke"
 Cohesion: 0.32
 Nodes (3): Get-EngineAssociation(), Resolve-EngineRoot(), Test-EngineRoot()
@@ -421,6 +414,10 @@ Nodes (10): 4. 任务拆解, M1：Core Utility, M2：Command + RandomAudit, M3�
 ### Community 43 - "Startup Protocol"
 Cohesion: 0.67
 Nodes (3): Graphify Workflow, Plan And Implementation Quality Gate, SGS Startup Protocol
+
+### Community 45 - "Community 45"
+Cohesion: 0.24
+Nodes (5): Object, Scriptinterface, Sgsautopassagent, Sgsdecisionagent, Sgsgameevents
 
 ### Community 46 - "Community 46"
 Cohesion: 0.25
@@ -451,19 +448,23 @@ Cohesion: 0.50
 Nodes (3): Rules README — 按需规则路由, 规则文件写作约束, 读取路由
 
 ### Community 207 - "Community 207"
-Cohesion: 0.17
-Nodes (7): Sgscommandrouter, Sgsgamecontext, Sgsindexedstore, Sgsrandomaudit, Sgstimingtypes, FSGSActiveEffectTimeline(), SGSActiveEffectStackPolicies()
+Cohesion: 0.25
+Nodes (4): FSGSReplayLog(), Sgsrandomaudit, Sgstargetquerytypes, Sgstimingtypes
+
+### Community 208 - "Community 208"
+Cohesion: 0.20
+Nodes (6): class, FSGSCommandFactory(), ISGSCommandType(), FSGSGASActiveEffectAdapter(), FSGSTableSnapshotBuilder(), FSGSLocalDecisionPromptViewModel()
 
 ### Community 209 - "Community 209"
 Cohesion: 0.40
 Nodes (4): 单反应公式, 反应规则, 属性类型, 术语
 
 ### Community 232 - "Community 232"
-Cohesion: 0.07
-Nodes (45): MakeBasicCard(), MakePlan0005SmokeDeck(), SGSMatchesExactTag(), SGSSuitToColor(), BuildInitialDeck(), FNativeGameplayTag, FSGSCardColor, FSGSDeckCardSpec (+37 more)
+Cohesion: 0.05
+Nodes (63): MakeBasicCard(), MakePlan0005SmokeDeck(), RegisterDefaultCommandTypes(), SGSMatchesExactTag(), SGSSuitToColor(), FGameplayTag, FNativeGameplayTag, FSGSCardColor (+55 more)
 
 ### Community 233 - "Community 233"
-Cohesion: 0.11
+Cohesion: 0.13
 Nodes (28): RequestPlayPhaseAction(), RequestPlayPhaseAction(), RequestResponseAction(), EnqueueInvalidPlayCard(), EnqueuePlayCard(), EnqueuePlayPass(), EnqueueResponseCard(), EnqueueResponsePass() (+20 more)
 
 ### Community 234 - "Community 234"
@@ -482,6 +483,10 @@ Nodes (13): 0011-M1 — 最小代码优先牌桌 UI 纵切, 1. 目标, 2. 背景
 Cohesion: 0.18
 Nodes (14): ESGSUIControlTone, FMargin, FSlateColor, FVector2D, ActionButtonMinSize(), ButtonGapPadding(), CardButtonSize(), CardPadding() (+6 more)
 
+### Community 240 - "Community 240"
+Cohesion: 0.20
+Nodes (10): FSGSEffectPipeline(), Command Random Replay Determinism, Data Driven Rules, EffectPipeline Rule Execution, SGS-GAS Boundary, GAS Timing Effect Bridge, Open Rule Identifiers Instead Of Closed Enums, QSanguosha License Boundary (+2 more)
+
 ## Knowledge Gaps
 - **390 isolated node(s):** `使用约束（必读）`, `残留风险提示`, `目录结构`, `1. 项目概述`, `3. 全局把控` (+385 more)
   These have ≤1 connection - possible missing edges or undocumented components.
@@ -490,17 +495,17 @@ Nodes (14): ESGSUIControlTone, FMargin, FSlateColor, FVector2D, ActionButtonMinS
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
+- **Why does `USGSGameDriver()` connect `Decision Flow` to `Community 45`?**
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
 - **Why does `ButtonTint()` connect `Community 234` to `Community 237`?**
-  _High betweenness centrality (0.021) - this node is a cross-community bridge._
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
 - **Why does `GetTargetsForCard()` connect `Community 234` to `Card Game Context`?**
-  _High betweenness centrality (0.011) - this node is a cross-community bridge._
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
 - **What connects `使用约束（必读）`, `残留风险提示`, `目录结构` to the rest of the system?**
   _392 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Card Game Context` be split into smaller, more focused modules?**
   _Cohesion score 0.06327006327006326 - nodes in this community are weakly interconnected._
 - **Should `Command Replay Toolkit` be split into smaller, more focused modules?**
-  _Cohesion score 0.1319073083778966 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08145363408521303 - nodes in this community are weakly interconnected._
 - **Should `Project Rules` be split into smaller, more focused modules?**
   _Cohesion score 0.07692307692307693 - nodes in this community are weakly interconnected._
-- **Should `Command Replay Toolkit` be split into smaller, more focused modules?**
-  _Cohesion score 0.05714285714285714 - nodes in this community are weakly interconnected._

@@ -1,0 +1,27 @@
+#include "Server/Commands/SGSCommandTypes.h"
+
+#include "Server/Commands/Types/SGSPassCommandType.h"
+#include "Server/Commands/Types/SGSRespondCardCommandType.h"
+#include "Server/Commands/Types/SGSUseCardCommandType.h"
+#include "Server/Commands/SGSCommandRouter.h"
+
+namespace
+{
+const TArray<TSharedRef<ISGSCommandType>>& GetDefaultCommandTypes()
+{
+	static const TArray<TSharedRef<ISGSCommandType>> DefaultTypes = {
+		MakeShared<FSGSPassCommandType>(),
+		MakeShared<FSGSUseCardCommandType>(),
+		MakeShared<FSGSRespondCardCommandType>()
+	};
+	return DefaultTypes;
+}
+}
+
+void SGSCommandTypes::RegisterDefaultCommandTypes(FSGSCommandRouter& Router)
+{
+	for (const TSharedRef<ISGSCommandType>& CommandType : GetDefaultCommandTypes())
+	{
+		Router.RegisterCommandType(CommandType);
+	}
+}

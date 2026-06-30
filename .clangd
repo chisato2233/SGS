@@ -1,0 +1,9 @@
+CompileFlags:
+  Add:
+    - -Wno-invalid-constexpr
+    - -Wno-error=invalid-constexpr
+
+Diagnostics:
+  UnusedIncludes: None
+  Suppress:
+    - invalid-constexpr

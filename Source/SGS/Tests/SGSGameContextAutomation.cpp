@@ -1,10 +1,10 @@
 #include "Misc/AutomationTest.h"
 
-#include "Core/SGSGameplayTags.h"
-#include "Logic/Cards/SGSCard.h"
-#include "Logic/Engine/SGSGameContext.h"
-#include "Logic/Players/SGSSeat.h"
-#include "Logic/Queries/SGSTargetQueryTypes.h"
+#include "Shared/Core/SGSGameplayTags.h"
+#include "Shared/Cards/SGSCard.h"
+#include "Server/Engine/SGSGameContext.h"
+#include "Server/Players/SGSSeat.h"
+#include "Shared/Queries/SGSTargetQueryTypes.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 

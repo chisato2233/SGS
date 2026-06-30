@@ -1,21 +1,22 @@
 #include "Misc/AutomationTest.h"
 
-#include "AI/SGSScriptedDecisionAgent.h"
-#include "Core/SGSGameplayTags.h"
-#include "Logic/Cards/SGSDeckTypes.h"
-#include "Logic/Commands/SGSCommandRouter.h"
-#include "Logic/Engine/SGSGameContext.h"
-#include "Logic/Engine/SGSGameDriver.h"
-#include "Logic/Players/SGSSeat.h"
-#include "UI/Bridge/SGSLocalHumanDecisionAgent.h"
-#include "UI/ViewModel/SGSTableViewModel.h"
-#include "UI/Widgets/SGSTableHudWidget.h"
+#include "Server/AI/SGSScriptedDecisionAgent.h"
+#include "Shared/Core/SGSGameplayTags.h"
+#include "Shared/Cards/SGSDeckTypes.h"
+#include "Server/Commands/SGSCommandRouter.h"
+#include "Server/Engine/SGSGameContext.h"
+#include "Server/Engine/SGSGameDriver.h"
+#include "Server/Players/SGSSeat.h"
+#include "Server/UI/SGSTableSnapshotBuilder.h"
+#include "Client/UI/Bridge/SGSLocalHumanDecisionAgent.h"
+#include "Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.h"
+#include "Client/UI/Widgets/SGSTableHudWidget.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
 namespace
 {
-FSGSDeckCardSpec MakeBasicCard(FName CardName, FSGSSuit Suit, int32 Number)
+FSGSDeckCardSpec MakePlan0011BasicCard(FName CardName, FSGSSuit Suit, int32 Number)
 {
 	FSGSDeckCardSpec Spec;
 	Spec.CardName = CardName;
@@ -46,45 +47,45 @@ TScriptInterface<ISGSDecisionAgent> MakeScriptedAgent(USGSScriptedDecisionAgent*
 TArray<FSGSDeckCardSpec> MakeLocalPlayDeck()
 {
 	TArray<FSGSDeckCardSpec> Deck;
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Spade.GetTag(), 7));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Club.GetTag(), 8));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Diamond.GetTag(), 9));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Heart.GetTag(), 10));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Spade.GetTag(), 7));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Club.GetTag(), 8));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Diamond.GetTag(), 9));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Heart.GetTag(), 10));
 
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Club.GetTag(), 11));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Spade.GetTag(), 12));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Diamond.GetTag(), 13));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Heart.GetTag(), 1));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Club.GetTag(), 11));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Spade.GetTag(), 12));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Diamond.GetTag(), 13));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Heart.GetTag(), 1));
 	return Deck;
 }
 
 TArray<FSGSDeckCardSpec> MakeLocalResponseDeck()
 {
 	TArray<FSGSDeckCardSpec> Deck;
-	Deck.Add(MakeBasicCard(TEXT("Dodge"), SGSGameplayTags::Suit_Heart.GetTag(), 2));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Club.GetTag(), 8));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Diamond.GetTag(), 9));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Heart.GetTag(), 10));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Dodge"), SGSGameplayTags::Suit_Heart.GetTag(), 2));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Club.GetTag(), 8));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Diamond.GetTag(), 9));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Heart.GetTag(), 10));
 
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Spade.GetTag(), 7));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Club.GetTag(), 11));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Diamond.GetTag(), 12));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Heart.GetTag(), 13));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Spade.GetTag(), 7));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Club.GetTag(), 11));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Diamond.GetTag(), 12));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Heart.GetTag(), 13));
 	return Deck;
 }
 
 TArray<FSGSDeckCardSpec> MakeLocalDyingPeachDeck()
 {
 	TArray<FSGSDeckCardSpec> Deck;
-	Deck.Add(MakeBasicCard(TEXT("Peach"), SGSGameplayTags::Suit_Diamond.GetTag(), 3));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Club.GetTag(), 8));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Diamond.GetTag(), 9));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Heart.GetTag(), 10));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Peach"), SGSGameplayTags::Suit_Diamond.GetTag(), 3));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Club.GetTag(), 8));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Diamond.GetTag(), 9));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Heart.GetTag(), 10));
 
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Spade.GetTag(), 7));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Club.GetTag(), 11));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Diamond.GetTag(), 12));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Heart.GetTag(), 13));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Spade.GetTag(), 7));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Club.GetTag(), 11));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Diamond.GetTag(), 12));
+	Deck.Add(MakePlan0011BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Heart.GetTag(), 13));
 	return Deck;
 }
 
@@ -201,6 +202,16 @@ bool HasExecutedLocalCommand(const USGSGameDriver* Driver, const FNativeGameplay
 	}
 	return false;
 }
+
+FSGSTableViewSnapshot BuildLocalTableSnapshot(
+	const USGSGameDriver* Driver,
+	const USGSLocalHumanDecisionAgent* Agent,
+	int32 ViewerSeat)
+{
+	FSGSTableViewSnapshot Snapshot = FSGSTableSnapshotBuilder::Build(Driver, ViewerSeat);
+	FSGSLocalDecisionPromptViewModel::Apply(Snapshot, Agent);
+	return Snapshot;
+}
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -223,12 +234,15 @@ bool FSGSPlan0011M1LocalUIBridgeTest::RunTest(const FString& Parameters)
 	TestNotNull(TEXT("Local play driver is created."), PlayDriver);
 	TestTrue(TEXT("Local agent receives a play prompt."), PlayLocalAgent->HasPendingPlayRequest());
 
-	const FSGSTableViewSnapshot PlaySnapshot = FSGSTableViewModel::Build(PlayDriver, PlayLocalAgent, 0);
+	const FSGSTableViewSnapshot PlaySnapshot = BuildLocalTableSnapshot(PlayDriver, PlayLocalAgent, 0);
 	TestTrue(TEXT("ViewModel exposes a local play prompt."), PlaySnapshot.Prompt.bHasPrompt && !PlaySnapshot.Prompt.bIsResponse);
 	TestEqual(TEXT("ViewModel exposes two seats."), PlaySnapshot.Seats.Num(), 2);
 	TestTrue(TEXT("ViewModel exposes local hand cards."), PlaySnapshot.HandCards.Num() > 0);
 	TSharedRef<SSGSTableHudWidget> HudWidget = SNew(SSGSTableHudWidget)
-		.GameDriver(PlayDriver)
+		.SnapshotProvider([PlayDriver]()
+			{
+				return FSGSTableSnapshotBuilder::Build(PlayDriver, 0);
+			})
 		.DecisionAgent(PlayLocalAgent)
 		.ViewerSeat(0);
 	TestTrue(TEXT("Slate HUD widget can be constructed for the local match."), HudWidget->GetVisibility().IsVisible());
@@ -245,7 +259,7 @@ bool FSGSPlan0011M1LocalUIBridgeTest::RunTest(const FString& Parameters)
 
 	USGSLocalHumanDecisionAgent* FourSeatLocalAgent = nullptr;
 	USGSGameDriver* FourSeatDriver = StartFourSeatLocalGame(FourSeatLocalAgent);
-	const FSGSTableViewSnapshot FourSeatSnapshot = FSGSTableViewModel::Build(FourSeatDriver, FourSeatLocalAgent, 0);
+	const FSGSTableViewSnapshot FourSeatSnapshot = BuildLocalTableSnapshot(FourSeatDriver, FourSeatLocalAgent, 0);
 	TestEqual(TEXT("Default local table snapshot exposes four seats."), FourSeatSnapshot.Seats.Num(), 4);
 	TestEqual(TEXT("Default local table snapshot is viewed by seat zero."), FourSeatSnapshot.ViewerSeat, 0);
 	TestTrue(TEXT("Default local table snapshot exposes draw pile count."), FourSeatSnapshot.DrawPileCount >= 0);
@@ -253,7 +267,10 @@ bool FSGSPlan0011M1LocalUIBridgeTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Default local table snapshot exposes a local prompt."), FourSeatSnapshot.Prompt.bHasPrompt);
 
 	TSharedRef<SSGSTableHudWidget> FourSeatHudWidget = SNew(SSGSTableHudWidget)
-		.GameDriver(FourSeatDriver)
+		.SnapshotProvider([FourSeatDriver]()
+			{
+				return FSGSTableSnapshotBuilder::Build(FourSeatDriver, 0);
+			})
 		.DecisionAgent(FourSeatLocalAgent)
 		.ViewerSeat(0);
 	FourSeatHudWidget->SlatePrepass();
@@ -274,7 +291,7 @@ bool FSGSPlan0011M1LocalUIBridgeTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Local player can pass their play phase."), ResponseLocalAgent->SubmitPass());
 	TestTrue(TEXT("Local agent receives a Dodge response prompt."), ResponseLocalAgent->HasPendingResponseRequest());
 
-	const FSGSTableViewSnapshot ResponseSnapshot = FSGSTableViewModel::Build(ResponseDriver, ResponseLocalAgent, 0);
+	const FSGSTableViewSnapshot ResponseSnapshot = BuildLocalTableSnapshot(ResponseDriver, ResponseLocalAgent, 0);
 	TestTrue(TEXT("ViewModel exposes a local response prompt."), ResponseSnapshot.Prompt.bHasPrompt && ResponseSnapshot.Prompt.bIsResponse);
 	TestEqual(TEXT("Response prompt asks for Dodge."), ResponseSnapshot.Prompt.RequiredCardName, FName(TEXT("Dodge")));
 
@@ -299,7 +316,7 @@ bool FSGSPlan0011M1LocalUIBridgeTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Local player receives a Peach dying response prompt."), PeachLocalAgent->HasPendingResponseRequest());
 	TestEqual(TEXT("Dying response prompt asks for Peach."), PeachLocalAgent->GetPendingResponseRequest()->RequiredCardName, FName(TEXT("Peach")));
 
-	const FSGSTableViewSnapshot PeachSnapshot = FSGSTableViewModel::Build(PeachDriver, PeachLocalAgent, 0);
+	const FSGSTableViewSnapshot PeachSnapshot = BuildLocalTableSnapshot(PeachDriver, PeachLocalAgent, 0);
 	TestTrue(TEXT("ViewModel exposes the local Peach response prompt."), PeachSnapshot.Prompt.bHasPrompt && PeachSnapshot.Prompt.bIsResponse);
 	TestEqual(TEXT("ViewModel Peach prompt targets the dying local seat."), PeachSnapshot.Prompt.RequiredCardName, FName(TEXT("Peach")));
 

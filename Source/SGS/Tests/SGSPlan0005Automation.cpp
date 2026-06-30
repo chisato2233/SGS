@@ -1,19 +1,21 @@
 #include "Misc/AutomationTest.h"
 
-#include "AI/SGSScriptedDecisionAgent.h"
-#include "Core/SGSGameplayTags.h"
-#include "Logic/Cards/SGSCard.h"
-#include "Logic/Cards/SGSDeckTypes.h"
-#include "Logic/Commands/SGSCommandRouter.h"
-#include "Logic/Engine/SGSGameContext.h"
-#include "Logic/Engine/SGSGameDriver.h"
-#include "Logic/Players/SGSSeat.h"
+#include "Server/AI/SGSScriptedDecisionAgent.h"
+#include "Shared/Core/SGSGameplayTags.h"
+#include "Shared/Cards/SGSCard.h"
+#include "Shared/Cards/SGSDeckTypes.h"
+#include "Shared/Commands/SGSCommandFactory.h"
+#include "Shared/Commands/SGSCommandPayloads.h"
+#include "Server/Commands/SGSCommandRouter.h"
+#include "Server/Engine/SGSGameContext.h"
+#include "Server/Engine/SGSGameDriver.h"
+#include "Server/Players/SGSSeat.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
 namespace
 {
-FSGSDeckCardSpec MakeBasicCard(FName CardName, FSGSSuit Suit, int32 Number)
+FSGSDeckCardSpec MakePlan0005BasicCard(FName CardName, FSGSSuit Suit, int32 Number)
 {
 	FSGSDeckCardSpec Spec;
 	Spec.CardName = CardName;
@@ -35,15 +37,15 @@ TScriptInterface<ISGSDecisionAgent> MakeScriptedAgent(USGSScriptedDecisionAgent*
 TArray<FSGSDeckCardSpec> MakeTwoSeatDeck(bool bSeatOneHasDodge, bool bSeatZeroHasPeach)
 {
 	TArray<FSGSDeckCardSpec> Deck;
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Spade.GetTag(), 7));
-	Deck.Add(MakeBasicCard(bSeatZeroHasPeach ? TEXT("Peach") : TEXT("Slash"), SGSGameplayTags::Suit_Diamond.GetTag(), 3));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Club.GetTag(), 8));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Spade.GetTag(), 9));
+	Deck.Add(MakePlan0005BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Spade.GetTag(), 7));
+	Deck.Add(MakePlan0005BasicCard(bSeatZeroHasPeach ? TEXT("Peach") : TEXT("Slash"), SGSGameplayTags::Suit_Diamond.GetTag(), 3));
+	Deck.Add(MakePlan0005BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Club.GetTag(), 8));
+	Deck.Add(MakePlan0005BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Spade.GetTag(), 9));
 
-	Deck.Add(MakeBasicCard(bSeatOneHasDodge ? TEXT("Dodge") : TEXT("Slash"), SGSGameplayTags::Suit_Heart.GetTag(), 2));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Club.GetTag(), 10));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Spade.GetTag(), 11));
-	Deck.Add(MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Diamond.GetTag(), 12));
+	Deck.Add(MakePlan0005BasicCard(bSeatOneHasDodge ? TEXT("Dodge") : TEXT("Slash"), SGSGameplayTags::Suit_Heart.GetTag(), 2));
+	Deck.Add(MakePlan0005BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Club.GetTag(), 10));
+	Deck.Add(MakePlan0005BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Spade.GetTag(), 11));
+	Deck.Add(MakePlan0005BasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Diamond.GetTag(), 12));
 	return Deck;
 }
 
@@ -88,6 +90,18 @@ bool HasRejectedCommand(const USGSGameDriver* Driver)
 	}
 	return false;
 }
+
+FSGSCommandBuildRequest MakeTestCommandBuildRequest(FName SourceName)
+{
+	FSGSCommandBuildRequest Request;
+	Request.CommandId = FSGSCommandId(1);
+	Request.RequestId = 1;
+	Request.SeatIndex = 0;
+	Request.Phase = SGSGameplayTags::Phase_Play.GetTag();
+	Request.SourceChannel = FName(TEXT("Test"));
+	Request.SourceName = SourceName;
+	return Request;
+}
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -111,6 +125,7 @@ bool FSGSPlan0005SlashDodgeDamageTest::RunTest(const FString& Parameters)
 	TestNotNull(TEXT("Dodge driver created."), DodgeDriver);
 	TestEqual(TEXT("Dodge prevents Slash damage."), DodgeDriver->GetContext()->GetSeat(1)->Health, 4);
 	TestTrue(TEXT("Dodge scenario keeps invariants."), DodgeDriver->GetContext()->CheckInvariants());
+	TestTrue(TEXT("Dodge scenario replay keeps invariants."), DodgeDriver->GetReplayLog().CheckInvariants());
 
 	USGSScriptedDecisionAgent* HitSeat0 = nullptr;
 	USGSScriptedDecisionAgent* HitSeat1 = nullptr;
@@ -125,6 +140,7 @@ bool FSGSPlan0005SlashDodgeDamageTest::RunTest(const FString& Parameters)
 		MakeTwoSeatDeck(/*bSeatOneHasDodge*/ false, /*bSeatZeroHasPeach*/ false));
 	TestEqual(TEXT("Pass on Dodge window takes one Slash damage."), HitDriver->GetContext()->GetSeat(1)->Health, 3);
 	TestTrue(TEXT("Hit scenario keeps invariants."), HitDriver->GetContext()->CheckInvariants());
+	TestTrue(TEXT("Hit scenario replay keeps invariants."), HitDriver->GetReplayLog().CheckInvariants());
 	TestTrue(TEXT("Hit scenario records replay events."), HitDriver->GetReplayLog().GetEventLog().Num() > 0);
 
 	return true;
@@ -216,18 +232,47 @@ bool FSGSPlan0005IllegalCommandTest::RunTest(const FString& Parameters)
 	ExecutionContext.ExpectedPhase = SGSGameplayTags::Phase_Play.GetTag();
 	ExecutionContext.RequiredCardName = TEXT("Dodge");
 
-	FSGSCommand ResponseOutsideWindow = FSGSCommand::MakeRespondCard(
-		FSGSCommandId(1),
-		1,
-		0,
-		SGSGameplayTags::Phase_Play.GetTag(),
-		Dodge->CardId,
-		TArray<int32>(),
-		TEXT("Slash.Dodge"),
-		TEXT("Test"),
-		TEXT("ResponseOutsideWindow"));
+	FSGSCommand ResponseOutsideWindow = FSGSCommandFactory::Make(
+		MakeTestCommandBuildRequest(TEXT("ResponseOutsideWindow")),
+		FSGSRespondCardCommandPayload(Dodge->CardId, TArray<int32>(), TEXT("Slash.Dodge")));
 	TestTrue(TEXT("RespondCard outside a response window is rejected."),
 		Router.SubmitCommand(ResponseOutsideWindow, ExecutionContext).HasError());
+
+	FSGSCommand MissingUsePayload = FSGSCommandFactory::Make(
+		MakeTestCommandBuildRequest(TEXT("MissingUsePayload")),
+		FSGSUseCardCommandPayload(Dodge->CardId, TArray<int32>()));
+	MissingUsePayload.Payload.Reset();
+	TestTrue(TEXT("UseCard missing typed payload is rejected even when legacy mirrors are populated."),
+		Router.SubmitCommand(MissingUsePayload, ExecutionContext).HasError());
+
+	FSGSCommand WrongUsePayload = FSGSCommandFactory::Make(
+		MakeTestCommandBuildRequest(TEXT("WrongUsePayload")),
+		FSGSUseCardCommandPayload(Dodge->CardId, TArray<int32>()));
+	WrongUsePayload.Payload = FInstancedStruct::Make<FSGSPassCommandPayload>();
+	TestTrue(TEXT("UseCard with the wrong typed payload is rejected."),
+		Router.SubmitCommand(WrongUsePayload, ExecutionContext).HasError());
+
+	FSGSCommandExecutionContext ResponseExecutionContext = ExecutionContext;
+	ResponseExecutionContext.ExpectedWindowName = TEXT("Slash.Dodge");
+	FSGSCommand WindowMismatchResponse = FSGSCommandFactory::Make(
+		MakeTestCommandBuildRequest(TEXT("WindowMismatchResponse")),
+		FSGSRespondCardCommandPayload(Dodge->CardId, TArray<int32>(), TEXT("Dying.Peach")));
+	TestTrue(TEXT("RespondCard with typed payload window mismatch is rejected."),
+		Router.SubmitCommand(WindowMismatchResponse, ResponseExecutionContext).HasError());
+
+	FSGSCommand DirtyPass = FSGSCommandFactory::Make(
+		MakeTestCommandBuildRequest(TEXT("DirtyPass")),
+		FSGSPassCommandPayload());
+	DirtyPass.CardIds.Add(Dodge->CardId);
+	TestTrue(TEXT("Pass command with illegal legacy card mirror is rejected."),
+		Router.SubmitCommand(DirtyPass, ExecutionContext).HasError());
+
+	FSGSCommand ValidTypedPass = FSGSCommandFactory::Make(
+		MakeTestCommandBuildRequest(TEXT("ValidTypedPass")),
+		FSGSPassCommandPayload());
+	TestFalse(TEXT("Typed payload Pass command is accepted."),
+		Router.SubmitCommand(ValidTypedPass, ExecutionContext).HasError());
+	TestTrue(TEXT("Command log keeps invariants under typed payload commands."), Router.CheckInvariants());
 	TestTrue(TEXT("Illegal command context keeps invariants."), Context->CheckInvariants());
 
 	return true;
