@@ -144,38 +144,48 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
-      "community": 232,
+      "community": 21,
       "norm_label": "sgsplayercontroller.cpp"
+    },
+    {
+      "label": "GetLifetimeReplicatedProps()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "game_sgsplayercontroller_getlifetimereplicatedprops",
+      "community": 0,
+      "norm_label": "getlifetimereplicatedprops()"
+    },
+    {
+      "label": "TArray",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "tarray",
+      "community": 0,
+      "norm_label": "tarray"
+    },
+    {
+      "label": "FLifetimeProperty",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "flifetimeproperty",
+      "community": 0,
+      "norm_label": "flifetimeproperty"
     },
     {
       "label": "AttachToMatch()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
-      "source_location": "L9",
+      "source_location": "L19",
       "_origin": "ast",
       "id": "game_sgsplayercontroller_attachtomatch",
-      "community": 232,
+      "community": 21,
       "norm_label": "attachtomatch()"
-    },
-    {
-      "label": "TFunction",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "id": "tfunction",
-      "community": 232,
-      "norm_label": "tfunction"
-    },
-    {
-      "label": "FSGSTableViewSnapshot",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "id": "fsgstableviewsnapshot",
-      "community": 232,
-      "norm_label": "fsgstableviewsnapshot"
     },
     {
       "label": "USGSLocalHumanDecisionAgent",
@@ -198,13 +208,193 @@
       "norm_label": "int32"
     },
     {
+      "label": "TFunction",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "tfunction",
+      "community": 21,
+      "norm_label": "tfunction"
+    },
+    {
+      "label": "FSGSPlayerPrivateSnapshot",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "fsgsplayerprivatesnapshot",
+      "community": 232,
+      "norm_label": "fsgsplayerprivatesnapshot"
+    },
+    {
+      "label": "RefreshPrivateSnapshotFromServer()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L47",
+      "_origin": "ast",
+      "id": "game_sgsplayercontroller_refreshprivatesnapshotfromserver",
+      "community": 21,
+      "norm_label": "refreshprivatesnapshotfromserver()"
+    },
+    {
+      "label": "BuildTableViewSnapshot()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L62",
+      "_origin": "ast",
+      "id": "game_sgsplayercontroller_buildtableviewsnapshot",
+      "community": 21,
+      "norm_label": "buildtableviewsnapshot()"
+    },
+    {
+      "label": "FSGSTableViewSnapshot",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "fsgstableviewsnapshot",
+      "community": 21,
+      "norm_label": "fsgstableviewsnapshot"
+    },
+    {
+      "label": "SubmitUseCard()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L81",
+      "_origin": "ast",
+      "id": "game_sgsplayercontroller_submitusecard",
+      "community": 21,
+      "norm_label": "submitusecard()"
+    },
+    {
+      "label": "SubmitResponseCard()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L92",
+      "_origin": "ast",
+      "id": "game_sgsplayercontroller_submitresponsecard",
+      "community": 21,
+      "norm_label": "submitresponsecard()"
+    },
+    {
+      "label": "SubmitPass()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L103",
+      "_origin": "ast",
+      "id": "game_sgsplayercontroller_submitpass",
+      "community": 21,
+      "norm_label": "submitpass()"
+    },
+    {
+      "label": "ClientAttachLocalHud_Implementation()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L114",
+      "_origin": "ast",
+      "id": "game_sgsplayercontroller_clientattachlocalhud_implementation",
+      "community": 21,
+      "norm_label": "clientattachlocalhud_implementation()"
+    },
+    {
+      "label": "ServerSubmitUseCard_Implementation()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L120",
+      "_origin": "ast",
+      "id": "game_sgsplayercontroller_serversubmitusecard_implementation",
+      "community": 21,
+      "norm_label": "serversubmitusecard_implementation()"
+    },
+    {
+      "label": "ServerSubmitResponseCard_Implementation()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L125",
+      "_origin": "ast",
+      "id": "game_sgsplayercontroller_serversubmitresponsecard_implementation",
+      "community": 21,
+      "norm_label": "serversubmitresponsecard_implementation()"
+    },
+    {
+      "label": "ServerSubmitPass_Implementation()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L130",
+      "_origin": "ast",
+      "id": "game_sgsplayercontroller_serversubmitpass_implementation",
+      "community": 21,
+      "norm_label": "serversubmitpass_implementation()"
+    },
+    {
+      "label": "OnRep_PrivateSnapshot()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L135",
+      "_origin": "ast",
+      "id": "game_sgsplayercontroller_onrep_privatesnapshot",
+      "community": 21,
+      "norm_label": "onrep_privatesnapshot()"
+    },
+    {
+      "label": "AttachLocalHud()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L139",
+      "_origin": "ast",
+      "id": "game_sgsplayercontroller_attachlocalhud",
+      "community": 21,
+      "norm_label": "attachlocalhud()"
+    },
+    {
+      "label": "SubmitUseCardOnServer()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L166",
+      "_origin": "ast",
+      "id": "game_sgsplayercontroller_submitusecardonserver",
+      "community": 21,
+      "norm_label": "submitusecardonserver()"
+    },
+    {
+      "label": "SubmitResponseCardOnServer()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L182",
+      "_origin": "ast",
+      "id": "game_sgsplayercontroller_submitresponsecardonserver",
+      "community": 21,
+      "norm_label": "submitresponsecardonserver()"
+    },
+    {
+      "label": "SubmitPassOnServer()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L198",
+      "_origin": "ast",
+      "id": "game_sgsplayercontroller_submitpassonserver",
+      "community": 21,
+      "norm_label": "submitpassonserver()"
+    },
+    {
+      "label": "RefreshAfterServerDecision()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L214",
+      "_origin": "ast",
+      "id": "game_sgsplayercontroller_refreshafterserverdecision",
+      "community": 21,
+      "norm_label": "refreshafterserverdecision()"
+    },
+    {
       "label": "EndPlay()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
-      "source_location": "L44",
+      "source_location": "L223",
       "_origin": "ast",
       "id": "game_sgsplayercontroller_endplay",
-      "community": 232,
+      "community": 21,
       "norm_label": "endplay()"
     },
     {
@@ -214,17 +404,17 @@
       "source_location": "",
       "_origin": "ast",
       "id": "type",
-      "community": 232,
+      "community": 21,
       "norm_label": "type"
     },
     {
       "label": "RemoveTableHud()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
-      "source_location": "L50",
+      "source_location": "L229",
       "_origin": "ast",
       "id": "game_sgsplayercontroller_removetablehud",
-      "community": 232,
+      "community": 21,
       "norm_label": "removetablehud()"
     },
     {
@@ -234,17 +424,17 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "source_sgs_client_game_sgsplayercontroller_h_game_sgsplayercontroller",
-      "community": 28,
+      "community": 11,
       "norm_label": "sgsplayercontroller.h"
     },
     {
       "label": "ASGSPlayerController()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/Game/SGSPlayerController.h",
-      "source_location": "L12",
+      "source_location": "L13",
       "_origin": "ast",
       "id": "game_sgsplayercontroller_asgsplayercontroller",
-      "community": 28,
+      "community": 11,
       "norm_label": "asgsplayercontroller()"
     },
     {
@@ -254,7 +444,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "sgs_api",
-      "community": 28,
+      "community": 11,
       "norm_label": "sgs_api"
     },
     {
@@ -608,86 +798,6 @@
       "norm_label": "esgsuicontroltone()"
     },
     {
-      "label": "SGSLocalDecisionPromptViewModel.cpp",
-      "file_type": "code",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.cpp",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "source_sgs_client_ui_viewmodel_sgslocaldecisionpromptviewmodel_cpp_viewmodel_sgslocaldecisionpromptviewmodel",
-      "community": 232,
-      "norm_label": "sgslocaldecisionpromptviewmodel.cpp"
-    },
-    {
-      "label": "AddUniqueInts()",
-      "file_type": "code",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.cpp",
-      "source_location": "L8",
-      "_origin": "ast",
-      "id": "viewmodel_sgslocaldecisionpromptviewmodel_adduniqueints",
-      "community": 232,
-      "norm_label": "adduniqueints()"
-    },
-    {
-      "label": "TArray",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "id": "tarray",
-      "community": 0,
-      "norm_label": "tarray"
-    },
-    {
-      "label": "ApplySelectionState()",
-      "file_type": "code",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.cpp",
-      "source_location": "L16",
-      "_origin": "ast",
-      "id": "viewmodel_sgslocaldecisionpromptviewmodel_applyselectionstate",
-      "community": 232,
-      "norm_label": "applyselectionstate()"
-    },
-    {
-      "label": "Apply()",
-      "file_type": "code",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.cpp",
-      "source_location": "L30",
-      "_origin": "ast",
-      "id": "viewmodel_sgslocaldecisionpromptviewmodel_apply",
-      "community": 232,
-      "norm_label": "apply()"
-    },
-    {
-      "label": "SGSLocalDecisionPromptViewModel.h",
-      "file_type": "code",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.h",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "source_sgs_client_ui_viewmodel_sgslocaldecisionpromptviewmodel_h_viewmodel_sgslocaldecisionpromptviewmodel",
-      "community": 208,
-      "norm_label": "sgslocaldecisionpromptviewmodel.h"
-    },
-    {
-      "label": "FSGSLocalDecisionPromptViewModel()",
-      "file_type": "code",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.h",
-      "source_location": "L8",
-      "_origin": "ast",
-      "id": "viewmodel_sgslocaldecisionpromptviewmodel_fsgslocaldecisionpromptviewmodel",
-      "community": 208,
-      "norm_label": "fsgslocaldecisionpromptviewmodel()"
-    },
-    {
-      "label": "class",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "_origin": "ast",
-      "id": "class",
-      "community": 208,
-      "norm_label": "class"
-    },
-    {
       "label": "SGSTableHudWidget.cpp",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
@@ -701,10 +811,10 @@
       "label": "HudTagLeaf()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L16",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_hudtagleaf",
-      "community": 232,
+      "community": 234,
       "norm_label": "hudtagleaf()"
     },
     {
@@ -724,14 +834,14 @@
       "source_location": "",
       "_origin": "ast",
       "id": "fgameplaytag",
-      "community": 232,
+      "community": 234,
       "norm_label": "fgameplaytag"
     },
     {
       "label": "ButtonTint()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L28",
+      "source_location": "L27",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_buttontint",
       "community": 234,
@@ -741,7 +851,7 @@
       "label": "Construct()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L46",
+      "source_location": "L45",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_construct",
       "community": 234,
@@ -761,7 +871,7 @@
       "label": "HandleRefreshTimer()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L61",
+      "source_location": "L60",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_handlerefreshtimer",
       "community": 234,
@@ -781,7 +891,7 @@
       "label": "Refresh()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L67",
+      "source_location": "L66",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_refresh",
       "community": 234,
@@ -791,7 +901,7 @@
       "label": "NormalizeSelection()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L80",
+      "source_location": "L85",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_normalizeselection",
       "community": 234,
@@ -801,7 +911,7 @@
       "label": "BuildContent()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L100",
+      "source_location": "L105",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_buildcontent",
       "community": 234,
@@ -831,7 +941,7 @@
       "label": "BuildHeader()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L139",
+      "source_location": "L144",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_buildheader",
       "community": 234,
@@ -841,7 +951,7 @@
       "label": "BuildSeats()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L155",
+      "source_location": "L160",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_buildseats",
       "community": 234,
@@ -851,7 +961,7 @@
       "label": "BuildSeatButton()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L170",
+      "source_location": "L175",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_buildseatbutton",
       "community": 234,
@@ -871,7 +981,7 @@
       "label": "BuildHand()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L200",
+      "source_location": "L205",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_buildhand",
       "community": 234,
@@ -881,7 +991,7 @@
       "label": "BuildCardButton()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L228",
+      "source_location": "L233",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_buildcardbutton",
       "community": 234,
@@ -901,7 +1011,7 @@
       "label": "BuildControls()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L251",
+      "source_location": "L256",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_buildcontrols",
       "community": 234,
@@ -911,7 +1021,7 @@
       "label": "OnCardClicked()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L322",
+      "source_location": "L327",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_oncardclicked",
       "community": 234,
@@ -931,7 +1041,7 @@
       "label": "OnSeatClicked()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L338",
+      "source_location": "L343",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_onseatclicked",
       "community": 234,
@@ -941,7 +1051,7 @@
       "label": "OnConfirmClicked()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L349",
+      "source_location": "L354",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_onconfirmclicked",
       "community": 234,
@@ -951,7 +1061,7 @@
       "label": "OnPassClicked()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L372",
+      "source_location": "L377",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_onpassclicked",
       "community": 234,
@@ -961,7 +1071,7 @@
       "label": "IsConfirmEnabled()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L385",
+      "source_location": "L390",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_isconfirmenabled",
       "community": 234,
@@ -971,7 +1081,7 @@
       "label": "GetTargetsForCard()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L396",
+      "source_location": "L401",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_gettargetsforcard",
       "community": 234,
@@ -981,10 +1091,10 @@
       "label": "GetPromptText()",
       "file_type": "code",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L405",
+      "source_location": "L410",
       "_origin": "ast",
       "id": "widgets_sgstablehudwidget_getprompttext",
-      "community": 234,
+      "community": 1,
       "norm_label": "getprompttext()"
     },
     {
@@ -1404,7 +1514,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "source_sgs_server_commands_sgscommandrouter_h_commands_sgscommandrouter",
-      "community": 21,
+      "community": 29,
       "norm_label": "sgscommandrouter.h"
     },
     {
@@ -1414,7 +1524,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "commands_sgscommandrouter_sgscommandlifecycle",
-      "community": 21,
+      "community": 29,
       "norm_label": "sgscommandlifecycle()"
     },
     {
@@ -1434,7 +1544,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "commands_sgscommandrouter_fsgscommandlogentry",
-      "community": 21,
+      "community": 29,
       "norm_label": "fsgscommandlogentry()"
     },
     {
@@ -1444,8 +1554,18 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "source_sgs_server_commands_sgscommandrouter_h_commands_sgscommandrouter_fsgscommandrouter",
-      "community": 21,
+      "community": 29,
       "norm_label": "fsgscommandrouter()"
+    },
+    {
+      "label": "class",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "class",
+      "community": 208,
+      "norm_label": "class"
     },
     {
       "label": "SGSCommandTypes.cpp",
@@ -1634,18 +1754,18 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "source_sgs_server_commands_types_sgsrespondcardcommandtype_cpp_types_sgsrespondcardcommandtype",
-      "community": 232,
+      "community": 32,
       "norm_label": "sgsrespondcardcommandtype.cpp"
     },
     {
-      "label": "FindHandCardStateById()",
+      "label": "FindRespondCardHandCardStateById()",
       "file_type": "code",
       "source_file": "Source/SGS/Server/Commands/Types/SGSRespondCardCommandType.cpp",
       "source_location": "L9",
       "_origin": "ast",
-      "id": "types_sgsrespondcardcommandtype_findhandcardstatebyid",
+      "id": "types_sgsrespondcardcommandtype_findrespondcardhandcardstatebyid",
       "community": 32,
-      "norm_label": "findhandcardstatebyid()"
+      "norm_label": "findrespondcardhandcardstatebyid()"
     },
     {
       "label": "FSGSCardState",
@@ -1664,7 +1784,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "types_sgsrespondcardcommandtype_gettype",
-      "community": 232,
+      "community": 234,
       "norm_label": "gettype()"
     },
     {
@@ -1674,7 +1794,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "types_sgsrespondcardcommandtype_synclegacymirror",
-      "community": 232,
+      "community": 32,
       "norm_label": "synclegacymirror()"
     },
     {
@@ -1718,14 +1838,14 @@
       "norm_label": "sgsusecardcommandtype.cpp"
     },
     {
-      "label": "FindHandCardStateById()",
+      "label": "FindUseCardHandCardStateById()",
       "file_type": "code",
       "source_file": "Source/SGS/Server/Commands/Types/SGSUseCardCommandType.cpp",
       "source_location": "L9",
       "_origin": "ast",
-      "id": "types_sgsusecardcommandtype_findhandcardstatebyid",
+      "id": "types_sgsusecardcommandtype_findusecardhandcardstatebyid",
       "community": 32,
-      "norm_label": "findhandcardstatebyid()"
+      "norm_label": "findusecardhandcardstatebyid()"
     },
     {
       "label": "GetType()",
@@ -1734,7 +1854,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "types_sgsusecardcommandtype_gettype",
-      "community": 232,
+      "community": 234,
       "norm_label": "gettype()"
     },
     {
@@ -1974,7 +2094,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "source_sgs_server_effects_sgseffectpipeline_h_effects_sgseffectpipeline",
-      "community": 240,
+      "community": 29,
       "norm_label": "sgseffectpipeline.h"
     },
     {
@@ -1984,7 +2104,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "source_sgs_server_effects_sgseffectpipeline_h_effects_sgseffectpipeline_checkinvariants",
-      "community": 240,
+      "community": 29,
       "norm_label": "checkinvariants()"
     },
     {
@@ -1994,7 +2114,7 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "effects_sgseffectpipeline_fsgseffectpipeline",
-      "community": 240,
+      "community": 29,
       "norm_label": "fsgseffectpipeline()"
     },
     {
@@ -2104,7 +2224,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "source_sgs_server_effects_sgsreplaylog_h_effects_sgsreplaylog",
-      "community": 207,
+      "community": 240,
       "norm_label": "sgsreplaylog.h"
     },
     {
@@ -2114,7 +2234,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "effects_sgsreplaylog_fsgseventlogentry",
-      "community": 207,
+      "community": 240,
       "norm_label": "fsgseventlogentry()"
     },
     {
@@ -2124,7 +2244,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "effects_sgsreplaylog_fsgsreplaylog",
-      "community": 207,
+      "community": 240,
       "norm_label": "fsgsreplaylog()"
     },
     {
@@ -2254,7 +2374,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "source_sgs_server_effects_sgsstandardeffectsteps_h_effects_sgsstandardeffectsteps",
-      "community": 24,
+      "community": 45,
       "norm_label": "sgsstandardeffectsteps.h"
     },
     {
@@ -2264,7 +2384,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "effects_sgsstandardeffectsteps_sgsstandardeffectsteps",
-      "community": 24,
+      "community": 45,
       "norm_label": "sgsstandardeffectsteps()"
     },
     {
@@ -2684,7 +2804,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "source_sgs_server_engine_sgsgamecontext_h_engine_sgsgamecontext",
-      "community": 207,
+      "community": 45,
       "norm_label": "sgsgamecontext.h"
     },
     {
@@ -2694,7 +2814,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "engine_sgsgamecontext_fsgscardstate",
-      "community": 207,
+      "community": 45,
       "norm_label": "fsgscardstate()"
     },
     {
@@ -3194,7 +3314,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "engine_sgsgameevents",
-      "community": 11,
+      "community": 37,
       "norm_label": "sgsgameevents.h"
     },
     {
@@ -3204,27 +3324,37 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "source_sgs_server_game_sgsgamemode_cpp_game_sgsgamemode",
-      "community": 232,
+      "community": 21,
       "norm_label": "sgsgamemode.cpp"
     },
     {
       "label": "ASGSGameMode()",
       "file_type": "code",
       "source_file": "Source/SGS/Server/Game/SGSGameMode.cpp",
-      "source_location": "L13",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "game_sgsgamemode_asgsgamemode",
-      "community": 232,
+      "community": 21,
       "norm_label": "asgsgamemode()"
+    },
+    {
+      "label": "RefreshViewSnapshots()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Server/Game/SGSGameMode.cpp",
+      "source_location": "L22",
+      "_origin": "ast",
+      "id": "game_sgsgamemode_refreshviewsnapshots",
+      "community": 21,
+      "norm_label": "refreshviewsnapshots()"
     },
     {
       "label": "BeginPlay()",
       "file_type": "code",
       "source_file": "Source/SGS/Server/Game/SGSGameMode.cpp",
-      "source_location": "L18",
+      "source_location": "L35",
       "_origin": "ast",
       "id": "game_sgsgamemode_beginplay",
-      "community": 232,
+      "community": 21,
       "norm_label": "beginplay()"
     },
     {
@@ -3234,17 +3364,17 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "source_sgs_server_game_sgsgamemode_h_game_sgsgamemode",
-      "community": 28,
+      "community": 21,
       "norm_label": "sgsgamemode.h"
     },
     {
       "label": "AGameModeBase()",
       "file_type": "code",
       "source_file": "Source/SGS/Server/Game/SGSGameMode.h",
-      "source_location": "L13",
+      "source_location": "L14",
       "_origin": "ast",
       "id": "game_sgsgamemode_agamemodebase",
-      "community": 28,
+      "community": 21,
       "norm_label": "agamemodebase()"
     },
     {
@@ -3264,7 +3394,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "players_sgsseat_usgsseat",
-      "community": 28,
+      "community": 45,
       "norm_label": "usgsseat()"
     },
     {
@@ -3454,7 +3584,7 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "source_sgs_server_timing_sgsactiveeffecttimeline_h_timing_sgsactiveeffecttimeline_fsgsactiveeffecttimeline",
-      "community": 16,
+      "community": 208,
       "norm_label": "fsgsactiveeffecttimeline()"
     },
     {
@@ -3554,7 +3684,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "source_sgs_server_timing_sgsgasactiveeffectadapter_h_timing_sgsgasactiveeffectadapter",
-      "community": 29,
+      "community": 208,
       "norm_label": "sgsgasactiveeffectadapter.h"
     },
     {
@@ -3564,7 +3694,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "timing_sgsgasactiveeffectadapter_fsgsgasactiveeffectbinding",
-      "community": 29,
+      "community": 208,
       "norm_label": "fsgsgasactiveeffectbinding()"
     },
     {
@@ -3731,7 +3861,7 @@
       "label": "SnapshotTagLeaf()",
       "file_type": "code",
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
-      "source_location": "L11",
+      "source_location": "L13",
       "_origin": "ast",
       "id": "ui_sgstablesnapshotbuilder_snapshottagleaf",
       "community": 232,
@@ -3741,21 +3871,51 @@
       "label": "FormatCard()",
       "file_type": "code",
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
-      "source_location": "L23",
+      "source_location": "L25",
       "_origin": "ast",
       "id": "ui_sgstablesnapshotbuilder_formatcard",
       "community": 232,
       "norm_label": "formatcard()"
     },
     {
-      "label": "Build()",
+      "label": "AddUniqueInts()",
       "file_type": "code",
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
-      "source_location": "L29",
+      "source_location": "L30",
       "_origin": "ast",
-      "id": "ui_sgstablesnapshotbuilder_build",
+      "id": "ui_sgstablesnapshotbuilder_adduniqueints",
       "community": 232,
-      "norm_label": "build()"
+      "norm_label": "adduniqueints()"
+    },
+    {
+      "label": "ApplyPromptSnapshot()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L38",
+      "_origin": "ast",
+      "id": "ui_sgstablesnapshotbuilder_applypromptsnapshot",
+      "community": 232,
+      "norm_label": "applypromptsnapshot()"
+    },
+    {
+      "label": "BuildPublicSnapshot()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L83",
+      "_origin": "ast",
+      "id": "ui_sgstablesnapshotbuilder_buildpublicsnapshot",
+      "community": 232,
+      "norm_label": "buildpublicsnapshot()"
+    },
+    {
+      "label": "FSGSTablePublicSnapshot",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "fsgstablepublicsnapshot",
+      "community": 0,
+      "norm_label": "fsgstablepublicsnapshot"
     },
     {
       "label": "USGSGameDriver",
@@ -3766,6 +3926,26 @@
       "id": "usgsgamedriver",
       "community": 232,
       "norm_label": "usgsgamedriver"
+    },
+    {
+      "label": "BuildPrivateSnapshot()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L143",
+      "_origin": "ast",
+      "id": "ui_sgstablesnapshotbuilder_buildprivatesnapshot",
+      "community": 232,
+      "norm_label": "buildprivatesnapshot()"
+    },
+    {
+      "label": "Build()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L184",
+      "_origin": "ast",
+      "id": "ui_sgstablesnapshotbuilder_build",
+      "community": 232,
+      "norm_label": "build()"
     },
     {
       "label": "SGSTableSnapshotBuilder.h",
@@ -3781,7 +3961,7 @@
       "label": "FSGSTableSnapshotBuilder()",
       "file_type": "code",
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.h",
-      "source_location": "L8",
+      "source_location": "L9",
       "_origin": "ast",
       "id": "ui_sgstablesnapshotbuilder_fsgstablesnapshotbuilder",
       "community": 208,
@@ -3804,7 +3984,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "cards_sgscard_usgscard",
-      "community": 28,
+      "community": 232,
       "norm_label": "usgscard()"
     },
     {
@@ -3814,7 +3994,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "cards_sgscarddef",
-      "community": 24,
+      "community": 37,
       "norm_label": "sgscarddef.h"
     },
     {
@@ -3824,7 +4004,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "cards_sgscarddef_ftablerowbase",
-      "community": 24,
+      "community": 37,
       "norm_label": "ftablerowbase()"
     },
     {
@@ -3914,7 +4094,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "source_sgs_shared_cards_sgsdecktypes_h_cards_sgsdecktypes",
-      "community": 11,
+      "community": 16,
       "norm_label": "sgsdecktypes.h"
     },
     {
@@ -3924,7 +4104,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "cards_sgsdecktypes_fsgsdeckcardspec",
-      "community": 11,
+      "community": 16,
       "norm_label": "fsgsdeckcardspec()"
     },
     {
@@ -3934,7 +4114,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "cards_sgsdecktypes_sgsdeckdefinitions",
-      "community": 11,
+      "community": 16,
       "norm_label": "sgsdeckdefinitions()"
     },
     {
@@ -3944,7 +4124,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "commands_sgscommand",
-      "community": 29,
+      "community": 37,
       "norm_label": "sgscommand.h"
     },
     {
@@ -3954,7 +4134,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "commands_sgscommand_fsgscommand",
-      "community": 29,
+      "community": 37,
       "norm_label": "fsgscommand()"
     },
     {
@@ -3994,7 +4174,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "commands_sgscommandpayloadtraits",
-      "community": 21,
+      "community": 29,
       "norm_label": "sgscommandpayloadtraits.h"
     },
     {
@@ -4004,7 +4184,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "commands_sgscommandpayloadtraits_tsgscommandpayloadtraits",
-      "community": 21,
+      "community": 29,
       "norm_label": "tsgscommandpayloadtraits()"
     },
     {
@@ -4014,7 +4194,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "commands_sgscommandpayloadtraits_fsgsusecardcommandpayload",
-      "community": 21,
+      "community": 29,
       "norm_label": "fsgsusecardcommandpayload()"
     },
     {
@@ -4024,7 +4204,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "commands_sgscommandpayloadtraits_fsgsrespondcardcommandpayload",
-      "community": 21,
+      "community": 29,
       "norm_label": "fsgsrespondcardcommandpayload()"
     },
     {
@@ -4284,7 +4464,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "source_sgs_shared_core_sgslogchannels_cpp_core_sgslogchannels",
-      "community": 232,
+      "community": 21,
       "norm_label": "sgslogchannels.cpp"
     },
     {
@@ -4494,8 +4674,108 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "decisions_sgsdecisiontypes",
-      "community": 21,
+      "community": 29,
       "norm_label": "sgsdecisiontypes.h"
+    },
+    {
+      "label": "SGSGameState.cpp",
+      "file_type": "code",
+      "source_file": "Source/SGS/Shared/Game/SGSGameState.cpp",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "source_sgs_shared_game_sgsgamestate_cpp_game_sgsgamestate",
+      "community": 0,
+      "norm_label": "sgsgamestate.cpp"
+    },
+    {
+      "label": "GetLifetimeReplicatedProps()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Shared/Game/SGSGameState.cpp",
+      "source_location": "L5",
+      "_origin": "ast",
+      "id": "game_sgsgamestate_getlifetimereplicatedprops",
+      "community": 0,
+      "norm_label": "getlifetimereplicatedprops()"
+    },
+    {
+      "label": "PublishPublicSnapshot()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Shared/Game/SGSGameState.cpp",
+      "source_location": "L11",
+      "_origin": "ast",
+      "id": "game_sgsgamestate_publishpublicsnapshot",
+      "community": 0,
+      "norm_label": "publishpublicsnapshot()"
+    },
+    {
+      "label": "OnRep_PublicSnapshot()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Shared/Game/SGSGameState.cpp",
+      "source_location": "L18",
+      "_origin": "ast",
+      "id": "game_sgsgamestate_onrep_publicsnapshot",
+      "community": 0,
+      "norm_label": "onrep_publicsnapshot()"
+    },
+    {
+      "label": "SGSGameState.h",
+      "file_type": "code",
+      "source_file": "Source/SGS/Shared/Game/SGSGameState.h",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "source_sgs_shared_game_sgsgamestate_h_game_sgsgamestate",
+      "community": 11,
+      "norm_label": "sgsgamestate.h"
+    },
+    {
+      "label": "AGameStateBase()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Shared/Game/SGSGameState.h",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "game_sgsgamestate_agamestatebase",
+      "community": 11,
+      "norm_label": "agamestatebase()"
+    },
+    {
+      "label": "SGSPlayerState.cpp",
+      "file_type": "code",
+      "source_file": "Source/SGS/Shared/Game/SGSPlayerState.cpp",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "source_sgs_shared_game_sgsplayerstate_cpp_game_sgsplayerstate",
+      "community": 0,
+      "norm_label": "sgsplayerstate.cpp"
+    },
+    {
+      "label": "GetLifetimeReplicatedProps()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Shared/Game/SGSPlayerState.cpp",
+      "source_location": "L5",
+      "_origin": "ast",
+      "id": "game_sgsplayerstate_getlifetimereplicatedprops",
+      "community": 0,
+      "norm_label": "getlifetimereplicatedprops()"
+    },
+    {
+      "label": "SGSPlayerState.h",
+      "file_type": "code",
+      "source_file": "Source/SGS/Shared/Game/SGSPlayerState.h",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "source_sgs_shared_game_sgsplayerstate_h_game_sgsplayerstate",
+      "community": 8,
+      "norm_label": "sgsplayerstate.h"
+    },
+    {
+      "label": "ASGSPlayerState()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Shared/Game/SGSPlayerState.h",
+      "source_location": "L9",
+      "_origin": "ast",
+      "id": "game_sgsplayerstate_asgsplayerstate",
+      "community": 8,
+      "norm_label": "asgsplayerstate()"
     },
     {
       "label": "SGSTargetQueryTypes.h",
@@ -4591,7 +4871,7 @@
       "label": "FSGSCardViewData()",
       "file_type": "code",
       "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
-      "source_location": "L6",
+      "source_location": "L9",
       "_origin": "ast",
       "id": "ui_sgstableviewtypes_fsgscardviewdata",
       "community": 11,
@@ -4601,31 +4881,71 @@
       "label": "FSGSSeatViewData()",
       "file_type": "code",
       "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
-      "source_location": "L16",
+      "source_location": "L33",
       "_origin": "ast",
       "id": "ui_sgstableviewtypes_fsgsseatviewdata",
       "community": 11,
       "norm_label": "fsgsseatviewdata()"
     },
     {
+      "label": "FSGSCardTargetViewData()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L63",
+      "_origin": "ast",
+      "id": "ui_sgstableviewtypes_fsgscardtargetviewdata",
+      "community": 11,
+      "norm_label": "fsgscardtargetviewdata()"
+    },
+    {
       "label": "FSGSDecisionPromptViewData()",
       "file_type": "code",
       "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
-      "source_location": "L28",
+      "source_location": "L75",
       "_origin": "ast",
       "id": "ui_sgstableviewtypes_fsgsdecisionpromptviewdata",
       "community": 11,
       "norm_label": "fsgsdecisionpromptviewdata()"
     },
     {
+      "label": "FSGSTablePublicSnapshot()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L134",
+      "_origin": "ast",
+      "id": "ui_sgstableviewtypes_fsgstablepublicsnapshot",
+      "community": 11,
+      "norm_label": "fsgstablepublicsnapshot()"
+    },
+    {
+      "label": "FSGSPlayerPrivateSnapshot()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L164",
+      "_origin": "ast",
+      "id": "ui_sgstableviewtypes_fsgsplayerprivatesnapshot",
+      "community": 11,
+      "norm_label": "fsgsplayerprivatesnapshot()"
+    },
+    {
       "label": "FSGSTableViewSnapshot()",
       "file_type": "code",
       "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
-      "source_location": "L40",
+      "source_location": "L182",
       "_origin": "ast",
       "id": "ui_sgstableviewtypes_fsgstableviewsnapshot",
       "community": 11,
       "norm_label": "fsgstableviewsnapshot()"
+    },
+    {
+      "label": "SGSComposeTableViewSnapshot()",
+      "file_type": "code",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L217",
+      "_origin": "ast",
+      "id": "ui_sgstableviewtypes_sgscomposetableviewsnapshot",
+      "community": 11,
+      "norm_label": "sgscomposetableviewsnapshot()"
     },
     {
       "label": "SGSGameContextAutomation.cpp",
@@ -4761,7 +5081,7 @@
       "label": "MakePlan0011BasicCard()",
       "file_type": "code",
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L19",
+      "source_location": "L18",
       "_origin": "ast",
       "id": "tests_sgsplan0011m1automation_makeplan0011basiccard",
       "community": 232,
@@ -4771,7 +5091,7 @@
       "label": "MakeLocalAgent()",
       "file_type": "code",
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L29",
+      "source_location": "L28",
       "_origin": "ast",
       "id": "tests_sgsplan0011m1automation_makelocalagent",
       "community": 232,
@@ -4781,7 +5101,7 @@
       "label": "MakeScriptedAgent()",
       "file_type": "code",
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L38",
+      "source_location": "L37",
       "_origin": "ast",
       "id": "tests_sgsplan0011m1automation_makescriptedagent",
       "community": 232,
@@ -4791,7 +5111,7 @@
       "label": "MakeLocalPlayDeck()",
       "file_type": "code",
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L47",
+      "source_location": "L46",
       "_origin": "ast",
       "id": "tests_sgsplan0011m1automation_makelocalplaydeck",
       "community": 232,
@@ -4801,7 +5121,7 @@
       "label": "MakeLocalResponseDeck()",
       "file_type": "code",
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L62",
+      "source_location": "L61",
       "_origin": "ast",
       "id": "tests_sgsplan0011m1automation_makelocalresponsedeck",
       "community": 232,
@@ -4811,7 +5131,7 @@
       "label": "MakeLocalDyingPeachDeck()",
       "file_type": "code",
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L77",
+      "source_location": "L76",
       "_origin": "ast",
       "id": "tests_sgsplan0011m1automation_makelocaldyingpeachdeck",
       "community": 232,
@@ -4821,7 +5141,7 @@
       "label": "StartTwoSeatGame()",
       "file_type": "code",
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L92",
+      "source_location": "L91",
       "_origin": "ast",
       "id": "tests_sgsplan0011m1automation_starttwoseatgame",
       "community": 232,
@@ -4831,7 +5151,7 @@
       "label": "StartFourSeatLocalGame()",
       "file_type": "code",
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L114",
+      "source_location": "L113",
       "_origin": "ast",
       "id": "tests_sgsplan0011m1automation_startfourseatlocalgame",
       "community": 232,
@@ -4841,7 +5161,7 @@
       "label": "StartLocalDyingPeachGame()",
       "file_type": "code",
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L137",
+      "source_location": "L136",
       "_origin": "ast",
       "id": "tests_sgsplan0011m1automation_startlocaldyingpeachgame",
       "community": 232,
@@ -4851,7 +5171,7 @@
       "label": "FindPlayableCardId()",
       "file_type": "code",
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L158",
+      "source_location": "L157",
       "_origin": "ast",
       "id": "tests_sgsplan0011m1automation_findplayablecardid",
       "community": 232,
@@ -4861,7 +5181,7 @@
       "label": "FindResponseCardId()",
       "file_type": "code",
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L176",
+      "source_location": "L175",
       "_origin": "ast",
       "id": "tests_sgsplan0011m1automation_findresponsecardid",
       "community": 232,
@@ -4871,7 +5191,7 @@
       "label": "HasExecutedLocalCommand()",
       "file_type": "code",
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L186",
+      "source_location": "L185",
       "_origin": "ast",
       "id": "tests_sgsplan0011m1automation_hasexecutedlocalcommand",
       "community": 232,
@@ -4881,7 +5201,7 @@
       "label": "BuildLocalTableSnapshot()",
       "file_type": "code",
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L206",
+      "source_location": "L205",
       "_origin": "ast",
       "id": "tests_sgsplan0011m1automation_buildlocaltablesnapshot",
       "community": 232,
@@ -4891,7 +5211,7 @@
       "label": "RunTest()",
       "file_type": "code",
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L222",
+      "source_location": "L221",
       "_origin": "ast",
       "id": "tests_sgsplan0011m1automation_runtest",
       "community": 232,
@@ -12025,7 +12345,7 @@
       "author": null,
       "contributor": null,
       "external": true,
-      "community": 29,
+      "community": 37,
       "community_name": "Command Replay Toolkit",
       "norm_label": "sgsids",
       "id": "sgsids"
@@ -12055,7 +12375,7 @@
       "author": null,
       "contributor": null,
       "external": true,
-      "community": 232,
+      "community": 21,
       "community_name": "Command Replay Toolkit",
       "norm_label": "sgslogchannels",
       "id": "sgslogchannels"
@@ -12070,7 +12390,7 @@
       "author": null,
       "contributor": null,
       "external": true,
-      "community": 207,
+      "community": 240,
       "community_name": "GAS Timing Bridge",
       "norm_label": "sgsrandomaudit",
       "id": "sgsrandomaudit"
@@ -12100,7 +12420,7 @@
       "author": null,
       "contributor": null,
       "external": true,
-      "community": 28,
+      "community": 21,
       "community_name": "Decision Flow",
       "norm_label": "sgsgamemode",
       "id": "sgsgamemode"
@@ -12115,7 +12435,7 @@
       "author": null,
       "contributor": null,
       "external": true,
-      "community": 232,
+      "community": 21,
       "community_name": "Decision Flow",
       "norm_label": "sgsgamedriver",
       "id": "sgsgamedriver"
@@ -12130,7 +12450,7 @@
       "author": null,
       "contributor": null,
       "external": true,
-      "community": 28,
+      "community": 21,
       "community_name": "Decision Flow",
       "norm_label": "gamemodebase",
       "id": "gamemodebase"
@@ -12145,7 +12465,7 @@
       "author": null,
       "contributor": null,
       "external": true,
-      "community": 11,
+      "community": 37,
       "community_name": "Card Game Context",
       "norm_label": "sgstypes",
       "id": "sgstypes"
@@ -12175,7 +12495,7 @@
       "author": null,
       "contributor": null,
       "external": true,
-      "community": 24,
+      "community": 37,
       "community_name": "Card Game Context",
       "norm_label": "datatable",
       "id": "datatable"
@@ -12190,7 +12510,7 @@
       "author": null,
       "contributor": null,
       "external": true,
-      "community": 24,
+      "community": 45,
       "community_name": "Card Game Context",
       "norm_label": "sgscardtypes",
       "id": "sgscardtypes"
@@ -12205,7 +12525,7 @@
       "author": null,
       "contributor": null,
       "external": true,
-      "community": 24,
+      "community": 37,
       "community_name": "Card Game Context",
       "norm_label": "sgscarddef",
       "id": "sgscarddef"
@@ -12265,7 +12585,7 @@
       "author": null,
       "contributor": null,
       "external": true,
-      "community": 21,
+      "community": 29,
       "community_name": "Command Replay Toolkit",
       "norm_label": "sgscommand",
       "id": "sgscommand"
@@ -12280,7 +12600,7 @@
       "author": null,
       "contributor": null,
       "external": true,
-      "community": 24,
+      "community": 45,
       "community_name": "Card Game Context",
       "norm_label": "sgseffectpipeline",
       "id": "sgseffectpipeline"
@@ -12310,7 +12630,7 @@
       "author": null,
       "contributor": null,
       "external": true,
-      "community": 240,
+      "community": 29,
       "community_name": "GAS Timing Bridge",
       "norm_label": "sgsactiveeffecttimeline",
       "id": "sgsactiveeffecttimeline"
@@ -12325,7 +12645,7 @@
       "author": null,
       "contributor": null,
       "external": true,
-      "community": 207,
+      "community": 240,
       "community_name": "GAS Timing Bridge",
       "norm_label": "sgstimingtypes",
       "id": "sgstimingtypes"
@@ -12400,7 +12720,7 @@
       "author": null,
       "contributor": null,
       "external": true,
-      "community": 207,
+      "community": 45,
       "community_name": "Card Game Context",
       "norm_label": "sgstargetquerytypes",
       "id": "sgstargetquerytypes"
@@ -12475,7 +12795,7 @@
       "author": null,
       "contributor": null,
       "external": true,
-      "community": 29,
+      "community": 208,
       "community_name": "Command Replay Toolkit",
       "norm_label": "gameplayeffecttypes",
       "id": "gameplayeffecttypes"
@@ -12585,11 +12905,41 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L139",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
+      "target": "game_sgsplayercontroller_attachlocalhud"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
       "source_location": "L10",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
       "target": "game_sgsplayercontroller_attachtomatch"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L62",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
+      "target": "game_sgsplayercontroller_buildtableviewsnapshot"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L114",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
+      "target": "game_sgsplayercontroller_clientattachlocalhud_implementation"
     },
     {
       "relation": "contains",
@@ -12605,11 +12955,141 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L12",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
+      "target": "game_sgsplayercontroller_getlifetimereplicatedprops"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L135",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
+      "target": "game_sgsplayercontroller_onrep_privatesnapshot"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L214",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
+      "target": "game_sgsplayercontroller_refreshafterserverdecision"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L47",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
+      "target": "game_sgsplayercontroller_refreshprivatesnapshotfromserver"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
       "source_location": "L51",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
       "target": "game_sgsplayercontroller_removetablehud"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L130",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
+      "target": "game_sgsplayercontroller_serversubmitpass_implementation"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L125",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
+      "target": "game_sgsplayercontroller_serversubmitresponsecard_implementation"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L120",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
+      "target": "game_sgsplayercontroller_serversubmitusecard_implementation"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L103",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
+      "target": "game_sgsplayercontroller_submitpass"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L198",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
+      "target": "game_sgsplayercontroller_submitpassonserver"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L92",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
+      "target": "game_sgsplayercontroller_submitresponsecard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L182",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
+      "target": "game_sgsplayercontroller_submitresponsecardonserver"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L81",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
+      "target": "game_sgsplayercontroller_submitusecard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L166",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_client_game_sgsplayercontroller_cpp_game_sgsplayercontroller",
+      "target": "game_sgsplayercontroller_submitusecardonserver"
     },
     {
       "relation": "imports",
@@ -12637,12 +13117,441 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L12",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_getlifetimereplicatedprops",
+      "target": "flifetimeproperty"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L12",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_getlifetimereplicatedprops",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Cards/SGSDeckTypes.cpp",
+      "source_location": "L17",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "cards_sgsdecktypes_makeplan0005smokedeck",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Core/SGSIndexedStore.h",
+      "source_location": "L205",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "core_sgsindexedstore_find",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Core/SGSRandomAudit.cpp",
+      "source_location": "L12",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "core_sgsrandomaudit_initializereplay",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Effects/SGSEffectPipeline.cpp",
+      "source_location": "L37",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "effects_sgseffectpipeline_enqueuemanyfront",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Effects/SGSReplayLog.cpp",
+      "source_location": "L11",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "effects_sgsreplaylog_setcommandlog",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Effects/SGSReplayLog.cpp",
+      "source_location": "L16",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "effects_sgsreplaylog_setrandomlog",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Effects/SGSStandardEffectSteps.cpp",
+      "source_location": "L22",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "effects_sgsstandardeffectsteps_makemovecardsstep",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
+      "source_location": "L364",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "engine_sgsgamecontext_discardfromhand",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
+      "source_location": "L320",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "engine_sgsgamecontext_drawcards",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
+      "source_location": "L170",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "engine_sgsgamecontext_getcardhandlesinpile",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
+      "source_location": "L175",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "engine_sgsgamecontext_getcardsinpile",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
+      "source_location": "L35",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "engine_sgsgamecontext_getcardsinzone",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
+      "source_location": "L7",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "engine_sgsgamecontext_initialize",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
+      "source_location": "L257",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "engine_sgsgamecontext_movecards",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Engine/SGSGameDriver.cpp",
+      "source_location": "L272",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "engine_sgsgamedriver_buildinitialdeck",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Engine/SGSGameDriver.cpp",
+      "source_location": "L8",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "engine_sgsgamedriver_startgame",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/Game/SGSGameState.cpp",
+      "source_location": "L5",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "game_sgsgamestate_getlifetimereplicatedprops",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/Game/SGSPlayerState.cpp",
+      "source_location": "L5",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "game_sgsplayerstate_getlifetimereplicatedprops",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Timing/SGSActiveEffectTimeline.cpp",
+      "source_location": "L136",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "tarray",
+      "target": "timing_sgsactiveeffecttimeline_filteractive"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Timing/SGSActiveEffectTimeline.cpp",
+      "source_location": "L48",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "tarray",
+      "target": "timing_sgsactiveeffecttimeline_queryactive"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Timing/SGSActiveEffectTimeline.cpp",
+      "source_location": "L61",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "tarray",
+      "target": "timing_sgsactiveeffecttimeline_querybyowner"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Timing/SGSActiveEffectTimeline.cpp",
+      "source_location": "L75",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "tarray",
+      "target": "timing_sgsactiveeffecttimeline_querybytag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Timing/SGSActiveEffectTimeline.cpp",
+      "source_location": "L68",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "tarray",
+      "target": "timing_sgsactiveeffecttimeline_querybytarget"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Timing/SGSGASActiveEffectAdapter.cpp",
+      "source_location": "L39",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "tarray",
+      "target": "timing_sgsgasactiveeffectadapter_querybyeffect"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Tests/SGSPlan0005Automation.cpp",
+      "source_location": "L35",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "tests_sgsplan0005automation_maketwoseatdeck",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Tests/SGSPlan0005Automation.cpp",
+      "source_location": "L50",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "tests_sgsplan0005automation_runtwoseatscriptedgame",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
+      "source_location": "L76",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "tests_sgsplan0011m1automation_makelocaldyingpeachdeck",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
+      "source_location": "L45",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "tests_sgsplan0011m1automation_makelocalplaydeck",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
+      "source_location": "L60",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "tests_sgsplan0011m1automation_makelocalresponsedeck",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
+      "source_location": "L75",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "tests_sgsplan0011m1automation_starttwoseatgame",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L30",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_adduniqueints",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/UI/Widgets/SGSTableHudWidget.cpp",
+      "source_location": "L369",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "widgets_sgstablehudwidget_gettargetsforcard",
+      "target": "tarray"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/Game/SGSGameState.cpp",
+      "source_location": "L5",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "confidence_score": 1.0,
+      "source": "game_sgsgamestate_getlifetimereplicatedprops",
+      "target": "flifetimeproperty"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/Game/SGSPlayerState.cpp",
+      "source_location": "L5",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "confidence_score": 1.0,
+      "source": "game_sgsplayerstate_getlifetimereplicatedprops",
+      "target": "flifetimeproperty"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L19",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_attachtomatch",
+      "target": "fsgsplayerprivatesnapshot"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
       "source_location": "L9",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "game_sgsplayercontroller_attachtomatch",
-      "target": "fsgstableviewsnapshot",
-      "confidence_score": 1.0
+      "target": "fsgstableviewsnapshot"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L39",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_attachtomatch",
+      "target": "game_sgsplayercontroller_attachlocalhud"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L35",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_attachtomatch",
+      "target": "game_sgsplayercontroller_refreshprivatesnapshotfromserver"
     },
     {
       "relation": "calls",
@@ -12673,9 +13582,9 @@
       "source_location": "L9",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "game_sgsplayercontroller_attachtomatch",
-      "target": "tfunction",
-      "confidence_score": 1.0
+      "target": "tfunction"
     },
     {
       "relation": "references",
@@ -12705,54 +13614,10 @@
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
       "source_location": "L206",
       "weight": 1.0,
-      "context": "return_type",
+      "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "tests_sgsplan0011m1automation_buildlocaltablesnapshot",
-      "target": "fsgstableviewsnapshot",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
-      "source_location": "L29",
-      "weight": 1.0,
-      "context": "return_type",
-      "source": "ui_sgstablesnapshotbuilder_build",
-      "target": "fsgstableviewsnapshot",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.cpp",
-      "source_location": "L30",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "source": "viewmodel_sgslocaldecisionpromptviewmodel_apply",
-      "target": "fsgstableviewsnapshot",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.cpp",
-      "source_location": "L16",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "source": "viewmodel_sgslocaldecisionpromptviewmodel_applyselectionstate",
-      "target": "fsgstableviewsnapshot",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L206",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "source": "tests_sgsplan0011m1automation_buildlocaltablesnapshot",
-      "target": "usgslocalhumandecisionagent",
-      "confidence_score": 1.0
+      "target": "usgslocalhumandecisionagent"
     },
     {
       "relation": "references",
@@ -12823,13 +13688,35 @@
     {
       "relation": "references",
       "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.cpp",
-      "source_location": "L30",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L38",
       "weight": 1.0,
       "context": "parameter_type",
-      "source": "viewmodel_sgslocaldecisionpromptviewmodel_apply",
-      "target": "usgslocalhumandecisionagent",
-      "confidence_score": 1.0
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_applypromptsnapshot",
+      "target": "usgslocalhumandecisionagent"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L191",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_build",
+      "target": "usgslocalhumandecisionagent"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L143",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_buildprivatesnapshot",
+      "target": "usgslocalhumandecisionagent"
     },
     {
       "relation": "references",
@@ -13318,6 +14205,83 @@
     {
       "relation": "references",
       "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L114",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_clientattachlocalhud_implementation",
+      "target": "int32"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L125",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_serversubmitresponsecard_implementation",
+      "target": "int32"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L120",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_serversubmitusecard_implementation",
+      "target": "int32"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L92",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_submitresponsecard",
+      "target": "int32"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L182",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_submitresponsecardonserver",
+      "target": "int32"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L81",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_submitusecard",
+      "target": "int32"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L166",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_submitusecardonserver",
+      "target": "int32"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Timing/SGSActiveEffectTimeline.cpp",
       "source_location": "L61",
       "weight": 1.0,
@@ -13454,9 +14418,9 @@
       "source_location": "L206",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "tests_sgsplan0011m1automation_buildlocaltablesnapshot",
-      "target": "int32",
-      "confidence_score": 1.0
+      "target": "int32"
     },
     {
       "relation": "references",
@@ -13505,23 +14469,34 @@
     {
       "relation": "references",
       "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Commands/Types/SGSRespondCardCommandType.cpp",
-      "source_location": "L8",
+      "source_file": "Source/SGS/Server/Commands/Types/SGSRespondCardCommandType.cpp",
+      "source_location": "L9",
       "weight": 1.0,
       "context": "parameter_type",
       "confidence_score": 1.0,
-      "source": "types_sgsrespondcardcommandtype_findhandcardstatebyid",
+      "source": "types_sgsrespondcardcommandtype_findrespondcardhandcardstatebyid",
       "target": "int32"
     },
     {
       "relation": "references",
       "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Commands/Types/SGSUseCardCommandType.cpp",
-      "source_location": "L8",
+      "source_file": "Source/SGS/Server/Commands/Types/SGSUseCardCommandType.cpp",
+      "source_location": "L9",
       "weight": 1.0,
       "context": "parameter_type",
       "confidence_score": 1.0,
-      "source": "types_sgsusecardcommandtype_findhandcardstatebyid",
+      "source": "types_sgsusecardcommandtype_findusecardhandcardstatebyid",
+      "target": "int32"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L30",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_adduniqueints",
       "target": "int32"
     },
     {
@@ -13531,20 +14506,20 @@
       "source_location": "L29",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "ui_sgstablesnapshotbuilder_build",
-      "target": "int32",
-      "confidence_score": 1.0
+      "target": "int32"
     },
     {
       "relation": "references",
       "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.cpp",
-      "source_location": "L8",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L143",
       "weight": 1.0,
-      "context": "generic_arg",
-      "source": "viewmodel_sgslocaldecisionpromptviewmodel_adduniqueints",
-      "target": "int32",
-      "confidence_score": 1.0
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_buildprivatesnapshot",
+      "target": "int32"
     },
     {
       "relation": "references",
@@ -13578,6 +14553,204 @@
       "confidence_score": 1.0,
       "source": "widgets_sgstablehudwidget_onseatclicked",
       "target": "int32"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L56",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_refreshprivatesnapshotfromserver",
+      "target": "fsgsplayerprivatesnapshot"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L38",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_applypromptsnapshot",
+      "target": "fsgsplayerprivatesnapshot"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L143",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_buildprivatesnapshot",
+      "target": "fsgsplayerprivatesnapshot"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L216",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_refreshafterserverdecision",
+      "target": "game_sgsplayercontroller_refreshprivatesnapshotfromserver"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L62",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_buildtableviewsnapshot",
+      "target": "fsgstableviewsnapshot"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
+      "source_location": "L206",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "tests_sgsplan0011m1automation_buildlocaltablesnapshot",
+      "target": "fsgstableviewsnapshot"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L29",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_build",
+      "target": "fsgstableviewsnapshot"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L85",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_submitusecard",
+      "target": "game_sgsplayercontroller_submitusecardonserver"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L96",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_submitresponsecard",
+      "target": "game_sgsplayercontroller_submitresponsecardonserver"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L107",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_submitpass",
+      "target": "game_sgsplayercontroller_submitpassonserver"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L117",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_clientattachlocalhud_implementation",
+      "target": "game_sgsplayercontroller_attachlocalhud"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L122",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_serversubmitusecard_implementation",
+      "target": "game_sgsplayercontroller_submitusecardonserver"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L127",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_serversubmitresponsecard_implementation",
+      "target": "game_sgsplayercontroller_submitresponsecardonserver"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L132",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_serversubmitpass_implementation",
+      "target": "game_sgsplayercontroller_submitpassonserver"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L146",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_attachlocalhud",
+      "target": "game_sgsplayercontroller_removetablehud"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L177",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_submitusecardonserver",
+      "target": "game_sgsplayercontroller_refreshafterserverdecision"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L193",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_submitresponsecardonserver",
+      "target": "game_sgsplayercontroller_refreshafterserverdecision"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Client/Game/SGSPlayerController.cpp",
+      "source_location": "L209",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "game_sgsplayercontroller_submitpassonserver",
+      "target": "game_sgsplayercontroller_refreshafterserverdecision"
     },
     {
       "relation": "calls",
@@ -13691,12 +14864,111 @@
     {
       "relation": "references",
       "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/Game/SGSGameState.h",
+      "source_location": "L12",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "game_sgsgamestate_agamestatebase",
+      "target": "sgs_api"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/Game/SGSPlayerState.h",
+      "source_location": "L9",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "game_sgsplayerstate_asgsplayerstate",
+      "target": "sgs_api"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Logic/Players/SGSSeat.h",
       "source_location": "L16",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
       "source": "players_sgsseat_usgsseat",
+      "target": "sgs_api"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L63",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstableviewtypes_fsgscardtargetviewdata",
+      "target": "sgs_api"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L9",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstableviewtypes_fsgscardviewdata",
+      "target": "sgs_api"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L75",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstableviewtypes_fsgsdecisionpromptviewdata",
+      "target": "sgs_api"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L164",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstableviewtypes_fsgsplayerprivatesnapshot",
+      "target": "sgs_api"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L33",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstableviewtypes_fsgsseatviewdata",
+      "target": "sgs_api"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L134",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstableviewtypes_fsgstablepublicsnapshot",
+      "target": "sgs_api"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L182",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstableviewtypes_fsgstableviewsnapshot",
       "target": "sgs_api"
     },
     {
@@ -14877,530 +16149,6 @@
       "target": "theme_sgsuitheme_esgsuicontroltone"
     },
     {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.cpp",
-      "source_location": "L4",
-      "weight": 1.0,
-      "source": "source_sgs_client_ui_viewmodel_sgslocaldecisionpromptviewmodel_cpp_viewmodel_sgslocaldecisionpromptviewmodel",
-      "target": "sgsdecisiontypes",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.cpp",
-      "source_location": "L8",
-      "weight": 1.0,
-      "source": "source_sgs_client_ui_viewmodel_sgslocaldecisionpromptviewmodel_cpp_viewmodel_sgslocaldecisionpromptviewmodel",
-      "target": "viewmodel_sgslocaldecisionpromptviewmodel_adduniqueints",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.cpp",
-      "source_location": "L30",
-      "weight": 1.0,
-      "source": "source_sgs_client_ui_viewmodel_sgslocaldecisionpromptviewmodel_cpp_viewmodel_sgslocaldecisionpromptviewmodel",
-      "target": "viewmodel_sgslocaldecisionpromptviewmodel_apply",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.cpp",
-      "source_location": "L16",
-      "weight": 1.0,
-      "source": "source_sgs_client_ui_viewmodel_sgslocaldecisionpromptviewmodel_cpp_viewmodel_sgslocaldecisionpromptviewmodel",
-      "target": "viewmodel_sgslocaldecisionpromptviewmodel_applyselectionstate",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.cpp",
-      "source_location": "L8",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "source": "viewmodel_sgslocaldecisionpromptviewmodel_adduniqueints",
-      "target": "tarray",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.cpp",
-      "source_location": "L50",
-      "weight": 1.0,
-      "source": "viewmodel_sgslocaldecisionpromptviewmodel_apply",
-      "target": "viewmodel_sgslocaldecisionpromptviewmodel_adduniqueints",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Cards/SGSDeckTypes.cpp",
-      "source_location": "L17",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "cards_sgsdecktypes_makeplan0005smokedeck",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Core/SGSIndexedStore.h",
-      "source_location": "L205",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "core_sgsindexedstore_find",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Core/SGSRandomAudit.cpp",
-      "source_location": "L12",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "core_sgsrandomaudit_initializereplay",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Effects/SGSEffectPipeline.cpp",
-      "source_location": "L37",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "effects_sgseffectpipeline_enqueuemanyfront",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Effects/SGSReplayLog.cpp",
-      "source_location": "L11",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "effects_sgsreplaylog_setcommandlog",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Effects/SGSReplayLog.cpp",
-      "source_location": "L16",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "effects_sgsreplaylog_setrandomlog",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Effects/SGSStandardEffectSteps.cpp",
-      "source_location": "L22",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "effects_sgsstandardeffectsteps_makemovecardsstep",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L364",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "engine_sgsgamecontext_discardfromhand",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L320",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "engine_sgsgamecontext_drawcards",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L170",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "engine_sgsgamecontext_getcardhandlesinpile",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L175",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "engine_sgsgamecontext_getcardsinpile",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L35",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "engine_sgsgamecontext_getcardsinzone",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L7",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "engine_sgsgamecontext_initialize",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Engine/SGSGameContext.cpp",
-      "source_location": "L257",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "engine_sgsgamecontext_movecards",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Engine/SGSGameDriver.cpp",
-      "source_location": "L272",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "engine_sgsgamedriver_buildinitialdeck",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Engine/SGSGameDriver.cpp",
-      "source_location": "L8",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "engine_sgsgamedriver_startgame",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Timing/SGSActiveEffectTimeline.cpp",
-      "source_location": "L136",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "tarray",
-      "target": "timing_sgsactiveeffecttimeline_filteractive"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Timing/SGSActiveEffectTimeline.cpp",
-      "source_location": "L48",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "tarray",
-      "target": "timing_sgsactiveeffecttimeline_queryactive"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Timing/SGSActiveEffectTimeline.cpp",
-      "source_location": "L61",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "tarray",
-      "target": "timing_sgsactiveeffecttimeline_querybyowner"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Timing/SGSActiveEffectTimeline.cpp",
-      "source_location": "L75",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "tarray",
-      "target": "timing_sgsactiveeffecttimeline_querybytag"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Timing/SGSActiveEffectTimeline.cpp",
-      "source_location": "L68",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "tarray",
-      "target": "timing_sgsactiveeffecttimeline_querybytarget"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Timing/SGSGASActiveEffectAdapter.cpp",
-      "source_location": "L39",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "tarray",
-      "target": "timing_sgsgasactiveeffectadapter_querybyeffect"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Tests/SGSPlan0005Automation.cpp",
-      "source_location": "L35",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "tests_sgsplan0005automation_maketwoseatdeck",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Tests/SGSPlan0005Automation.cpp",
-      "source_location": "L50",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "tests_sgsplan0005automation_runtwoseatscriptedgame",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L76",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "tests_sgsplan0011m1automation_makelocaldyingpeachdeck",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L45",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "tests_sgsplan0011m1automation_makelocalplaydeck",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L60",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "tests_sgsplan0011m1automation_makelocalresponsedeck",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
-      "source_location": "L75",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "tests_sgsplan0011m1automation_starttwoseatgame",
-      "target": "tarray"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/UI/Widgets/SGSTableHudWidget.cpp",
-      "source_location": "L369",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "widgets_sgstablehudwidget_gettargetsforcard",
-      "target": "tarray"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.cpp",
-      "source_location": "L38",
-      "weight": 1.0,
-      "source": "viewmodel_sgslocaldecisionpromptviewmodel_apply",
-      "target": "viewmodel_sgslocaldecisionpromptviewmodel_applyselectionstate",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.h",
-      "source_location": "L3",
-      "weight": 1.0,
-      "source": "source_sgs_client_ui_viewmodel_sgslocaldecisionpromptviewmodel_h_viewmodel_sgslocaldecisionpromptviewmodel",
-      "target": "coreminimal",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.h",
-      "source_location": "L8",
-      "weight": 1.0,
-      "source": "source_sgs_client_ui_viewmodel_sgslocaldecisionpromptviewmodel_h_viewmodel_sgslocaldecisionpromptviewmodel",
-      "target": "viewmodel_sgslocaldecisionpromptviewmodel_fsgslocaldecisionpromptviewmodel",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.h",
-      "source_location": "L8",
-      "weight": 1.0,
-      "context": "return_type",
-      "source": "viewmodel_sgslocaldecisionpromptviewmodel_fsgslocaldecisionpromptviewmodel",
-      "target": "class",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Effects/SGSEffectPipeline.h",
-      "source_location": "L86",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "class",
-      "target": "effects_sgseffectpipeline_fsgseffectpipeline"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Effects/SGSReplayLog.h",
-      "source_location": "L33",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "class",
-      "target": "effects_sgsreplaylog_fsgsreplaylog"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Timing/SGSGASActiveEffectAdapter.h",
-      "source_location": "L30",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "class",
-      "target": "timing_sgsgasactiveeffectadapter_fsgsgasactiveeffectadapter"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Commands/SGSCommandFactory.h",
-      "source_location": "L9",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "commands_sgscommandfactory_fsgscommandfactory",
-      "target": "class"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Commands/SGSCommandTypes.h",
-      "source_location": "L26",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "commands_sgscommandtypes_isgscommandtype",
-      "target": "class"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Shared/Decisions/SGSDecisionAgent.h",
-      "source_location": "L19",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "decisions_sgsdecisionagent_isgsdecisionagent",
-      "target": "class"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Server/Commands/SGSCommandRouter.h",
-      "source_location": "L34",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "source_sgs_server_commands_sgscommandrouter_h_commands_sgscommandrouter_fsgscommandrouter",
-      "target": "class"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Server/Timing/SGSActiveEffectTimeline.h",
-      "source_location": "L86",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "source_sgs_server_timing_sgsactiveeffecttimeline_h_timing_sgsactiveeffecttimeline_fsgsactiveeffecttimeline",
-      "target": "class"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.h",
-      "source_location": "L8",
-      "weight": 1.0,
-      "context": "return_type",
-      "source": "ui_sgstablesnapshotbuilder_fsgstablesnapshotbuilder",
-      "target": "class",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp",
@@ -15794,9 +16542,20 @@
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
       "source_location": "L49",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_sgstablesnapshotbuilder_build",
-      "target": "fstring",
-      "confidence_score": 1.0
+      "target": "fstring"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L102",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_buildpublicsnapshot",
+      "target": "fstring"
     },
     {
       "relation": "references",
@@ -15805,9 +16564,9 @@
       "source_location": "L23",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "ui_sgstablesnapshotbuilder_formatcard",
-      "target": "fstring",
-      "confidence_score": 1.0
+      "target": "fstring"
     },
     {
       "relation": "references",
@@ -15816,9 +16575,9 @@
       "source_location": "L11",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "ui_sgstablesnapshotbuilder_snapshottagleaf",
-      "target": "fstring",
-      "confidence_score": 1.0
+      "target": "fstring"
     },
     {
       "relation": "references",
@@ -15915,9 +16674,9 @@
       "source_location": "L11",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "ui_sgstablesnapshotbuilder_snapshottagleaf",
-      "target": "fgameplaytag",
-      "confidence_score": 1.0
+      "target": "fgameplaytag"
     },
     {
       "relation": "calls",
@@ -17493,12 +18252,12 @@
     {
       "relation": "references",
       "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Commands/Types/SGSRespondCardCommandType.cpp",
-      "source_location": "L8",
+      "source_file": "Source/SGS/Server/Commands/Types/SGSRespondCardCommandType.cpp",
+      "source_location": "L9",
       "weight": 1.0,
       "context": "parameter_type",
       "confidence_score": 1.0,
-      "source": "types_sgsrespondcardcommandtype_findhandcardstatebyid",
+      "source": "types_sgsrespondcardcommandtype_findrespondcardhandcardstatebyid",
       "target": "fsgscommand"
     },
     {
@@ -17526,12 +18285,12 @@
     {
       "relation": "references",
       "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Commands/Types/SGSUseCardCommandType.cpp",
-      "source_location": "L8",
+      "source_file": "Source/SGS/Server/Commands/Types/SGSUseCardCommandType.cpp",
+      "source_location": "L9",
       "weight": 1.0,
       "context": "parameter_type",
       "confidence_score": 1.0,
-      "source": "types_sgsusecardcommandtype_findhandcardstatebyid",
+      "source": "types_sgsusecardcommandtype_findusecardhandcardstatebyid",
       "target": "fsgscommand"
     },
     {
@@ -17592,12 +18351,12 @@
     {
       "relation": "references",
       "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Commands/Types/SGSRespondCardCommandType.cpp",
-      "source_location": "L8",
+      "source_file": "Source/SGS/Server/Commands/Types/SGSRespondCardCommandType.cpp",
+      "source_location": "L9",
       "weight": 1.0,
       "context": "parameter_type",
       "confidence_score": 1.0,
-      "source": "types_sgsrespondcardcommandtype_findhandcardstatebyid",
+      "source": "types_sgsrespondcardcommandtype_findrespondcardhandcardstatebyid",
       "target": "fsgscommandexecutioncontext"
     },
     {
@@ -17614,12 +18373,12 @@
     {
       "relation": "references",
       "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Commands/Types/SGSUseCardCommandType.cpp",
-      "source_location": "L8",
+      "source_file": "Source/SGS/Server/Commands/Types/SGSUseCardCommandType.cpp",
+      "source_location": "L9",
       "weight": 1.0,
       "context": "parameter_type",
       "confidence_score": 1.0,
-      "source": "types_sgsusecardcommandtype_findhandcardstatebyid",
+      "source": "types_sgsusecardcommandtype_findusecardhandcardstatebyid",
       "target": "fsgscommandexecutioncontext"
     },
     {
@@ -17860,6 +18619,105 @@
       "confidence_score": 1.0,
       "source": "namespace",
       "target": "timing_sgstimingtypes_sgstimingsteps"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/Commands/SGSCommandRouter.h",
+      "source_location": "L34",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "source_sgs_server_commands_sgscommandrouter_h_commands_sgscommandrouter_fsgscommandrouter",
+      "target": "class"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Effects/SGSEffectPipeline.h",
+      "source_location": "L86",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "class",
+      "target": "effects_sgseffectpipeline_fsgseffectpipeline"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Effects/SGSReplayLog.h",
+      "source_location": "L33",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "class",
+      "target": "effects_sgsreplaylog_fsgsreplaylog"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Timing/SGSGASActiveEffectAdapter.h",
+      "source_location": "L30",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "class",
+      "target": "timing_sgsgasactiveeffectadapter_fsgsgasactiveeffectadapter"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Commands/SGSCommandFactory.h",
+      "source_location": "L9",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "commands_sgscommandfactory_fsgscommandfactory",
+      "target": "class"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Logic/Commands/SGSCommandTypes.h",
+      "source_location": "L26",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "commands_sgscommandtypes_isgscommandtype",
+      "target": "class"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/Decisions/SGSDecisionAgent.h",
+      "source_location": "L19",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "decisions_sgsdecisionagent_isgsdecisionagent",
+      "target": "class"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/Timing/SGSActiveEffectTimeline.h",
+      "source_location": "L86",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "source_sgs_server_timing_sgsactiveeffecttimeline_h_timing_sgsactiveeffecttimeline_fsgsactiveeffecttimeline",
+      "target": "class"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.h",
+      "source_location": "L8",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_fsgstablesnapshotbuilder",
+      "target": "class"
     },
     {
       "relation": "contains",
@@ -18222,7 +19080,7 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "source_sgs_server_commands_types_sgsrespondcardcommandtype_cpp_types_sgsrespondcardcommandtype",
-      "target": "types_sgsrespondcardcommandtype_findhandcardstatebyid"
+      "target": "types_sgsrespondcardcommandtype_findrespondcardhandcardstatebyid"
     },
     {
       "relation": "contains",
@@ -18257,24 +19115,24 @@
     {
       "relation": "references",
       "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Commands/Types/SGSRespondCardCommandType.cpp",
-      "source_location": "L8",
+      "source_file": "Source/SGS/Server/Commands/Types/SGSRespondCardCommandType.cpp",
+      "source_location": "L9",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
-      "source": "types_sgsrespondcardcommandtype_findhandcardstatebyid",
+      "source": "types_sgsrespondcardcommandtype_findrespondcardhandcardstatebyid",
       "target": "fsgscardstate"
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Commands/Types/SGSRespondCardCommandType.cpp",
-      "source_location": "L66",
+      "source_file": "Source/SGS/Server/Commands/Types/SGSRespondCardCommandType.cpp",
+      "source_location": "L57",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "types_sgsrespondcardcommandtype_validatetyped",
-      "target": "types_sgsrespondcardcommandtype_findhandcardstatebyid"
+      "target": "types_sgsrespondcardcommandtype_findrespondcardhandcardstatebyid"
     },
     {
       "relation": "references",
@@ -18290,12 +19148,12 @@
     {
       "relation": "references",
       "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Commands/Types/SGSUseCardCommandType.cpp",
-      "source_location": "L8",
+      "source_file": "Source/SGS/Server/Commands/Types/SGSUseCardCommandType.cpp",
+      "source_location": "L9",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
-      "source": "types_sgsusecardcommandtype_findhandcardstatebyid",
+      "source": "types_sgsusecardcommandtype_findusecardhandcardstatebyid",
       "target": "fsgscardstate"
     },
     {
@@ -18361,7 +19219,7 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "source_sgs_server_commands_types_sgsusecardcommandtype_cpp_types_sgsusecardcommandtype",
-      "target": "types_sgsusecardcommandtype_findhandcardstatebyid"
+      "target": "types_sgsusecardcommandtype_findusecardhandcardstatebyid"
     },
     {
       "relation": "contains",
@@ -18397,12 +19255,12 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "source_file": "Source/SGS/Logic/Commands/Types/SGSUseCardCommandType.cpp",
-      "source_location": "L50",
+      "source_file": "Source/SGS/Server/Commands/Types/SGSUseCardCommandType.cpp",
+      "source_location": "L43",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "types_sgsusecardcommandtype_validatetyped",
-      "target": "types_sgsusecardcommandtype_findhandcardstatebyid"
+      "target": "types_sgsusecardcommandtype_findusecardhandcardstatebyid"
     },
     {
       "relation": "references",
@@ -19687,9 +20545,9 @@
       "source_location": "L23",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "ui_sgstablesnapshotbuilder_formatcard",
-      "target": "usgscard",
-      "confidence_score": 1.0
+      "target": "usgscard"
     },
     {
       "relation": "references",
@@ -22762,6 +23620,16 @@
       "target": "game_sgsgamemode_beginplay"
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/Game/SGSGameMode.cpp",
+      "source_location": "L22",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_server_game_sgsgamemode_cpp_game_sgsgamemode",
+      "target": "game_sgsgamemode_refreshviewsnapshots"
+    },
+    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -22804,6 +23672,17 @@
       "confidence_score": 1.0,
       "source": "source_sgs_server_game_sgsgamemode_cpp_game_sgsgamemode",
       "target": "sgslogchannels"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/Game/SGSGameMode.cpp",
+      "source_location": "L100",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "game_sgsgamemode_beginplay",
+      "target": "game_sgsgamemode_refreshviewsnapshots"
     },
     {
       "relation": "imports",
@@ -23807,9 +24686,9 @@
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "source_sgs_server_ui_sgstablesnapshotbuilder_cpp_ui_sgstablesnapshotbuilder",
-      "target": "sgscard",
-      "confidence_score": 1.0
+      "target": "sgscard"
     },
     {
       "relation": "imports",
@@ -23818,9 +24697,20 @@
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "source_sgs_server_ui_sgstablesnapshotbuilder_cpp_ui_sgstablesnapshotbuilder",
-      "target": "sgscommandrouter",
-      "confidence_score": 1.0
+      "target": "sgscommandrouter"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L9",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_server_ui_sgstablesnapshotbuilder_cpp_ui_sgstablesnapshotbuilder",
+      "target": "sgsdecisiontypes"
     },
     {
       "relation": "imports",
@@ -23829,9 +24719,9 @@
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "source_sgs_server_ui_sgstablesnapshotbuilder_cpp_ui_sgstablesnapshotbuilder",
-      "target": "sgsgamecontext",
-      "confidence_score": 1.0
+      "target": "sgsgamecontext"
     },
     {
       "relation": "imports",
@@ -23840,9 +24730,9 @@
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "source_sgs_server_ui_sgstablesnapshotbuilder_cpp_ui_sgstablesnapshotbuilder",
-      "target": "sgsgamedriver",
-      "confidence_score": 1.0
+      "target": "sgsgamedriver"
     },
     {
       "relation": "imports",
@@ -23851,9 +24741,29 @@
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "source_sgs_server_ui_sgstablesnapshotbuilder_cpp_ui_sgstablesnapshotbuilder",
-      "target": "sgsseat",
-      "confidence_score": 1.0
+      "target": "sgsseat"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L30",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_server_ui_sgstablesnapshotbuilder_cpp_ui_sgstablesnapshotbuilder",
+      "target": "ui_sgstablesnapshotbuilder_adduniqueints"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L38",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_server_ui_sgstablesnapshotbuilder_cpp_ui_sgstablesnapshotbuilder",
+      "target": "ui_sgstablesnapshotbuilder_applypromptsnapshot"
     },
     {
       "relation": "contains",
@@ -23861,9 +24771,29 @@
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "source_sgs_server_ui_sgstablesnapshotbuilder_cpp_ui_sgstablesnapshotbuilder",
-      "target": "ui_sgstablesnapshotbuilder_build",
-      "confidence_score": 1.0
+      "target": "ui_sgstablesnapshotbuilder_build"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L143",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_server_ui_sgstablesnapshotbuilder_cpp_ui_sgstablesnapshotbuilder",
+      "target": "ui_sgstablesnapshotbuilder_buildprivatesnapshot"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L83",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_server_ui_sgstablesnapshotbuilder_cpp_ui_sgstablesnapshotbuilder",
+      "target": "ui_sgstablesnapshotbuilder_buildpublicsnapshot"
     },
     {
       "relation": "contains",
@@ -23871,9 +24801,9 @@
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
       "source_location": "L23",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "source_sgs_server_ui_sgstablesnapshotbuilder_cpp_ui_sgstablesnapshotbuilder",
-      "target": "ui_sgstablesnapshotbuilder_formatcard",
-      "confidence_score": 1.0
+      "target": "ui_sgstablesnapshotbuilder_formatcard"
     },
     {
       "relation": "contains",
@@ -23881,9 +24811,9 @@
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
       "source_location": "L11",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "source_sgs_server_ui_sgstablesnapshotbuilder_cpp_ui_sgstablesnapshotbuilder",
-      "target": "ui_sgstablesnapshotbuilder_snapshottagleaf",
-      "confidence_score": 1.0
+      "target": "ui_sgstablesnapshotbuilder_snapshottagleaf"
     },
     {
       "relation": "calls",
@@ -23892,9 +24822,9 @@
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
       "source_location": "L25",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_sgstablesnapshotbuilder_formatcard",
-      "target": "ui_sgstablesnapshotbuilder_snapshottagleaf",
-      "confidence_score": 1.0
+      "target": "ui_sgstablesnapshotbuilder_snapshottagleaf"
     },
     {
       "relation": "calls",
@@ -23903,20 +24833,86 @@
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
       "source_location": "L97",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_sgstablesnapshotbuilder_build",
-      "target": "ui_sgstablesnapshotbuilder_formatcard",
-      "confidence_score": 1.0
+      "target": "ui_sgstablesnapshotbuilder_formatcard"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L174",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_buildprivatesnapshot",
+      "target": "ui_sgstablesnapshotbuilder_formatcard"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L55",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_applypromptsnapshot",
+      "target": "ui_sgstablesnapshotbuilder_adduniqueints"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L153",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_buildprivatesnapshot",
+      "target": "ui_sgstablesnapshotbuilder_applypromptsnapshot"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L187",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_build",
+      "target": "ui_sgstablesnapshotbuilder_buildpublicsnapshot"
     },
     {
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
-      "source_location": "L29",
+      "source_location": "L83",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_buildpublicsnapshot",
+      "target": "fsgstablepublicsnapshot"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L83",
       "weight": 1.0,
       "context": "parameter_type",
-      "source": "ui_sgstablesnapshotbuilder_build",
-      "target": "usgsgamedriver",
-      "confidence_score": 1.0
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_buildpublicsnapshot",
+      "target": "usgsgamedriver"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/Game/SGSGameState.cpp",
+      "source_location": "L11",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "game_sgsgamestate_publishpublicsnapshot",
+      "target": "fsgstablepublicsnapshot"
     },
     {
       "relation": "references",
@@ -23947,9 +24943,9 @@
       "source_location": "L206",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "tests_sgsplan0011m1automation_buildlocaltablesnapshot",
-      "target": "usgsgamedriver",
-      "confidence_score": 1.0
+      "target": "usgsgamedriver"
     },
     {
       "relation": "references",
@@ -23996,15 +24992,48 @@
       "target": "usgsgamedriver"
     },
     {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L29",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_build",
+      "target": "usgsgamedriver"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L143",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_buildprivatesnapshot",
+      "target": "usgsgamedriver"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp",
+      "source_location": "L188",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "ui_sgstablesnapshotbuilder_build",
+      "target": "ui_sgstablesnapshotbuilder_buildprivatesnapshot"
+    },
+    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.h",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "source_sgs_server_ui_sgstablesnapshotbuilder_h_ui_sgstablesnapshotbuilder",
-      "target": "coreminimal",
-      "confidence_score": 1.0
+      "target": "coreminimal"
     },
     {
       "relation": "contains",
@@ -24012,9 +25041,9 @@
       "source_file": "Source/SGS/Server/UI/SGSTableSnapshotBuilder.h",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "source_sgs_server_ui_sgstablesnapshotbuilder_h_ui_sgstablesnapshotbuilder",
-      "target": "ui_sgstablesnapshotbuilder_fsgstablesnapshotbuilder",
-      "confidence_score": 1.0
+      "target": "ui_sgstablesnapshotbuilder_fsgstablesnapshotbuilder"
     },
     {
       "relation": "contains",
@@ -25337,6 +26366,88 @@
       "target": "sgscommand"
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/Game/SGSGameState.cpp",
+      "source_location": "L5",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_shared_game_sgsgamestate_cpp_game_sgsgamestate",
+      "target": "game_sgsgamestate_getlifetimereplicatedprops"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/Game/SGSGameState.cpp",
+      "source_location": "L18",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_shared_game_sgsgamestate_cpp_game_sgsgamestate",
+      "target": "game_sgsgamestate_onrep_publicsnapshot"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/Game/SGSGameState.cpp",
+      "source_location": "L11",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_shared_game_sgsgamestate_cpp_game_sgsgamestate",
+      "target": "game_sgsgamestate_publishpublicsnapshot"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/Game/SGSGameState.h",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_shared_game_sgsgamestate_h_game_sgsgamestate",
+      "target": "coreminimal"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/Game/SGSGameState.h",
+      "source_location": "L12",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_shared_game_sgsgamestate_h_game_sgsgamestate",
+      "target": "game_sgsgamestate_agamestatebase"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/Game/SGSPlayerState.cpp",
+      "source_location": "L5",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_shared_game_sgsplayerstate_cpp_game_sgsplayerstate",
+      "target": "game_sgsplayerstate_getlifetimereplicatedprops"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/Game/SGSPlayerState.h",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_shared_game_sgsplayerstate_h_game_sgsplayerstate",
+      "target": "coreminimal"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/Game/SGSPlayerState.h",
+      "source_location": "L9",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "source_sgs_shared_game_sgsplayerstate_h_game_sgsplayerstate",
+      "target": "game_sgsplayerstate_asgsplayerstate"
+    },
+    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -25457,9 +26568,9 @@
       "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_sgstableviewtypes",
-      "target": "coreminimal",
-      "confidence_score": 1.0
+      "target": "coreminimal"
     },
     {
       "relation": "imports",
@@ -25468,9 +26579,19 @@
       "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_sgstableviewtypes",
-      "target": "sgstypes",
-      "confidence_score": 1.0
+      "target": "sgstypes"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L63",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "ui_sgstableviewtypes",
+      "target": "ui_sgstableviewtypes_fsgscardtargetviewdata"
     },
     {
       "relation": "contains",
@@ -25478,9 +26599,9 @@
       "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_sgstableviewtypes",
-      "target": "ui_sgstableviewtypes_fsgscardviewdata",
-      "confidence_score": 1.0
+      "target": "ui_sgstableviewtypes_fsgscardviewdata"
     },
     {
       "relation": "contains",
@@ -25488,9 +26609,19 @@
       "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
       "source_location": "L28",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_sgstableviewtypes",
-      "target": "ui_sgstableviewtypes_fsgsdecisionpromptviewdata",
-      "confidence_score": 1.0
+      "target": "ui_sgstableviewtypes_fsgsdecisionpromptviewdata"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L164",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "ui_sgstableviewtypes",
+      "target": "ui_sgstableviewtypes_fsgsplayerprivatesnapshot"
     },
     {
       "relation": "contains",
@@ -25498,9 +26629,19 @@
       "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_sgstableviewtypes",
-      "target": "ui_sgstableviewtypes_fsgsseatviewdata",
-      "confidence_score": 1.0
+      "target": "ui_sgstableviewtypes_fsgsseatviewdata"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L134",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "ui_sgstableviewtypes",
+      "target": "ui_sgstableviewtypes_fsgstablepublicsnapshot"
     },
     {
       "relation": "contains",
@@ -25508,9 +26649,52 @@
       "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
       "source_location": "L40",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "ui_sgstableviewtypes",
-      "target": "ui_sgstableviewtypes_fsgstableviewsnapshot",
-      "confidence_score": 1.0
+      "target": "ui_sgstableviewtypes_fsgstableviewsnapshot"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L217",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "ui_sgstableviewtypes",
+      "target": "ui_sgstableviewtypes_sgscomposetableviewsnapshot"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L217",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstableviewtypes_sgscomposetableviewsnapshot",
+      "target": "ui_sgstableviewtypes_fsgstablepublicsnapshot"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L217",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstableviewtypes_sgscomposetableviewsnapshot",
+      "target": "ui_sgstableviewtypes_fsgsplayerprivatesnapshot"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "Source/SGS/Shared/UI/SGSTableViewTypes.h",
+      "source_location": "L217",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "ui_sgstableviewtypes_sgscomposetableviewsnapshot",
+      "target": "ui_sgstableviewtypes_fsgstableviewsnapshot"
     },
     {
       "relation": "imports",
@@ -25906,9 +27090,9 @@
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
       "source_location": "L206",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_sgsplan0011m1automation",
-      "target": "tests_sgsplan0011m1automation_buildlocaltablesnapshot",
-      "confidence_score": 1.0
+      "target": "tests_sgsplan0011m1automation_buildlocaltablesnapshot"
     },
     {
       "relation": "contains",
@@ -26245,9 +27429,9 @@
       "source_file": "Source/SGS/Tests/SGSPlan0011M1Automation.cpp",
       "source_location": "L237",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tests_sgsplan0011m1automation_runtest",
-      "target": "tests_sgsplan0011m1automation_buildlocaltablesnapshot",
-      "confidence_score": 1.0
+      "target": "tests_sgsplan0011m1automation_buildlocaltablesnapshot"
     },
     {
       "relation": "contains",
@@ -31393,5 +32577,5 @@
       "source_file": "Source/Doc/Plan/Archive/0012-sgs-foundation-toolkit.md"
     }
   ],
-  "built_at_commit": "97765bd96dde6bf21136a26800ed63ced2b81650"
+  "built_at_commit": "b3c32424dc1d26b6bb03639cd2305b425f6898b1"
 }

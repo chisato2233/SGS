@@ -1,8 +1,7 @@
 #include "Client/UI/Widgets/SGSTableHudWidget.h"
 
-#include "Client/UI/Bridge/SGSLocalHumanDecisionAgent.h"
+#include "Client/Game/SGSPlayerController.h"
 #include "Client/UI/Theme/SGSUITheme.h"
-#include "Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SScrollBox.h"
@@ -45,8 +44,8 @@ FSlateColor ButtonTint(bool bSelected, bool bAvailable, bool bCurrent)
 
 void SSGSTableHudWidget::Construct(const FArguments& InArgs)
 {
+	PlayerController = InArgs._PlayerController;
 	SnapshotProvider = InArgs._SnapshotProvider;
-	DecisionAgent = InArgs._DecisionAgent;
 	ViewerSeat = InArgs._ViewerSeat;
 
 	ChildSlot
@@ -66,9 +65,15 @@ EActiveTimerReturnType SSGSTableHudWidget::HandleRefreshTimer(double InCurrentTi
 
 void SSGSTableHudWidget::Refresh()
 {
-	Snapshot = SnapshotProvider ? SnapshotProvider() : FSGSTableViewSnapshot();
+	if (const ASGSPlayerController* Controller = PlayerController.Get())
+	{
+		Snapshot = Controller->BuildTableViewSnapshot();
+	}
+	else
+	{
+		Snapshot = SnapshotProvider ? SnapshotProvider() : FSGSTableViewSnapshot();
+	}
 	Snapshot.ViewerSeat = ViewerSeat;
-	FSGSLocalDecisionPromptViewModel::Apply(Snapshot, DecisionAgent.Get());
 	NormalizeSelection();
 
 	ChildSlot
@@ -348,19 +353,19 @@ FReply SSGSTableHudWidget::OnSeatClicked(int32 SeatIndex)
 
 FReply SSGSTableHudWidget::OnConfirmClicked()
 {
-	USGSLocalHumanDecisionAgent* Agent = DecisionAgent.Get();
-	if (Agent == nullptr)
+	ASGSPlayerController* Controller = PlayerController.Get();
+	if (Controller == nullptr)
 	{
 		return FReply::Handled();
 	}
 
 	if (Snapshot.Prompt.bIsResponse)
 	{
-		Agent->SubmitResponseCard(SelectedCardId, SelectedTargetSeat);
+		Controller->SubmitResponseCard(SelectedCardId, SelectedTargetSeat);
 	}
 	else
 	{
-		Agent->SubmitUseCard(SelectedCardId, SelectedTargetSeat);
+		Controller->SubmitUseCard(SelectedCardId, SelectedTargetSeat);
 	}
 
 	SelectedCardId = INDEX_NONE;
@@ -371,9 +376,9 @@ FReply SSGSTableHudWidget::OnConfirmClicked()
 
 FReply SSGSTableHudWidget::OnPassClicked()
 {
-	if (USGSLocalHumanDecisionAgent* Agent = DecisionAgent.Get())
+	if (ASGSPlayerController* Controller = PlayerController.Get())
 	{
-		Agent->SubmitPass();
+		Controller->SubmitPass();
 	}
 
 	SelectedCardId = INDEX_NONE;
@@ -395,7 +400,7 @@ bool SSGSTableHudWidget::IsConfirmEnabled() const
 
 TArray<int32> SSGSTableHudWidget::GetTargetsForCard(int32 CardId) const
 {
-	if (const TArray<int32>* Targets = Snapshot.Prompt.TargetSeatIndicesByCardId.Find(CardId))
+	if (const TArray<int32>* Targets = Snapshot.Prompt.FindTargetSeatIndicesForCard(CardId))
 	{
 		return *Targets;
 	}

@@ -4,14 +4,14 @@
 #include "Shared/UI/SGSTableViewTypes.h"
 #include "Widgets/SCompoundWidget.h"
 
-class USGSLocalHumanDecisionAgent;
+class ASGSPlayerController;
 
 class SGS_API SSGSTableHudWidget : public SCompoundWidget
 {
 public:
 	SLATE_BEGIN_ARGS(SSGSTableHudWidget) {}
+		SLATE_ARGUMENT(TWeakObjectPtr<ASGSPlayerController>, PlayerController)
 		SLATE_ARGUMENT(TFunction<FSGSTableViewSnapshot()>, SnapshotProvider)
-		SLATE_ARGUMENT(TWeakObjectPtr<USGSLocalHumanDecisionAgent>, DecisionAgent)
 		SLATE_ARGUMENT(int32, ViewerSeat)
 	SLATE_END_ARGS()
 
@@ -39,8 +39,8 @@ private:
 	TArray<int32> GetTargetsForCard(int32 CardId) const;
 	FString GetPromptText() const;
 
+	TWeakObjectPtr<ASGSPlayerController> PlayerController;
 	TFunction<FSGSTableViewSnapshot()> SnapshotProvider;
-	TWeakObjectPtr<USGSLocalHumanDecisionAgent> DecisionAgent;
 	int32 ViewerSeat = 0;
 	FSGSTableViewSnapshot Snapshot;
 	int32 SelectedCardId = INDEX_NONE;

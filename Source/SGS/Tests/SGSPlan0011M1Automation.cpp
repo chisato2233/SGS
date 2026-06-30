@@ -9,7 +9,6 @@
 #include "Server/Players/SGSSeat.h"
 #include "Server/UI/SGSTableSnapshotBuilder.h"
 #include "Client/UI/Bridge/SGSLocalHumanDecisionAgent.h"
-#include "Client/UI/ViewModel/SGSLocalDecisionPromptViewModel.h"
 #include "Client/UI/Widgets/SGSTableHudWidget.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -208,9 +207,9 @@ FSGSTableViewSnapshot BuildLocalTableSnapshot(
 	const USGSLocalHumanDecisionAgent* Agent,
 	int32 ViewerSeat)
 {
-	FSGSTableViewSnapshot Snapshot = FSGSTableSnapshotBuilder::Build(Driver, ViewerSeat);
-	FSGSLocalDecisionPromptViewModel::Apply(Snapshot, Agent);
-	return Snapshot;
+	return SGSComposeTableViewSnapshot(
+		FSGSTableSnapshotBuilder::BuildPublicSnapshot(Driver),
+		FSGSTableSnapshotBuilder::BuildPrivateSnapshot(Driver, Agent, ViewerSeat));
 }
 }
 
@@ -234,16 +233,20 @@ bool FSGSPlan0011M1LocalUIBridgeTest::RunTest(const FString& Parameters)
 	TestNotNull(TEXT("Local play driver is created."), PlayDriver);
 	TestTrue(TEXT("Local agent receives a play prompt."), PlayLocalAgent->HasPendingPlayRequest());
 
-	const FSGSTableViewSnapshot PlaySnapshot = BuildLocalTableSnapshot(PlayDriver, PlayLocalAgent, 0);
+	const FSGSTablePublicSnapshot PlayPublicSnapshot = FSGSTableSnapshotBuilder::BuildPublicSnapshot(PlayDriver);
+	const FSGSPlayerPrivateSnapshot PlayPrivateSnapshot = FSGSTableSnapshotBuilder::BuildPrivateSnapshot(PlayDriver, PlayLocalAgent, 0);
+	const FSGSTableViewSnapshot PlaySnapshot = SGSComposeTableViewSnapshot(PlayPublicSnapshot, PlayPrivateSnapshot);
+	TestEqual(TEXT("Public snapshot exposes two seats."), PlayPublicSnapshot.Seats.Num(), 2);
+	TestTrue(TEXT("Private snapshot exposes local hand cards."), PlayPrivateSnapshot.HandCards.Num() > 0);
+	TestTrue(TEXT("Private snapshot exposes local prompt."), PlayPrivateSnapshot.Prompt.bHasPrompt);
 	TestTrue(TEXT("ViewModel exposes a local play prompt."), PlaySnapshot.Prompt.bHasPrompt && !PlaySnapshot.Prompt.bIsResponse);
 	TestEqual(TEXT("ViewModel exposes two seats."), PlaySnapshot.Seats.Num(), 2);
 	TestTrue(TEXT("ViewModel exposes local hand cards."), PlaySnapshot.HandCards.Num() > 0);
 	TSharedRef<SSGSTableHudWidget> HudWidget = SNew(SSGSTableHudWidget)
-		.SnapshotProvider([PlayDriver]()
+		.SnapshotProvider([PlayDriver, PlayLocalAgent]()
 			{
-				return FSGSTableSnapshotBuilder::Build(PlayDriver, 0);
+				return BuildLocalTableSnapshot(PlayDriver, PlayLocalAgent, 0);
 			})
-		.DecisionAgent(PlayLocalAgent)
 		.ViewerSeat(0);
 	TestTrue(TEXT("Slate HUD widget can be constructed for the local match."), HudWidget->GetVisibility().IsVisible());
 	HudWidget->SlatePrepass();
@@ -269,9 +272,10 @@ bool FSGSPlan0011M1LocalUIBridgeTest::RunTest(const FString& Parameters)
 	TSharedRef<SSGSTableHudWidget> FourSeatHudWidget = SNew(SSGSTableHudWidget)
 		.SnapshotProvider([FourSeatDriver]()
 			{
-				return FSGSTableSnapshotBuilder::Build(FourSeatDriver, 0);
+				return SGSComposeTableViewSnapshot(
+					FSGSTableSnapshotBuilder::BuildPublicSnapshot(FourSeatDriver),
+					FSGSTableSnapshotBuilder::BuildPrivateSnapshot(FourSeatDriver, nullptr, 0));
 			})
-		.DecisionAgent(FourSeatLocalAgent)
 		.ViewerSeat(0);
 	FourSeatHudWidget->SlatePrepass();
 	const FVector2D FourSeatDesiredSize = FourSeatHudWidget->GetDesiredSize();

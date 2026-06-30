@@ -6,7 +6,7 @@
 
 namespace
 {
-const FSGSCardState* FindHandCardStateById(int32 CardId, const FSGSCommand& Command, const FSGSCommandExecutionContext& Context)
+const FSGSCardState* FindUseCardHandCardStateById(int32 CardId, const FSGSCommand& Command, const FSGSCommandExecutionContext& Context)
 {
 	if (CardId == INDEX_NONE || Context.GameContext == nullptr)
 	{
@@ -40,7 +40,7 @@ FSGSStatus FSGSUseCardCommandType::ValidateTyped(
 	const FSGSUseCardCommandPayload& Payload,
 	const FSGSCommandExecutionContext& Context) const
 {
-	if (FindHandCardStateById(Payload.CardId, Command, Context) == nullptr)
+	if (FindUseCardHandCardStateById(Payload.CardId, Command, Context) == nullptr)
 	{
 		return MakeError(FSGSError::Make(
 			FName(TEXT("SGS.Command.InvalidCard")),

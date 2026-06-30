@@ -7,12 +7,29 @@
 #include "Server/Engine/SGSGameDriver.h"
 #include "Server/UI/SGSTableSnapshotBuilder.h"
 #include "Shared/Decisions/SGSDecisionAgent.h"
+#include "Shared/Game/SGSGameState.h"
+#include "Shared/Game/SGSPlayerState.h"
 #include "Misc/App.h"
 #include "Client/UI/Bridge/SGSLocalHumanDecisionAgent.h"
 
 ASGSGameMode::ASGSGameMode()
 {
 	PlayerControllerClass = ASGSPlayerController::StaticClass();
+	GameStateClass = ASGSGameState::StaticClass();
+	PlayerStateClass = ASGSPlayerState::StaticClass();
+}
+
+void ASGSGameMode::RefreshViewSnapshots()
+{
+	if (ASGSGameState* SGSGameState = GetGameState<ASGSGameState>())
+	{
+		SGSGameState->PublishPublicSnapshot(FSGSTableSnapshotBuilder::BuildPublicSnapshot(GameDriver));
+	}
+
+	if (LocalHumanPlayerController != nullptr)
+	{
+		LocalHumanPlayerController->RefreshPrivateSnapshotFromServer();
+	}
 }
 
 void ASGSGameMode::BeginPlay()
@@ -26,13 +43,13 @@ void ASGSGameMode::BeginPlay()
 	}
 
 	const int32 SeatCount = FMath::Max(NumSeats, 1);
-	ASGSPlayerController* LocalPlayerController = Cast<ASGSPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
+	LocalHumanPlayerController = Cast<ASGSPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
 	const bool bUseLocalHuman =
 		!FApp::IsUnattended()
 		&& !IsRunningCommandlet()
 		&& GetNetMode() != NM_DedicatedServer
-		&& LocalPlayerController != nullptr
-		&& LocalPlayerController->IsLocalController();
+		&& LocalHumanPlayerController != nullptr
+		&& LocalHumanPlayerController->IsLocalController();
 
 	TArray<TScriptInterface<ISGSDecisionAgent>> Agents;
 	Agents.Reserve(SeatCount);
@@ -61,16 +78,39 @@ void ASGSGameMode::BeginPlay()
 
 	GameDriver = NewObject<USGSGameDriver>(this);
 
-	if (bUseLocalHuman && LocalPlayerController != nullptr && LocalHumanAgent != nullptr)
+	if (bUseLocalHuman && LocalHumanPlayerController != nullptr && LocalHumanAgent != nullptr)
 	{
 		TWeakObjectPtr<USGSGameDriver> WeakGameDriver = GameDriver.Get();
-		LocalPlayerController->AttachToMatch(
-			[WeakGameDriver]()
-			{
-				return FSGSTableSnapshotBuilder::Build(WeakGameDriver.Get(), 0);
-			},
+		TWeakObjectPtr<USGSLocalHumanDecisionAgent> WeakLocalHumanAgent = LocalHumanAgent.Get();
+		TWeakObjectPtr<ASGSGameMode> WeakGameMode = this;
+		LocalHumanPlayerController->AttachToMatch(
 			LocalHumanAgent,
-			0);
+			0,
+			[WeakGameDriver, WeakLocalHumanAgent]()
+			{
+				return FSGSTableSnapshotBuilder::BuildPrivateSnapshot(
+					WeakGameDriver.Get(),
+					WeakLocalHumanAgent.Get(),
+					0);
+			},
+			[WeakGameMode]()
+			{
+				if (WeakGameMode.IsValid())
+				{
+					WeakGameMode->RefreshViewSnapshots();
+				}
+			});
+	}
+
+	if (LocalHumanPlayerController != nullptr)
+	{
+		if (ASGSPlayerState* SGSPlayerState = LocalHumanPlayerController->GetPlayerState<ASGSPlayerState>())
+		{
+			SGSPlayerState->SetSeatIndex(
+				bUseLocalHuman
+					? 0
+					: INDEX_NONE);
+		}
 	}
 
 	FSGSGameStartConfig Config;
@@ -78,4 +118,5 @@ void ASGSGameMode::BeginPlay()
 	Config.InitialDeck = SGSDeckDefinitions::MakePlan0005SmokeDeck(SeatCount);
 	Config.bShuffleInitialDeck = false;
 	GameDriver->StartGame(Agents, Config);
+	RefreshViewSnapshots();
 }

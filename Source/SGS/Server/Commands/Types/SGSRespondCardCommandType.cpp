@@ -6,7 +6,7 @@
 
 namespace
 {
-const FSGSCardState* FindHandCardStateById(int32 CardId, const FSGSCommand& Command, const FSGSCommandExecutionContext& Context)
+const FSGSCardState* FindRespondCardHandCardStateById(int32 CardId, const FSGSCommand& Command, const FSGSCommandExecutionContext& Context)
 {
 	if (CardId == INDEX_NONE || Context.GameContext == nullptr)
 	{
@@ -54,7 +54,7 @@ FSGSStatus FSGSRespondCardCommandType::ValidateTyped(
 			FString::Printf(TEXT("Command window does not match expected window %s."), *Context.ExpectedWindowName.ToString())));
 	}
 
-	const FSGSCardState* State = FindHandCardStateById(Payload.CardId, Command, Context);
+	const FSGSCardState* State = FindRespondCardHandCardStateById(Payload.CardId, Command, Context);
 	if (State == nullptr)
 	{
 		return MakeError(FSGSError::Make(
