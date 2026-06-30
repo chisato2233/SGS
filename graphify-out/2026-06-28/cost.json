@@ -1,0 +1,14 @@
+{
+  "runs": [
+    {
+      "date": "2026-06-26T20:18:13.826529+00:00",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "files": 68,
+      "mode": "deep",
+      "note": "Codex subagent semantic extraction; token usage unavailable from worker JSON."
+    }
+  ],
+  "total_input_tokens": 0,
+  "total_output_tokens": 0
+}
