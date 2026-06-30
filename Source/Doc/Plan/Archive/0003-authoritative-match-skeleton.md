@@ -2,9 +2,9 @@
 
 | 字段 | 值 |
 |---|---|
-| 状态 | `In Progress` |
+| 状态 | `Archived` |
 | 创建日期 | 2026-06-19 |
-| 最近更新 | 2026-06-19 |
+| 最近更新 | 2026-06-27 |
 | 关联需求 | `0000-RawRequirements.md` 第 #4 条 |
 | 关联代码 | `Source/SGS/{Logic,AI,Game}/`（详见 graphify）|
 
@@ -49,15 +49,19 @@
 - [x] 对局驱动器：异步回合阶段机（`SGSGameDriver`）
 - [x] 占位 AI 代理（`SGSAutoPassAgent`）
 - [x] 服务器入口（`SGSGameMode`）
-- [ ] （后续网络 Plan）复制状态 + PlayerController + RPC 决策通道
-- [ ] （待编译环境）在 UE 编辑器编译并以 PIE 验证日志序列
+- [x] 默认 GameMode 绑定到 `ASGSGameMode`，启动项目即可进入骨架对局 smoke 路径
+- [x] UE5.7 Development Editor 编译通过
+- [x] 命令行 game smoke 验证日志序列：4 AI 座位空对局跑满 8 个骨架回合并 `GameEnded`
+
+后续网络范围（另立 / 使用 0003N）：复制状态 + PlayerController + RPC 决策通道。
 
 ## 5. 验收标准
 
 - 代码符合 Rulers 规范（命名、`#pragma once`、`SGS_API`、`generated.h` 顺序、注释规则）。
 - 逻辑自洽（人工走查）：空对局产生预期事件序列，出牌阶段经代理 Pass 后推进，跑满 `MaxTurnsForSkeleton` 个回合后 `GameEnded`。
 - 无阻塞、无递归爆栈（蹦床 + 重入守卫）。
-- 待编译环境补充：编辑器编译通过 + PIE 日志验证。
+- 编译验收：`powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Unreal.ps1 -Action Build -Configuration Development` 通过。
+- 运行验收：命令行 game smoke 或 PIE 启动后，日志应出现 `Game class is 'SGSGameMode'`、`SGS skeleton match starting with 4 AI seats.`、`SGS.GameEvent.GameStarted`、各阶段 `PhaseBegan/PhaseEnded`、`Game over after 8 turns.` 与 `SGS.GameEvent.GameEnded`。
 
 ## 6. 进度与决策记录
 
@@ -65,3 +69,4 @@
 - 2026-06-19：**范围收缩**——复制/RPC/PlayerController 因无编译环境留待网络 Plan；蹦床循环 + `bPumping` 重入守卫替代阻塞式等待。
 - 2026-06-19：终止条件用 `MaxTurnsForSkeleton` 占位，胜负条件实现后替换。
 - 2026-06-19：⚠️ 风险：所有 UE C++ 未经编译，以人工审查为准；需尽快接入可编译的 UE5.7 环境补验证。
+- 2026-06-27：接入本地 UE5.7 构建验证；`Tools/Unreal.ps1 -Action Build -Configuration Development` 通过。`Config/DefaultEngine.ini` 绑定 `GlobalDefaultGameMode=/Script/SGS.SGSGameMode`，`USGSGameDriver::Broadcast` 输出事件日志；命令行 smoke 在 `Saved/Logs/SGS.log` 确认 4 AI 座位从 `GameStarted` 跑到 `GameEnded`。本计划归档，网络/RPC 进入后续 0003N。

@@ -55,6 +55,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FSGSOnCardsMoved, const FSGSCardMoveInfo& /*
 DECLARE_MULTICAST_DELEGATE_OneParam(FSGSOnDamage, const FSGSDamageInfo& /*Damage*/);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FSGSOnHealthChanged, int32 /*SeatIndex*/, int32 /*NewHealth*/);
 DECLARE_MULTICAST_DELEGATE_OneParam(FSGSOnSeatDying, int32 /*SeatIndex*/);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FSGSOnSeatEliminated, int32 /*SeatIndex*/, FName /*Reason*/);
 
 // 对局权威数据模型 + 基础操作原语（服务器侧）。
 // 持有牌堆/弃牌堆/座位与全部牌；提供移牌/摸牌/弃牌/伤害/回复/距离等原语并广播事件。
@@ -70,6 +71,8 @@ public:
 
 	int32 NumSeats() const { return Seats.Num(); }
 	USGSSeat* GetSeat(int32 Index) const;
+	USGSCard* FindCardById(int32 CardId) const;
+	const FSGSCardState* FindCardStateById(int32 CardId) const;
 	TArray<USGSCard*> GetCardsInZone(FSGSCardZone Zone, int32 SeatIndex = INDEX_NONE) const;
 	const FSGSRandomAudit& GetRandomAudit() const { return RandomAudit; }
 
@@ -92,6 +95,9 @@ public:
 	// 回复体力（不超过上限）。
 	void Heal(int32 SeatIndex, int32 Amount);
 
+	// 濒死求桃失败后的最小出局处理；完整胜负判定进入后续计划。
+	void EliminateSeat(int32 SeatIndex, FName Reason);
+
 	// 攻击者 FromSeat 到 ToSeat 的距离：存活座位环形最短 + 坐骑修正，最小为 1。
 	int32 GetDistance(int32 FromSeat, int32 ToSeat) const;
 	FSGSSeatQueryResult QuerySeats(const FSGSSeatQuery& Query) const;
@@ -102,6 +108,7 @@ public:
 	FSGSOnDamage& OnDamage() { return DamageDelegate; }
 	FSGSOnHealthChanged& OnHealthChanged() { return HealthChangedDelegate; }
 	FSGSOnSeatDying& OnSeatDying() { return SeatDyingDelegate; }
+	FSGSOnSeatEliminated& OnSeatEliminated() { return SeatEliminatedDelegate; }
 
 private:
 	using FCardStore = TSGSIndexedStore<FSGSCardState>;
@@ -152,6 +159,7 @@ private:
 	FSGSOnDamage DamageDelegate;
 	FSGSOnHealthChanged HealthChangedDelegate;
 	FSGSOnSeatDying SeatDyingDelegate;
+	FSGSOnSeatEliminated SeatEliminatedDelegate;
 
 	// 骨架期默认体力上限（真实值由武将决定，见 Plan 0009）。
 	static constexpr int32 DefaultMaxHealth = 4;

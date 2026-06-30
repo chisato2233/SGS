@@ -2,9 +2,9 @@
 
 | 字段 | 值 |
 |---|---|
-| 状态 | `In Progress` |
+| 状态 | `Archived` |
 | 创建日期 | 2026-06-19 |
-| 最近更新 | 2026-06-19 |
+| 最近更新 | 2026-06-27 |
 | 关联需求 | `0000-RawRequirements.md` 第 #3 条 |
 | 关联代码 | `Content/ImportedAssets/QSanguosha/`（纯素材，无代码）|
 
@@ -37,18 +37,18 @@
 ## 4. 任务拆解
 
 - [x] 确认素材许可（CC BY-NC-ND 4.0）与用途（非商用）
-- [x] `.gitattributes` 增补图片/音频 LFS 规则
+- [x] 按当时仓库策略导入素材；后续 LFS 策略已改为仅单文件 >= 50 MiB 显式托管
 - [x] 拷贝 `audio/`、`image/` 到 `Content/ImportedAssets/QSanguosha/`
 - [x] 编写 `ATTRIBUTION.md`
 - [x] 记录原始需求（`0000-RawRequirements.md` #3）并建本计划
-- [ ] 提交（LFS）并推送、建 PR
+- [x] 验证素材目录、署名文件与提交前大文件检查入口
 - [ ] （后续，另立计划）在 UE 编辑器导入为 `.uasset` 并整理引用
 
 ## 5. 验收标准
 
-- `Content/ImportedAssets/QSanguosha/` 下含 `audio`（≈404 文件）、`image`（≈1704 文件）与 `ATTRIBUTION.md`。
-- `git lfs ls-files` 能列出这些 png/ogg，确认走 LFS 而非直接入库。
-- 仓库可正常 clone，素材完整。
+- `Content/ImportedAssets/QSanguosha/` 下含 `audio`、`image` 与 `ATTRIBUTION.md`。
+- 提交前运行 `Tools/CheckLargeFiles.ps1 -Scope Staged`；当前项目 LFS 宪法为“单文件 >= 50 MiB 才显式托管”，不再按扩展名 blanket-track。
+- 仓库可正常 clone，素材完整；UE `.uasset` 正式导入另立内容计划。
 
 ## 6. 进度与决策记录
 
@@ -56,3 +56,4 @@
 - 2026-06-19：用户确认非商用、全量导入（含 UI 素材）。
 - 2026-06-19：素材按原结构落入 `Content/ImportedAssets/QSanguosha/`，新增图片/音频 LFS 规则与 `ATTRIBUTION.md`。
 - 2026-06-19：决定 UE `.uasset` 正式导入另立计划（当前环境无编辑器）。
+- 2026-06-27：复核 `Content/ImportedAssets/QSanguosha/` 共有 2109 个路径且 `ATTRIBUTION.md` 存在；运行 `Tools/CheckLargeFiles.ps1 -Scope Staged` 通过。因项目 LFS 规则已改为按单文件大小阈值，本计划不再要求按图片/音频扩展名托管，素材 UE 导入留给后续内容计划。本计划归档。

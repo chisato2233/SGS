@@ -5,6 +5,7 @@
 #include "UObject/ScriptInterface.h"
 #include "Core/SGSError.h"
 #include "Core/SGSTypes.h"
+#include "Logic/Cards/SGSDeckTypes.h"
 #include "Logic/Commands/SGSCommandRouter.h"
 #include "Logic/Effects/SGSEffectPipeline.h"
 #include "Logic/Engine/SGSGameEvents.h"
@@ -13,6 +14,17 @@
 #include "SGSGameDriver.generated.h"
 
 class USGSGameContext;
+class USGSCard;
+
+struct SGS_API FSGSGameStartConfig
+{
+	int32 RandomSeed = 0;
+	TArray<FSGSDeckCardSpec> InitialDeck;
+	bool bShuffleInitialDeck = true;
+	int32 StartingHandSize = 4;
+	int32 MaxTurns = 8;
+	TMap<int32, int32> InitialHealthBySeat;
+};
 
 // 服务器权威的对局驱动器：推进回合/阶段、在出牌阶段向决策代理请求动作。
 //
@@ -29,11 +41,14 @@ class SGS_API USGSGameDriver : public UObject
 public:
 	// 服务器：按给定决策代理（每个代理对应一个座位）开始一局。RandomSeed 用于可复现洗牌。
 	void StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents, int32 RandomSeed = 0);
+	void StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents, const FSGSGameStartConfig& Config);
 
 	// 事件总线：观察者在此订阅对局生命周期事件。
 	FSGSOnGameEvent& OnGameEvent() { return GameEventDelegate; }
 
 	USGSGameContext* GetContext() const { return Context; }
+	int32 GetCurrentSeatIndex() const { return CurrentSeatIndex; }
+	FSGSPhase GetCurrentPhase() const { return CurrentPhase; }
 
 	bool IsGameOver() const { return bGameOver; }
 	int32 GetTurnsPlayed() const { return TurnsPlayed; }
@@ -56,12 +71,28 @@ private:
 
 	// 出牌阶段动作的应答回调（可能同步或跨帧触发）。
 	void OnPlayActionDecided(const FSGSPlayPhaseDecision& Decision);
-	void SubmitPlayPhaseCommandWithFallback(const FSGSCommand& Command);
+	void OnResponseActionDecided(const FSGSResponseDecision& Decision);
+	bool SubmitCommandWithFallback(const FSGSCommand& Command);
 	FSGSCommandExecutionContext MakeCommandExecutionContext() const;
 	FSGSCommand MakeFallbackPassCommand(FName Reason) const;
 	FSGSEffectContext MakeEffectContext(FSGSCommandId CommandId = FSGSCommandId());
 	FSGSTimingPoint MakeCurrentTimingPoint(FName Step);
+	void BuildInitialDeck(const TArray<FSGSDeckCardSpec>& InitialDeck, bool bShuffle);
+	FSGSPlayPhaseRequest MakePlayPhaseRequest();
+	FSGSResponseRequest MakeResponseRequest(int32 SeatIndex, FName WindowName, FName RequiredCardName, int32 EffectSourceSeat, int32 EffectTargetSeat);
+	void ResolvePlayPhaseCommand(const FSGSCommand& Command);
+	void ResolveResponseCommand(const FSGSCommand& Command);
+	void ResolveSlashCommand(const FSGSCommand& Command);
+	void ResolvePeachCommand(const FSGSCommand& Command, int32 HealTargetSeat);
+	void ResolveSlashDodgeResponse(const FSGSCommand& Command);
+	void ResolveDyingPeachResponse(const FSGSCommand& Command);
+	void RequestSlashDodge(int32 SourceSeat, int32 TargetSeat);
+	void ApplySlashDamageOrDying();
+	void BeginDyingPeachWindow(int32 DyingSeat);
+	void RequestNextDyingPeachResponder();
+	void FinishPendingCardResolution();
 	void ExecuteDrawPhaseThroughPipeline();
+	void RunEffectStep(FSGSEffectStep Step, FSGSCommandId CommandId = FSGSCommandId());
 	void SyncReplayLog();
 
 	static FSGSPhase NextPhase(FSGSPhase Phase);
@@ -77,6 +108,15 @@ private:
 	FSGSCommandId PendingCommandId;
 	int32 NextCommandIdValue = 0;
 	int64 NextTimingSequence = 0;
+	FName PendingWindowName = NAME_None;
+	FName PendingRequiredCardName = NAME_None;
+	int32 PendingEffectSourceSeat = INDEX_NONE;
+	int32 PendingEffectTargetSeat = INDEX_NONE;
+	TObjectPtr<USGSCard> PendingSlashCard;
+	TArray<int32> PendingDyingResponders;
+	int32 PendingDyingResponderIndex = INDEX_NONE;
+	int32 CurrentMaxTurns = 8;
+	int32 CurrentStartingHandSize = 4;
 
 	bool bGameOver = false;
 	bool bWaitingForDecision = false;
@@ -90,12 +130,6 @@ private:
 	FSGSActiveEffectTimeline ActiveEffectTimeline;
 	FSGSReplayLog ReplayLog;
 
-	// 骨架期终止条件占位：跑满这么多个回合即结束。胜负条件实现后替换（见 Plan 0002 路线图）。
-	static constexpr int32 MaxTurnsForSkeleton = 8;
-
 	// 摸牌阶段固定摸牌数（标准规则）。
 	static constexpr int32 DrawCountPerTurn = 2;
-
-	// 起始手牌数（标准规则）。
-	static constexpr int32 StartingHandSize = 4;
 };

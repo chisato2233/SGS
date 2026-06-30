@@ -53,4 +53,6 @@ namespace SGSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameEvent_PhaseEnded, "SGS.GameEvent.PhaseEnded", "Phase ended event.");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(PlayAction_Pass, "SGS.PlayAction.Pass", "Pass the current play action request.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(PlayAction_UseCard, "SGS.PlayAction.UseCard", "Use a card from hand during an active decision.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(PlayAction_RespondCard, "SGS.PlayAction.RespondCard", "Respond to a reaction or rescue window with a card.");
 }

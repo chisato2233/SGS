@@ -1,10 +1,29 @@
 #include "Logic/Commands/SGSCommandRouter.h"
 
+#include "Logic/Cards/SGSCard.h"
 #include "Logic/Engine/SGSGameContext.h"
 #include "Core/SGSLogChannels.h"
 
 namespace
 {
+const FSGSCardState* FindHandCardState(const FSGSCommand& Command, const FSGSCommandExecutionContext& Context)
+{
+	if (Command.CardIds.Num() != 1 || Context.GameContext == nullptr)
+	{
+		return nullptr;
+	}
+
+	const FSGSCardState* State = Context.GameContext->FindCardStateById(Command.CardIds[0]);
+	if (State == nullptr
+		|| !State->Zone.MatchesTagExact(SGSGameplayTags::CardZone_Hand.GetTag())
+		|| State->OwnerSeat != Command.SeatIndex)
+	{
+		return nullptr;
+	}
+
+	return State;
+}
+
 class FSGSPassCommandHandler final : public ISGSCommandHandler
 {
 public:
@@ -42,11 +61,116 @@ public:
 		return MakeValue();
 	}
 };
+
+class FSGSUseCardCommandHandler final : public ISGSCommandHandler
+{
+public:
+	virtual FGameplayTag GetType() const override
+	{
+		return SGSGameplayTags::PlayAction_UseCard.GetTag();
+	}
+
+	virtual FSGSStatus Validate(const FSGSCommand& Command, const FSGSCommandExecutionContext& Context) const override
+	{
+		if (!Command.IsType(SGSGameplayTags::PlayAction_UseCard))
+		{
+			return MakeError(FSGSError::Make(
+				FName(TEXT("SGS.Command.UnsupportedType")),
+				FString::Printf(TEXT("UseCard handler received unsupported command type %s."), *Command.Type.ToString())));
+		}
+
+		if (FindHandCardState(Command, Context) == nullptr)
+		{
+			return MakeError(FSGSError::Make(
+				FName(TEXT("SGS.Command.InvalidCard")),
+				TEXT("UseCard requires exactly one card currently in the acting seat's hand.")));
+		}
+
+		if (Command.CardHandles.Num() > 0 || Command.TargetHandles.Num() > 0)
+		{
+			return MakeError(FSGSError::Make(
+				FName(TEXT("SGS.Command.UnsupportedHandlePayload")),
+				TEXT("Plan0005 commands use CardIds / TargetSeatIndices; handle payloads are reserved for later UI/network paths.")));
+		}
+
+		return MakeValue();
+	}
+
+	virtual FSGSStatus Execute(const FSGSCommand& Command, const FSGSCommandExecutionContext& Context) const override
+	{
+		return MakeValue();
+	}
+};
+
+class FSGSRespondCardCommandHandler final : public ISGSCommandHandler
+{
+public:
+	virtual FGameplayTag GetType() const override
+	{
+		return SGSGameplayTags::PlayAction_RespondCard.GetTag();
+	}
+
+	virtual FSGSStatus Validate(const FSGSCommand& Command, const FSGSCommandExecutionContext& Context) const override
+	{
+		if (!Command.IsType(SGSGameplayTags::PlayAction_RespondCard))
+		{
+			return MakeError(FSGSError::Make(
+				FName(TEXT("SGS.Command.UnsupportedType")),
+				FString::Printf(TEXT("RespondCard handler received unsupported command type %s."), *Command.Type.ToString())));
+		}
+
+		if (Context.ExpectedWindowName.IsNone())
+		{
+			return MakeError(FSGSError::Make(
+				FName(TEXT("SGS.Command.NoResponseWindow")),
+				TEXT("RespondCard is only valid while a response window is pending.")));
+		}
+
+		const FString* WindowName = Command.Parameters.Find(FName(TEXT("WindowName")));
+		if (WindowName == nullptr || *WindowName != Context.ExpectedWindowName.ToString())
+		{
+			return MakeError(FSGSError::Make(
+				FName(TEXT("SGS.Command.ResponseWindowMismatch")),
+				FString::Printf(TEXT("Command window does not match expected window %s."), *Context.ExpectedWindowName.ToString())));
+		}
+
+		const FSGSCardState* State = FindHandCardState(Command, Context);
+		if (State == nullptr)
+		{
+			return MakeError(FSGSError::Make(
+				FName(TEXT("SGS.Command.InvalidCard")),
+				TEXT("RespondCard requires exactly one card currently in the responding seat's hand.")));
+		}
+
+		if (!Context.RequiredCardName.IsNone() && State->CardName != Context.RequiredCardName)
+		{
+			return MakeError(FSGSError::Make(
+				FName(TEXT("SGS.Command.CardNameMismatch")),
+				FString::Printf(TEXT("Required=%s Actual=%s"), *Context.RequiredCardName.ToString(), *State->CardName.ToString())));
+		}
+
+		if (Command.CardHandles.Num() > 0 || Command.TargetHandles.Num() > 0)
+		{
+			return MakeError(FSGSError::Make(
+				FName(TEXT("SGS.Command.UnsupportedHandlePayload")),
+				TEXT("Plan0005 commands use CardIds / TargetSeatIndices; handle payloads are reserved for later UI/network paths.")));
+		}
+
+		return MakeValue();
+	}
+
+	virtual FSGSStatus Execute(const FSGSCommand& Command, const FSGSCommandExecutionContext& Context) const override
+	{
+		return MakeValue();
+	}
+};
 }
 
 FSGSCommandRouter::FSGSCommandRouter()
 {
 	RegisterHandler(MakeShared<FSGSPassCommandHandler>());
+	RegisterHandler(MakeShared<FSGSUseCardCommandHandler>());
+	RegisterHandler(MakeShared<FSGSRespondCardCommandHandler>());
 }
 
 void FSGSCommandRouter::Reset()
@@ -55,6 +179,8 @@ void FSGSCommandRouter::Reset()
 	NextLogSequence = 0;
 	Handlers.Reset();
 	RegisterHandler(MakeShared<FSGSPassCommandHandler>());
+	RegisterHandler(MakeShared<FSGSUseCardCommandHandler>());
+	RegisterHandler(MakeShared<FSGSRespondCardCommandHandler>());
 }
 
 void FSGSCommandRouter::RegisterHandler(TSharedRef<ISGSCommandHandler> Handler)

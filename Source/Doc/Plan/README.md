@@ -14,9 +14,10 @@ NNNN-短横线命名.md
 ```
 
 - `NNNN`：4 位零填充的递增序号，按创建顺序分配（如 `0001`、`0002`）。
-- `0000-RawRequirements.md` 是**保留文件**：专门按时间顺序追加记录用户键入的原始需求。
+- `NNNN-MN-短横线命名.md`：已有父计划的实施子里程碑（如 `0011-M1-...`）。只在父计划已经是长期路线 / 架构计划，且需要把实际落地拆成可验收切片时使用。
+- `0000-RawRequirements.md` 是**保留文件**：专门按时间顺序追加记录用户键入的原始需求。它是历史档案，后期可能非常冗长；不要默认全文读取，只在追溯原始需求时按需检索 / 局部阅读。
 - `_Template.md` 是**计划模板**：新建计划时复制它，不要直接修改模板本身。
-- `Archive/` 是**已完成计划归档目录**：状态为 `Archived` 的计划放在这里，主目录只保留当前工作面。
+- `Archive/` 是**已完成计划归档目录**：状态为 `Archived` 的计划放在这里，主目录只保留当前工作面。计划是否活跃由路径区分：`Source/Doc/Plan/*.md`（排除 README、模板、RawRequirements）是当前工作面；`Source/Doc/Plan/Archive/*.md` 是历史，默认不读。
 
 示例：
 ```text
@@ -26,6 +27,7 @@ Source/Doc/Plan/
 ├── 0000-RawRequirements.md    # 原始需求档案（持续追加）
 ├── 0001-table-skeleton.md     # 活跃计划：桌面骨架
 ├── 0002-turn-loop.md          # 活跃计划：回合循环
+├── 0011-M1-minimal-ui.md      # 父计划 0011 的实施子里程碑
 └── Archive/
     └── 0000-example-done.md   # 已完成并归档的计划
 ```
@@ -36,9 +38,9 @@ Source/Doc/Plan/
 
 1. 在 `0000-RawRequirements.md` 顶部追加本次用户的原始需求条目（保留原话）。
 2. 复制 `_Template.md` 为 `NNNN-短名.md`，填写方案。
-3. 在下方 **活跃计划索引** 表格中登记新条目。
+3. 将计划文件放在 `Source/Doc/Plan/` 主目录；路径本身表示它属于当前工作面，不再维护单独索引表。
 4. 实施过程中持续更新该计划文档的 `状态` 与 `进度`。
-5. 完成后：先把计划 `状态` 改为 `Done` 并完成验证；确认没有后续执行项后，移动到 `Archive/`，把 `状态` 改为 `Archived`，从活跃索引移到归档索引，并回写根目录 `ProjectBrief.md` 第 5 节「当前项目状态」。
+5. 完成后：先把计划 `状态` 改为 `Done` 并完成验证；确认没有后续执行项后，移动到 `Archive/`，把 `状态` 改为 `Archived`，并回写根目录 `ProjectBrief.md` 第 5 节「当前项目状态」。
 
 ### 2.1 计划质量门
 
@@ -67,29 +69,20 @@ Source/Doc/Plan/
 
 ---
 
-## 4. 活跃计划索引
+## 4. 计划发现与读取规则
 
-> 新建计划后在此登记。最新的放在最上面。状态为 `Archived` 的计划不得留在本表。
+本目录不维护活跃 / 归档索引表，避免 README 随计划数量膨胀并与文件状态漂移。后续 Agent 按路径判断计划状态：
 
-| 序号 | 标题 | 状态 | 说明 |
-|---|---|---|---|
-| 0011 | Native Code-first UI 架构 | Ready | Slate/UMG/CommonUI 按需组合 + SGSUI 薄封装；不使用 WebView/React/Vue 作为主 UI，不自研 Gameface |
-| 0004 | 对局数据模型 | In Progress | 卡牌/牌区/玩家状态 + 通用移牌/摸牌/弃牌/伤害/回复/距离原语 + 事件（`USGSGameContext`）|
-| 0003 | 权威对局骨架 | In Progress | 服务器侧回合阶段机闭环 + 决策代理 + 事件总线 + 占位 AI + GameMode 入口 |
-| 0002 | 核心逻辑：架构/分层/路线图 | In Progress | 服务器权威 + 多人/AI 并存 + 异步结算；分层规范 + `Core/` 基础层 + 后续 Plan 路线图 |
-| 0001 | 导入太阳神三国杀素材 | In Progress | QSanguosha 卡牌/武将/配音/音乐/UI 素材导入 `Content/ImportedAssets/` |
-| 0000 | 原始需求档案 | — | 用户原始需求的时间线记录 |
+- `Source/Doc/Plan/*.md`：当前工作面。排除 `README.md`、`_Template.md`、`0000-RawRequirements.md` 后，剩余计划即活跃或 Ready 计划；按当前任务只读取相关文件。
+- `Source/Doc/Plan/Archive/*.md`：历史计划。默认不读；只有追溯决策、验收证据或历史原因时，才按文件名 / git / graphify / 搜索结果读取具体归档文件。
+- `Source/Doc/Plan/0000-RawRequirements.md`：原始需求历史。只追加，不整理；可能非常长。默认不全文读取，只有需要核对用户原话或需求来源时再检索并局部阅读。
+- `ProjectBrief.md` 第 5 节只记录项目级总状态和下一步，不承担计划索引职责。
 
----
+常用发现命令：
 
-## 5. 归档计划索引
+```powershell
+rg --files Source\Doc\Plan -g "*.md" -g "!README.md" -g "!_Template.md" -g "!0000-RawRequirements.md" -g "!**/Archive/**"
+rg --files Source\Doc\Plan\Archive -g "*.md"
+```
 
-> 归档计划位于 `Source/Doc/Plan/Archive/`。需要追溯历史决策时读取；不要直接在归档计划里继续追加新实现任务，新的实质工作应新建或使用活跃 Plan。
-
-| 序号 | 标题 | 状态 | 位置 | 说明 |
-|---|---|---|---|---|
-| 0012 | SGS 基础工具库开发计划 | Archived | `Archive/0012-sgs-foundation-toolkit.md` | P0+P1 基础工具库：错误/结果、Command、RandomAudit、IndexedStore、TargetQuery、Timing/ActiveEffect、EffectPipeline、ReplayLog 地基；P2 工具按需小迭代 |
-
-<!-- 新计划登记示例：
-| 0001 | 桌面骨架 | Ready | 4 人桌面 + 牌堆/弃牌堆/手牌区 |
--->
+需要理解计划与代码影响面时，优先使用 graphify query/path/explain，而不是把索引信息手写进 README。

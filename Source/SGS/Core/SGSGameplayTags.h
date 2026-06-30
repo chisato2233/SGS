@@ -67,4 +67,6 @@ namespace SGSGameplayTags
 
 	// Command / decision actions.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(PlayAction_Pass);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(PlayAction_UseCard);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(PlayAction_RespondCard);
 }

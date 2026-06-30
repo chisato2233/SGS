@@ -21,4 +21,18 @@ class SGS_API ISGSDecisionAgent
 public:
 	// 请求该座位在出牌阶段的一个动作。完成时调用 OnDecided 回传结果。
 	virtual void RequestPlayPhaseAction(const FSGSPlayPhaseRequest& Request, FSGSPlayPhaseDecisionDelegate OnDecided) = 0;
+
+	// 请求该座位响应一个规则窗口（如出闪 / 求桃）。默认 Pass，便于旧代理保持安全行为。
+	virtual void RequestResponseAction(const FSGSResponseRequest& Request, FSGSResponseDecisionDelegate OnDecided)
+	{
+		FSGSResponseDecision Decision;
+		Decision.Command = FSGSCommand::MakePass(
+			Request.CommandId,
+			Request.RequestId,
+			Request.SeatIndex,
+			Request.Phase,
+			FName(TEXT("AgentDefault")),
+			Request.WindowName.IsNone() ? FName(TEXT("ResponsePass")) : Request.WindowName);
+		OnDecided.ExecuteIfBound(Decision);
+	}
 };

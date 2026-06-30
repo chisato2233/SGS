@@ -75,4 +75,52 @@ struct SGS_API FSGSCommand
 		Command.SourceName = InSourceName;
 		return Command;
 	}
+
+	static FSGSCommand MakeUseCard(
+		FSGSCommandId InCommandId,
+		int32 InRequestId,
+		int32 InSeatIndex,
+		FSGSPhase InPhase,
+		int32 InCardId,
+		TArray<int32> InTargetSeatIndices,
+		FName InSourceChannel,
+		FName InSourceName)
+	{
+		FSGSCommand Command;
+		Command.CommandId = InCommandId;
+		Command.RequestId = InRequestId;
+		Command.SeatIndex = InSeatIndex;
+		Command.Type = SGSGameplayTags::PlayAction_UseCard.GetTag();
+		Command.Phase = InPhase;
+		Command.CardIds.Add(InCardId);
+		Command.TargetSeatIndices = MoveTemp(InTargetSeatIndices);
+		Command.SourceChannel = InSourceChannel;
+		Command.SourceName = InSourceName;
+		return Command;
+	}
+
+	static FSGSCommand MakeRespondCard(
+		FSGSCommandId InCommandId,
+		int32 InRequestId,
+		int32 InSeatIndex,
+		FSGSPhase InPhase,
+		int32 InCardId,
+		TArray<int32> InTargetSeatIndices,
+		FName InWindowName,
+		FName InSourceChannel,
+		FName InSourceName)
+	{
+		FSGSCommand Command;
+		Command.CommandId = InCommandId;
+		Command.RequestId = InRequestId;
+		Command.SeatIndex = InSeatIndex;
+		Command.Type = SGSGameplayTags::PlayAction_RespondCard.GetTag();
+		Command.Phase = InPhase;
+		Command.CardIds.Add(InCardId);
+		Command.TargetSeatIndices = MoveTemp(InTargetSeatIndices);
+		Command.Parameters.Add(FName(TEXT("WindowName")), InWindowName.ToString());
+		Command.SourceChannel = InSourceChannel;
+		Command.SourceName = InSourceName;
+		return Command;
+	}
 };

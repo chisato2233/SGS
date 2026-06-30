@@ -27,6 +27,9 @@ struct SGS_API FSGSCommandExecutionContext
 	int32 ExpectedRequestId = 0;
 	int32 ExpectedSeatIndex = INDEX_NONE;
 	FSGSPhase ExpectedPhase = SGSGameplayTags::Phase_None.GetTag();
+	FName ExpectedWindowName = NAME_None;
+	FName RequiredCardName = NAME_None;
+	int32 EffectTargetSeatIndex = INDEX_NONE;
 };
 
 struct SGS_API FSGSCommandLogEntry

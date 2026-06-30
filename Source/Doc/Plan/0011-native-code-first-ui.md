@@ -4,9 +4,10 @@
 |---|---|
 | 状态 | `Ready` |
 | 创建日期 | 2026-06-19 |
-| 最近更新 | 2026-06-19 |
+| 最近更新 | 2026-06-28 |
 | 关联需求 | `0000-RawRequirements.md` 中的第 5 条 |
 | 关联代码 | `Source/SGS/UI/`（未来），`Source/SGS/SGS.Build.cs`（未来按需追加 UI 模块） |
+| 子计划 | `0011-M1-minimal-code-first-table-ui.md` |
 
 ---
 
@@ -64,6 +65,12 @@ SGSUI 不是通用 UI 引擎，只包含 SGS 需要的薄层：
 
 ## 4. 任务拆解
 
+### M1：最小代码优先牌桌 UI 纵切
+
+详见 `0011-M1-minimal-code-first-table-ui.md`。M1 只做本地最小可操作牌桌 HUD，并依赖 `0005-basic-card-playable-rules.md` 的真实基础牌规则路径；静态假界面不能作为 M1 完成依据。
+
+### 后续 UI 任务池
+
 - [ ] 在 UI 阶段开始时，按需为 `SGS.Build.cs` 追加 `UMG` / `Slate` / `SlateCore`。
 - [ ] 建立 `Source/SGS/UI/` 的最小目录和命名规范。
 - [ ] 定义第一版 SGS theme/token。
@@ -84,3 +91,4 @@ SGSUI 不是通用 UI 引擎，只包含 SGS 需要的薄层：
 ## 6. 进度与决策记录
 
 - 2026-06-19：用户确认选择路线 B。项目 UI 路线定为 Unreal Native Code-first + SGSUI 薄封装；不采用 WebView/React/Vue 作为主 UI，不自研完整 Gameface。
+- 2026-06-28：拆出 `0011-M1-minimal-code-first-table-ui.md` 作为第一个 UI 实施子计划。M1 只验收真实规则状态驱动的最小可操作 HUD，依赖 Plan 0005，不接受静态假界面。

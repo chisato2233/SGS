@@ -2,9 +2,9 @@
 
 | 字段 | 值 |
 |---|---|
-| 状态 | `In Progress` |
+| 状态 | `Archived` |
 | 创建日期 | 2026-06-19 |
-| 最近更新 | 2026-06-19 |
+| 最近更新 | 2026-06-27 |
 | 关联需求 | `0000-RawRequirements.md` 第 #4 条 |
 | 关联代码 | `Source/SGS/`（分层骨架）、`Source/SGS/Core/`（基础层）|
 
@@ -118,7 +118,7 @@ Source/SGS/
 - `ProjectBrief.md` / `Rulers.md` 与本架构一致，无残留"单机/不复制"表述（changelog 留痕除外）。
 - `Source/SGS/Core/SGSLogChannels.{h,cpp}`、`Source/SGS/Core/SGSTypes.h` 就位，符合 `Rulers.md` 编码规范（命名、`#pragma once`、`SGS_API`、注释规则）。
 - 本文件含可执行的 Plan 路线图。
-- （编译验证：当前环境无 UE 引擎，无法本地编译；以严格遵循 UE5.7 规范的人工审查替代，待有编辑器环境时补编译。）
+- UE5.7 Development Editor 编译通过。
 
 ## 7. 进度与决策记录
 
@@ -130,3 +130,4 @@ Source/SGS/
 - 2026-06-19：路线图调整——因 Cloud 环境无 UE 编译器，Plan 0003 收缩为"服务器侧逻辑闭环"，复制/RPC/PlayerController 拆出为 **0003N（网络层）**，待具备可编译 UE 环境再做。
 - 2026-06-19：UI 路线更新为 **Native Code-first UI / SGSUI 薄封装**（见 Plan 0011），替代早期"UMG 纯 C++"表述；核心逻辑路线图编号不变。
 - 2026-06-23：GAS 策略改定为“引入 GAS，但不外包 SGS 规则核心”；新增 Plan 0012 作为基础工具库计划，原“联机打磨”顺延为 Plan 0013。
+- 2026-06-27：复核架构基线、分层、路线图与 `Core/` 基础层均已被后续计划承接；运行 `Tools/Unreal.ps1 -Action Build -Configuration Development` 通过。本计划作为架构/路线图总纲归档，后续实现状态以具体 Plan 为准。

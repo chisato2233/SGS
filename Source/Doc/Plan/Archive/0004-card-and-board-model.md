@@ -2,9 +2,9 @@
 
 | 字段 | 值 |
 |---|---|
-| 状态 | `In Progress` |
+| 状态 | `Archived` |
 | 创建日期 | 2026-06-19 |
-| 最近更新 | 2026-06-19 |
+| 最近更新 | 2026-06-27 |
 | 关联需求 | `0000-RawRequirements.md` 第 #4 条 |
 | 关联代码 | `Source/SGS/Logic/{Cards,Players,Engine}/`（详见 graphify）|
 
@@ -60,15 +60,18 @@
 - [x] 扩展 `USGSSeat` 玩家运行态
 - [x] `USGSGameContext`：模型 + 原语 + 事件
 - [x] 重构 `USGSGameDriver` 用 Context；摸牌阶段/起手接入
-- [ ] （待编译环境）编辑器编译 + 用占位牌库 PIE 验证原语
-- [ ] （后续）标准牌库 DataTable 内容
+- [x] UE5.7 Development Editor 编译通过
+- [x] 骨架对局 smoke 覆盖 `USGSGameDriver` 通过 EffectPipeline 调用起手/摸牌路径（当前牌堆为空）
+- [x] 用占位牌库自动化测试验证移牌/摸牌/弃牌/洗回/伤害/回复/距离/查询/不变量
+- [x] 标准牌库 DataTable 内容拆出到后续内容 / 基础牌计划，不阻塞本数据模型计划
 
 ## 5. 验收标准
 
 - 代码符合 Rulers 规范；分层依赖单向（`Engine → Cards/Players`，无反向）。
 - 人工走查：移牌/摸牌/洗回/伤害/回复/距离逻辑自洽；事件在对应原语处广播。
 - 距离：相邻为 1；+1/-1 马按栏修正；最小 1。
-- 待编译环境补：编译通过 + 用占位牌库跑通摸牌/弃牌/伤害链。
+- 编译验收：`powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Unreal.ps1 -Action Build -Configuration Development` 通过。
+- 运行验收：`SGS.Plan0004.GameContextPrimitives` 自动化测试通过，覆盖占位牌库创建、摸牌、弃牌、弃牌堆洗回、伤害、回复、濒死事件、距离修正、目标查询与 `CheckInvariants()`；空牌堆骨架 smoke 作为驱动器集成补充证据。
 
 ## 6. 进度与决策记录
 
@@ -78,3 +81,5 @@
 - 2026-06-19：装备移动/濒死/弃牌选择/牌库内容按 3.5 有意延后。
 - 2026-06-19：⚠️ 全部未编译，人工审查为准。
 - 2026-06-27：Plan 0012 完成后，早期 `USGSCardPile` 设计被删除；牌区状态统一迁移到 `USGSGameContext` 的 CardStore / `CardsByPile`，避免 Store 与 UObject 牌堆双事实源。
+- 2026-06-27：`Tools/Unreal.ps1 -Action Build -Configuration Development` 通过；命令行骨架 smoke 确认 `USGSGameDriver` 能通过 EffectPipeline 调起起手/摸牌路径并跑完整局。
+- 2026-06-27：新增 `SGS.Plan0004.GameContextPrimitives` 自动化验收，直接覆盖 `USGSGameContext` 的占位牌库、摸牌、弃牌、弃牌堆洗回、伤害、回复、濒死事件、距离、目标查询与不变量检查。测试命令行运行成功，日志显示 `Result={Success}`。执行中发现并修复 `DrawCards` 在摸牌数超过当前摸牌堆数量时可能重复选择同一张牌的问题。本计划归档；标准牌库 DataTable 内容进入后续内容 / 基础牌计划。

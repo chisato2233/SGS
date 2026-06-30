@@ -32,6 +32,23 @@ USGSSeat* USGSGameContext::GetSeat(int32 Index) const
 	return Seats.IsValidIndex(Index) ? Seats[Index] : nullptr;
 }
 
+USGSCard* USGSGameContext::FindCardById(int32 CardId) const
+{
+	const FSGSCardState* State = FindCardStateById(CardId);
+	return State != nullptr ? State->Card : nullptr;
+}
+
+const FSGSCardState* USGSGameContext::FindCardStateById(int32 CardId) const
+{
+	if (CardId == INDEX_NONE || !CardsById.IsValid())
+	{
+		return nullptr;
+	}
+
+	const FSGSStableHandle Handle = CardsById->Find(CardId);
+	return Handle.IsValid() ? CardStore.Find(Handle) : nullptr;
+}
+
 TArray<USGSCard*> USGSGameContext::GetCardsInZone(FSGSCardZone Zone, int32 SeatIndex) const
 {
 	return GetCardsInPile(MakePileKey(Zone, SeatIndex));
@@ -346,17 +363,18 @@ TArray<USGSCard*> USGSGameContext::DrawCards(int32 SeatIndex, int32 Count)
 			break;
 		}
 
+		TArray<USGSCard*> Batch;
+		Batch.Reserve(TakeCount);
 		for (int32 DrawIndex = 0; DrawIndex < TakeCount; ++DrawIndex)
 		{
-			Drawn.Add(DrawPileCards[DrawIndex]);
+			Batch.Add(DrawPileCards[DrawIndex]);
 		}
+
+		MoveCards(Batch, SGSGameplayTags::CardZone_DrawPile.GetTag(), INDEX_NONE, SGSGameplayTags::CardZone_Hand.GetTag(), SeatIndex);
+		Drawn.Append(Batch);
 	}
 
-	if (Drawn.Num() > 0)
-	{
-		MoveCards(Drawn, SGSGameplayTags::CardZone_DrawPile.GetTag(), INDEX_NONE, SGSGameplayTags::CardZone_Hand.GetTag(), SeatIndex);
-		UE_LOG(LogSGSCard, Verbose, TEXT("Seat %d drew %d card(s)."), SeatIndex, Drawn.Num());
-	}
+	UE_LOG(LogSGSCard, Verbose, TEXT("Seat %d drew %d card(s)."), SeatIndex, Drawn.Num());
 
 	return Drawn;
 }
@@ -436,6 +454,22 @@ void USGSGameContext::Heal(int32 SeatIndex, int32 Amount)
 	HealthChangedDelegate.Broadcast(SeatIndex, Seat->Health);
 
 	UE_LOG(LogSGSCombat, Log, TEXT("Seat %d healed %d (HP now %d)."), SeatIndex, Amount, Seat->Health);
+}
+
+void USGSGameContext::EliminateSeat(int32 SeatIndex, FName Reason)
+{
+	USGSSeat* Seat = GetSeat(SeatIndex);
+	if (Seat == nullptr || !Seat->bIsAlive)
+	{
+		return;
+	}
+
+	Seat->Health = 0;
+	Seat->bIsAlive = false;
+	RebuildSeatIndexes();
+	UE_LOG(LogSGSCombat, Log, TEXT("Seat %d is eliminated. Reason=%s"), SeatIndex, *Reason.ToString());
+	HealthChangedDelegate.Broadcast(SeatIndex, Seat->Health);
+	SeatEliminatedDelegate.Broadcast(SeatIndex, Reason);
 }
 
 int32 USGSGameContext::GetDistance(int32 FromSeat, int32 ToSeat) const

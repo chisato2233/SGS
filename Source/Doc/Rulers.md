@@ -1,246 +1,128 @@
-# Rulers.md — 项目级编码约束
+# Rulers.md — SGS 项目宪法
 
-> **本文档为长期、稳定的编码约束，所有 Agent 必读。**
-> 项目全貌 / 技术栈 / 当前状态见根目录 `ProjectBrief.md`。
-> 某一次开发的临时计划见 `Source/Doc/Plan/NNNN-*.md`。
-> 代码结构 / 依赖关系由 **graphify** 维护，不在文档里手写。
-
----
-
-## 1. 工作流程
-
-### 1.1 启动协议
-
-每个新会话按**严格顺序**：
-
-1. 读根目录 `ProjectBrief.md`（项目全貌、技术栈、当前状态）
-2. 读本文件 `Source/Doc/Rulers.md`（项目级编码约束）
-3. 读 `Source/Doc/Plan/README.md`，按 `ProjectBrief.md` 第 5 节「当前项目状态」的指向，读对应活跃 Plan；历史决策按 README 的归档索引读取 `Source/Doc/Plan/Archive/NNNN-*.md`
-4. **需要理解既有代码结构 / 依赖关系时，以 graphify 的产物为准**
-
-> **不必读全库**。这是文档体系存在的全部理由。
-> `ProjectBrief.md` = 项目是什么；`plan.md` = 本期为什么这么做；graphify = 代码现在长什么样。三者职责互补，不重复。
-> `AGENTS.md` 仅为 Codex 的自动发现适配层，必须指回 `ProjectBrief.md`，不得另立项目事实源。
-
-### 1.2 提交协议
-
-每完成一个有意义的步骤：
-
-- 勾选 / 更新对应计划文档（`Source/Doc/Plan/NNNN-*.md`）的任务清单
-- 必要时把决策写入该计划文档的「进度与决策记录」节
-- 计划完成并验证后，将其移入 `Source/Doc/Plan/Archive/`，状态改为 `Archived`，并同步 `Source/Doc/Plan/README.md` 的活跃 / 归档索引
-- **不要**直接改 `ProjectBrief.md`（除非阶段切换 / Plan 切换，见其第 5 节约定）
-- **不要**修改 `Source/Doc/Plan/0000-RawRequirements.md` 的历史条目（只在顶部追加）
-
-### 1.3 引入新约束的协议
-
-发现需沉淀的新项目级约束（例如「所有 UMG 必须重写 NativePreConstruct」）：
-
-1. 先在当前计划文档的「进度与决策记录」中暂存
-2. 该 Plan 完成、归档时，提升为本文件的正式条目
-3. 重大约束变更需征得用户同意
-
-### 1.4 不要做的事
-
-- ❌ 不要修改 `Source/Doc/Plan/0000-RawRequirements.md` 的历史条目（只追加）
-- ❌ 不要在文档里手写代码结构 / 类图 / 依赖关系（交给 graphify）
-- ❌ 不要为了「看起来工作多了」加冗余测试 / 注释 / 日志
-- ❌ 不要绕过计划文档偷偷做计划外变更
-- ❌ 不要在没有对应计划文档的情况下开始一个有规模的任务
-- ❌ 不要把计划或实现降格成只创建类 / 空函数 / 假数据 / 演示路径的脚手架，除非用户明确要求原型或外部条件确实阻塞真实实现
+> 本文件是所有 Agent 必读的长期全局约束。它包含每个任务都必须知道的架构、编码与工作流底线。
+> 任务领域细则位于 `Source/Doc/Rules/`，按需读取；具体计划位于 `Source/Doc/Plan/`。
+> 代码结构、类关系、依赖关系和影响面由 graphify 维护，不在文档里手写替代。
 
 ---
 
-### 1.5 计划与实现质量门
+## 1. 启动协议
 
-- **默认交付真实工程切片**：每个 Plan 都应面向实际游戏中的使用方式设计，哪怕范围很小，也要能自然接入现有规则层、AI、UI、网络或数据流中的某个真实入口。
-- **短切片不等于临时脚手架**：可以分阶段，但本阶段留下的接口、数据结构和状态流不应是已知会被推倒的假壳。若必须做过渡实现，必须在 Plan 中写清原因、边界、替换条件和后续落点。
-- **Ready 前必须考虑健壮性与扩展性**：方案至少说明关键不变量、失败路径、数据来源、未来扩展点、与现有工具库 / 架构约束的关系；不要只给文件列表和类名。
-- **验收必须落到真实场景**：验收标准不能只写“类存在 / 能编译”。应包含一条实际游戏路径或 smoke 路径，例如某个 Command、EffectPipeline、GameContext 原语、AI 决策、UI 操作或回放审计如何使用它。
-- **假数据只能是隔离的开发辅助手段**：占位牌库、占位 AI、placeholder Effect 等必须不污染规则事实源；不得替代 DataTable、GameplayTag、Command、RandomAudit、Store、EffectPipeline 等正式入口。
+每次新会话或切换任务时，按顺序读取：
+
+1. `ProjectBrief.md`：项目目标、技术栈、当前状态。
+2. `Source/Doc/Rulers.md`：本文件，项目宪法。
+3. `Source/Doc/Rules/README.md`：按任务选择需要读取的领域规则细则。
+4. `Source/Doc/Plan/README.md`：了解计划系统与路径发现规则；只按需读取相关 Plan。
+5. 需要理解代码结构、依赖关系、调用路径、影响面时，优先使用 graphify query/path/explain。
+
+不默认全文读取 `Archive/`、`0000-RawRequirements.md`、`GRAPH_REPORT.md` 或所有规则文件。`Archive/` 是历史计划，默认不读；`0000-RawRequirements.md` 是可能非常冗长的原始需求历史，只在追溯用户原话时检索 / 局部阅读。
 
 ---
 
-## 2. UE C++ 编码规范
+## 2. 文档分层
 
-### 2.1 命名
+- `ProjectBrief.md`：长期稳定项目地图，只写项目是什么、当前阶段、技术栈和导航。
+- `Rulers.md`：全局不可违反的宪法，包含架构、编码、工作流和安全底线。
+- `Source/Doc/Rules/*`：按需领域细则，说明约束和边界，不描述代码结构。
+- `Source/Doc/Plan/*.md`：具体开发计划、验收和进度；排除 README、模板、`0000-RawRequirements.md` 后，主目录计划即当前工作面。
+- `Source/Doc/Plan/Archive/*`：历史计划档案，默认不读，只在追溯决策时读取具体文件。
+- `Source/Doc/Plan/0000-RawRequirements.md`：用户原始需求档案，只追加，不整理成常驻上下文，默认不全文读取。
+- `graphify-out/*`：代码事实图谱，负责结构、关系、跨文件影响面。
 
-- **类前缀**：`U`（UObject）/ `A`（AActor）/ `F`（POD/Struct）/ `I`（接口）/ `S`（Slate）/ `E`（Enum）
-- **业务前缀**：项目类一律加业务 / 领域前缀避免和引擎/插件冲突：
-  - ✅ `UCardEffect`, `UCardDefinition`, `UJudgeComponent`, `UTurnSubsystem`
-  - ❌ `UCard`（太泛 / 易冲突）, `UEffect`（太泛）
-- **文件名 = 类名（不含前缀）**：`UCardEffect` → `CardEffect.h` / `CardEffect.cpp`
-- **函数**：PascalCase（`ApplyDamage`, `DrawCards`）
-- **变量**：PascalCase（`CurrentHealth`），bool 加 `b` 前缀（`bIsAlive`）
-- **常量**：PascalCase（`DefaultHandLimit`），枚举值 `EFoo::Bar` 形式
-- **默认避免封闭枚举建模规则概念**：卡牌游戏策划会改写看似固定的集合；不要轻易用 `enum class` / `UENUM` 表达阶段、回合类型、座次语义、花色、卡牌名、技能名、效果类型、状态类型、目标类型等规则/内容概念。阶段可能被插入、跳过、换序、替换；回合可能被插入或只包含若干阶段；座次可能交换、重分配，角色也可能移除游戏但仍存活；花色甚至可能由技能新建。此类概念默认使用 `FName` / DataTable RowName、GameplayTag、数据资产、注册表、策略对象或规则类等开放式标识与行为封装。只有当集合属于技术层内部、可证明封闭稳定、不会被卡牌/技能/模式扩展，并且确实需要编译期分支时，才允许使用枚举；新增枚举前必须在对应 Plan 记录理由与兼容性影响。
+历史不另建大量 decision/ADR 文件；需要追溯时使用 git、归档 Plan、RawRequirements 和 graphify。
 
-### 2.2 头文件
+---
 
-- 总是用 `#pragma once`，不用 include guard
-- 单一职责：一个 .h 一个主类（小辅助 struct/enum 可同文件）
-- 用 `class FFoo;` 前向声明，避免引入大头
-- 公共 API 加 `SGS_API` 宏（项目主模块名为 SGS）
+## 3. 架构宪法
 
-### 2.3 反射与对象
+- **服务器权威**：规则结算只在服务器权威逻辑层执行，服务器状态是唯一真相源。客户端只显示状态和采集输入，不持有可信规则状态。
+- **多人与 AI 同源**：真人、AI、RPC、回放都通过同一决策抽象进入规则层；规则层不关心决策来源。
+- **异步非阻塞**：等待玩家决策时逻辑层挂起，不阻塞游戏线程；应答、超时、默认选择或托管恢复结算。
+- **表现解耦**：UI、动画、音效、摄像机、输入提示不得承载规则结算。规则层可以产出事件、状态和意图，但不反向依赖具体 UI 实现。
+- **网络边界清晰**：网络只传递可信服务器状态和玩家指令，不允许客户端直接修改规则事实源。
+- **数据与规则分离**：静态内容走 DataTable、DataAsset、GameplayTag 等开放数据入口；规则执行走 SGS C++ 管线。
+- **GAS 是底座，不是规则核心**：GAS 用作 Attribute、GameplayEffect、GameplayTag、GameplayCue / 表现桥接和可复用效果载体；Command、随机审计、回放、牌区移动、响应窗口和三国杀式结算顺序仍由 SGS C++ 规则管线控制。
 
-- 公开属性默认 `UPROPERTY(EditAnywhere, BlueprintReadOnly)`，BlueprintReadOnly 是为了未来 debug 工具，不代表会在蓝图里写逻辑
-- 实例化子对象：`UPROPERTY(Instanced, EditAnywhere) TArray<TObjectPtr<UCardEffect>> Effects;`
-- 容器 / 对象指针使用 `TObjectPtr<>` 而非裸 `*`（UE 5+ 标准）
-- ❌ 不用 `BlueprintCallable` / `BlueprintNativeEvent` 除非确实需要蓝图调用（本项目核心逻辑纯 C++）
-- 不要为了「提供蓝图扩展点」提前加 BlueprintNative—— YAGNI
+---
 
-### 2.4 模块依赖
+## 4. 编码宪法
 
-`Source/SGS/SGS.Build.cs` 当前已含：
-`Core, CoreUObject, Engine, InputCore, EnhancedInput, GameplayAbilities, GameplayTasks, GameplayTags`
+- **UE 命名**：类前缀遵守 UE 约定：`U` / `A` / `F` / `I` / `S` / `E`。SGS 业务类使用 `SGS` 或清晰领域前缀，避免 `UCard`、`UEffect` 这类泛名。
+- **命名风格**：函数、变量、常量使用 PascalCase；bool 使用 `b` 前缀。
+- **枚举克制**：技术层内部、可证明封闭稳定、确实需要编译期分支时，才使用 enum。规则/内容概念默认不用封闭 enum，详见 `GameplayModeling.md`。
+- **头文件**：使用 `#pragma once`；一个头文件只放一个主类型，小型辅助 struct 可同文件；优先前向声明；公共 API 使用 `SGS_API`；`.generated.h` 必须是最后一个 include。
+- **UE 反射**：核心逻辑默认 C++，不要为了“未来可能蓝图扩展”提前加 `BlueprintCallable` / `BlueprintNativeEvent`。对象指针使用 `TObjectPtr<>`。`BlueprintReadOnly` 可用于调试可视化，不代表允许蓝图承载规则逻辑。
+- **注释**：非平凡主类 / 主工具头文件开头写 3-8 行中文用途注释：职责、典型入口、关键不变量。不写流水账注释、changelog、作者、日期；行内注释只解释 why、不变量、陷阱或 TODO。
+- **错误处理**：不使用 C++ 异常。不可恢复的不变量用 `check()`；可继续但不应发生的情况用 `ensure()`；业务日志使用集中声明的 SGS 日志分类；规则层失败路径优先使用项目结果/错误类型，而不是裸 `bool` 丢失原因。
 
-按需追加：
-- `UMG`, `Slate`, `SlateCore` —— 启用 Native Code-first UI / SGSUI 时
-- `CommonUI` —— 只有在 UI Plan 明确需要菜单栈、输入路由、手柄/键鼠提示等能力时才启用，并同步记录插件/模块变更
-- `DeveloperSettings` —— 项目级配置
-- `GameplayAbilitiesEditor` —— 只有在后续专门做 GAS 编辑器工具 / 调试工具时才启用，且不得进入 Runtime 依赖
+---
 
-GAS 运行时模块已启用：`GameplayAbilities` / `GameplayTasks` / `GameplayTags`。不得用蓝图 Ability 承载核心规则；核心规则仍以 C++ 服务器权威实现。
+## 5. 工作流宪法
 
-### 2.5 注释规则
+- **状态先行**：新会话、提交前、切换任务前运行 `git status --short --branch`。
+- **计划先行**：有规模的代码或文档工作应对应活跃 Plan；小型维护可直接完成，但不得绕过已有 Plan 的约束。
+- **真实工程切片**：Plan 和实现必须面向真实游戏路径，考虑失败路径、关键不变量、扩展点和后续接入；不得用空实现、假数据或只创建类的脚手架冒充完成。
+- **状态回写**：完成实质工作后更新相关 Plan 与 `ProjectBrief.md` 当前状态；完成并验证的 Plan 移入 `Source/Doc/Plan/Archive/`，主目录只保留当前工作面。
+- **原始需求**：`0000-RawRequirements.md` 只追加，不修改历史条目。
+- **构建脚本**：统一使用项目脚本：
 
-- **不写「narrate the code」型注释**（"// 增加计数器"、"// 设置变量"）
-- 每个非平凡主类 / 主工具头文件开头应有简短中文文件级用途注释，说明“这个类/文件用来解决什么问题、典型入口怎么用、关键不变量是什么”。保持 3-8 行，避免复述成员函数列表。
-- 行内 / 块内注释只写 **why** / 不变量 / 陷阱 / TODO
-- 不在文件头加 changelog / author / date（用 git）
-- 不在代码里写中文长解释（用 commit message 或计划文档）
-
-### 2.6 错误处理
-
-- `check()` —— 不可恢复的不变量违反（断言）
-- `ensure()` —— 「不该发生但能继续」的诊断
-- `UE_LOG(LogCategory, Verbosity, TEXT("..."))` —— 业务日志
-- 日志分类：`LogSGS`（通用）/ `LogSGSCard` / `LogSGSSkill` / `LogSGSTurn` / `LogSGSCombat`（伤害/回复/濒死）/ `LogSGSNet`（网络/复制/RPC）/ `LogSGSAI` / `LogSGSUI`
-- **不用 C++ 异常**（UE 默认禁）
-
-### 2.7 头文件组织顺序（规范化模板）
-
-```cpp
-// .h
-#pragma once
-
-#include "CoreMinimal.h"          // 必须第一个
-#include "<父类头文件>.h"
-// 其他 #include
-// 前向声明
-#include "CardEffect.generated.h" // 必须最后一个
-
-UCLASS()
-class SGS_API UCardEffect : public UObject
-{
-    GENERATED_BODY()
-
-public:
-    // 构造、析构
-    UCardEffect();
-
-    // 公开接口
-    void Apply(...);
-
-    // 公开属性
-    UPROPERTY(EditAnywhere)
-    int32 Value;
-
-protected:
-    // 子类可见
-
-private:
-    // 内部实现
-};
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Unreal.ps1 -Action Build -Configuration Development
 ```
 
----
+若 UBT/UBA 卡住，仍使用同一脚本加 `-NoUBA` 重试。不要直接手写裸 `Build.bat`，除非任务是在排查该脚本本身。
 
-## 3. 项目硬约束
+- **graphify**：需要代码结构、依赖关系、调用路径、影响面时，优先使用 `graphify query/path/explain`。修改代码后运行 `graphify update .`；只改说明性文档时按需要更新。面向人的 HTML 图可用：
 
-以下约束**全局生效，不可违反**：
-
-1. **引入 GAS，但不外包 SGS 规则核心**：启用 `GameplayAbilities` / `GameplayTasks` / `GameplayTags`，用于 Attribute、GameplayEffect、GameplayTag、GameplayCue / 表现桥接以及可复用效果载体。动作命令、牌区移动、判定流程、随机审计、回放日志、响应窗口、三国杀式结算顺序和服务器权威校验仍由 SGS 自研管线控制。不得用蓝图 Ability 编写核心规则；GAS 只能作为 C++ 规则层可控的底座与适配层。
-2. **Native Code-first UI**：UI 主路线为 Unreal 原生代码优先体系（Slate 为主要自定义控件底座，UMG 仅作视口/生命周期/对象系统适配，CommonUI 按需引入）。**不在编辑器 Designer 中拖控件**；如使用 `UWidget`/`UUserWidget`，必须在 C++ 中拼装控件树。项目不以 WebView/React/Vue/Noesis/Gameface 作为主 UI 技术栈，也不自研完整 Gameface/浏览器级 UI runtime，除非新 Plan 明确推翻本约束。SGSUI 只做薄封装：theme/token、通用组件、游戏组件、动画预设、状态/动作桥接；UI 只显示状态和采集输入，不承载游戏规则结算。
-3. **服务器权威 + 多人/AI 并存**：游戏逻辑只在服务器执行，是唯一真相源；客户端只显示与采集输入。状态用 UE 复制（`GameState`/`PlayerState`），私密信息（如手牌）**只复制给拥有者**；玩家指令走可靠 RPC。真人与 AI 一律通过 `ISGSDecisionAgent` 接入，逻辑层**不感知**对端是人还是 AI。等待决策时逻辑层**异步挂起**，不阻塞游戏线程（应答 / 超时 → 默认或 AI 托管后恢复）。逻辑层**不反向依赖**表现层与具体网络实现。<br>（本条于 2026-06-19 由「当前阶段单机、不写复制代码」改定，原因见 Plan 0002 / RawRequirements #4。）
-4. **数据驱动优先**：卡牌 / 武将静态定义走 `DataTable` / `DataAsset`；属性、标签、持续 / 即时状态优先映射到 GAS Attribute / GameplayTag / GameplayEffect；SGS 自研效果管线负责卡牌结算语义、响应窗口和审计。新卡 / 新技能优先复用现成 Effect / GAS Adapter / 规则组件，除非现有能力不够用，否则**不**为单张卡写新 C++ 类。
-5. **结算不依赖 wallclock**：所有时序一律按「回合 / 阶段 / 出牌次序」推进。`FTimerHandle`、`Tick` 中的 `DeltaTime` 累加都不可用于游戏逻辑（仅可用于纯表现层动画）。
-6. **Plan 0012 工具库是规则层默认入口**：新规则代码必须优先使用 `FSGSCommandRouter`、`FSGSRandomAudit`、`TSGSIndexedStore` / StableHandle、TargetQuery、`FSGSActiveEffectTimeline`、`FSGSEffectPipeline`、`FSGSReplayLog` 等工具库入口。不得重新发明平行的命令、随机、索引、目标筛选、持续效果、效果执行或回放体系。牌区状态以 `USGSGameContext` 的 CardStore / `CardsByPile` 为事实源；不要重新引入 `USGSCardPile` 这类平行牌堆容器，也不得直接维护独立牌堆数组来改变规则状态。
-
----
-
-## 4. 命名空间与日志分类
-
-C++ 业务命名空间（可选用）：`SGS::Card::`, `SGS::Turn::` 等。MVP 阶段不强制。
-
-日志分类**必须**在 `Source/SGS/Core/SGSLogChannels.h` 集中声明：
-
-```cpp
-DECLARE_LOG_CATEGORY_EXTERN(LogSGS, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(LogSGSCard, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(LogSGSSkill, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(LogSGSTurn, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(LogSGSCombat, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(LogSGSNet, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(LogSGSAI, Log, All);
-DECLARE_LOG_CATEGORY_EXTERN(LogSGSUI, Log, All);
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\GraphifyVisualFilter.ps1
 ```
 
----
+该脚本只影响可视化视图，不替代原始 `graph.json`。
 
-## 5. 测试策略
+- **Git 与 LFS**：Git LFS 只用于单文件大小 >= 50 MiB 的大文件，不按扩展名一概托管。提交前运行：
 
-- **MVP 阶段不强制单元测试**
-- 关键不变量（伤害结算、回合 / 阶段推进、判定逻辑）可在需要时写 `Source/SGSTests/`（独立模块）
-- 不要主动给 utility 函数补测试，除非用户明确要求
-- Unreal 编译 / 启动统一使用项目脚本：`powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Unreal.ps1 -Action Build -Configuration Development`。若 UBT/UBA 卡住，仍使用同一脚本加 `-NoUBA` 重试；不要直接绕过脚本手写裸 `Build.bat`，除非任务是在排查该脚本本身。
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\CheckLargeFiles.ps1 -Scope Staged
+```
 
----
-
-## 6. Git 工作流
-
-- 仓库根目录为项目根（`SGS.uproject` 所在目录）。新会话开始、提交前、切换任务前都先看 `git status --short --branch`。
-- 默认跟踪：`Source/`（含 `Source/Doc/`）、`Config/`、`.uproject`、`.vsconfig`、`.gitignore`、`.gitattributes`、`AGENTS.md`、`.codex/hooks.json`、`.githooks/`、`graphify-out/.graphify_root`、`graphify-out/graph.json`、`graphify-out/manifest.json`、项目级 IDE/Agent 任务脚本。
-- 默认忽略：`Binaries/`、`Intermediate/`、`Saved/`、`DerivedDataCache/`、`.vs/`、`.sln` / `.vcxproj*`、`graphify-out/cache/` 等 UE/IDE/graphify 缓存生成物。
-- Git LFS 仅用于单文件大小 >= 50 MiB 的大文件；不要按扩展名把所有二进制资产一概放入 LFS。`.gitattributes` 只保留文本归一化和脚本生成的显式大文件 LFS 条目。
-- 提交前必须运行 `powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\CheckLargeFiles.ps1 -Scope Staged`；本地 `.githooks/pre-commit` 执行同一检查。若检查失败，运行同脚本加 `-Fix` 为对应大文件写入显式 LFS 规则并重新 stage。
-- 提交前只 stage 本次任务相关文件；不要把用户未要求的本地改动顺手塞进提交。
-- 任何 `git reset`、`git checkout -- <path>`、批量删除、改写历史操作都必须先确认意图；不要为了「干净」丢弃未知改动。
+- **提交安全**：只 stage 本次任务相关文件；不使用 `git reset --hard`、`git checkout -- <path>`、批量删除或改写历史，除非用户明确要求。
 
 ---
 
-## 7. 提交粒度
+## 6. 规则建模硬约束
 
-- 一个 Plan 通常对应 1-3 个 git commit
-- 单 commit **净增 ≤ 500 行**（除非纯样板/生成代码）
-- commit message 包含 plan ID：
-  - `[plan-0001] add UCardEffect base class`
-  - `[plan-0002] implement turn phase machine`
-- 中文 / 英文均可
-
----
-
-## 8. 文件 / 目录创建准则
-
-- 不主动创建 README 或文档文件，除非用户要求或本 Rulers.md 明确规定
-- 不创建 `.gitkeep` / 子目录 `.gitignore`（根目录 `.gitignore` 由 Git 基础设施维护）
-- 不创建 example / sample 文件
-- 不创建未来用得上的「占位」文件
+- **数据驱动与开放标识优先**：规则/内容概念默认使用 GameplayTag、FName、DataTable RowName、数据资产、注册表、策略对象或规则类。
+- **不要封闭可扩展概念**：阶段、回合、座次、花色、卡牌名、技能名、效果类型、状态类型、目标类型等会被卡牌/技能扩展的概念，不得轻易用 enum 表达。
+- **结算不依赖 wallclock**：规则时序按回合、阶段、出牌次序和离散 TimingPoint 推进；`Tick`、`DeltaTime`、`FTimerHandle` 只能服务表现层动画。
+- **Native Code-first UI**：UI 主路线为 Slate/UMG/CommonUI 按需组合的原生代码优先体系；不使用 Designer 拖控件，不以 WebView/React/Vue/Noesis/Gameface 作为主 UI。
+- **Plan 0012 工具库是规则层默认入口**：新规则代码优先使用 CommandRouter、RandomAudit、IndexedStore/TargetQuery、ActiveEffectTimeline、EffectPipeline、ReplayLog。不得重新发明平行命令、随机、索引、目标筛选、持续效果、效果执行或回放体系。
+- **graphify 正交原则**：文档只写意图、约束、边界、为什么；代码功能、文件关系、类图、调用路径、影响面交给 graphify。
 
 ---
 
-## Last Updated
+## 7. 领域细则路由
 
-2026-06-27 — 新增 Plan 与实现质量门：每个 Plan 默认交付真实游戏可承接的工程切片，必须考虑健壮性、可扩展性、实际使用路径和占位边界；禁止用脚手架、空实现、假数据冒充完成。
-2026-06-27 — Plan 系统增加 `Archive/` 归档目录：完成并验证的计划移出主目录，状态改为 `Archived`，并在 Plan README 的归档索引登记；主目录只保留当前工作面。
-2026-06-19 — UI 路线定为 Native Code-first UI（Slate/UMG/CommonUI 按需组合 + SGSUI 薄封装）：不使用 WebView/React/Vue/Noesis/Gameface 作为主 UI，不自研完整 Gameface；硬约束 #2 由「UMG 纯 C++」升级为「Native Code-first UI」。见 Plan 0011。
-2026-06-23 — Git LFS 策略改为仅托管单文件 >= 50 MiB 的大文件；提交前通过 `Tools/CheckLargeFiles.ps1` / `.githooks/pre-commit` 检查，按需生成显式 per-file LFS 条目。
-2026-06-23 — 编码规范升级为「默认避免封闭枚举建模规则概念」：阶段、回合、座次、花色、技能/卡牌/效果/状态等规则与内容概念默认使用开放式标识、注册表、数据资产或规则类；枚举仅限可证明封闭稳定的技术层内部集合。
-2026-06-23 — GAS 策略改定：启用 `GameplayAbilities` / `GameplayTasks` / `GameplayTags`，但仅作为属性、标签、GameplayEffect、GameplayCue 与效果载体底座；SGS Command、随机审计、回放、牌区与三国杀式结算顺序仍由自研规则管线控制。见归档 Plan 0012。
-2026-06-25 — 注释规则调整：非平凡主类 / 主工具头文件开头应保留简短中文用途注释，说明职责、典型入口和关键不变量；仍禁止流水账注释、changelog、作者和日期。
-2026-06-27 — Unreal 编译 / 启动统一使用 `Tools/Unreal.ps1`；脚本支持 `-NoUBA` 处理 UBT/UBA 卡住场景。Agent 不应绕过项目脚本直接调用裸 `Build.bat`，除非是在排查脚本本身。
-2026-06-27 — Plan 0012 工具库提升为规则层默认入口：Command、RandomAudit、IndexedStore/TargetQuery、ActiveEffectTimeline、EffectPipeline、ReplayLog 不得被平行体系绕过；删除 `USGSCardPile`，牌区完全由 CardStore / `CardsByPile` 表达。
-2026-06-19 — Codex 入口适配纳入文档系统：`AGENTS.md` 只作为自动发现/graphify 规则入口，必须指回 `ProjectBrief.md`；`graphify-out/graph.json` 与 manifest 作为项目级图谱产物跟踪，cache 忽略。
-2026-06-19 — 架构转向：硬约束 #3 由「单机不写复制」改为「服务器权威 + 多人/AI 并存（决策代理 + 异步非阻塞）」；新增 `LogSGSNet`/`LogSGSAI` 日志分类；日志头文件路径定为 `Source/SGS/Core/`。见 Plan 0002。
-2026-06-19 — 从外部项目模板适配为 SGS（三国杀）：模块名 Stuff→SGS、修正文档路径、删除「模块活文档」系统（改由 graphify 维护代码结构）、删除外部游戏术语表、明确不用 GAS / UMG 纯 C++ / 单机不写复制 / 回合制结算约束。
+架构、编码、工作流规则已经并入本文件，不再作为按需细则维护。
+
+从 `Source/Doc/Rules/README.md` 选择任务相关领域文件：
+
+- 规则建模、数据驱动、开放标识：`GameplayModeling.md`
+- UI：`UI.md`
+- GAS：`GAS.md`
+- Plan 0012 工具库入口：`RuleToolkit.md`
+
+只读取与当前任务有关的细则，不把整个 `Rules/` 目录塞进上下文。
+
+---
+
+## 8. 变更协议
+
+- 新项目级规则先写入相关 Plan 的进度/决策记录；确认具有长期全局价值后，才提升到 `Rulers.md` 或 `Rules/*`。
+- `Rulers.md` 新增条目必须全局、稳定、值得每个 Agent 默认读取；详细理由留在 Plan、git 历史或 graphify 可查材料中。
+- `Rules/*` 只承载领域细则，不沉淀架构、编码、工作流这类高频通用规则。
+- 不修改 `0000-RawRequirements.md` 的历史条目，只能在顶部追加。
+- 完成并验证的 Plan 移入 `Source/Doc/Plan/Archive/`，主目录只保留当前工作面。
+
+Last reviewed: 2026-06-27
