@@ -242,7 +242,7 @@ bool FSGSPlan0005IllegalCommandTest::RunTest(const FString& Parameters)
 		MakeTestCommandBuildRequest(TEXT("MissingUsePayload")),
 		FSGSUseCardCommandPayload(Dodge->CardId, TArray<int32>()));
 	MissingUsePayload.Payload.Reset();
-	TestTrue(TEXT("UseCard missing typed payload is rejected even when legacy mirrors are populated."),
+	TestTrue(TEXT("UseCard missing typed payload is rejected."),
 		Router.SubmitCommand(MissingUsePayload, ExecutionContext).HasError());
 
 	FSGSCommand WrongUsePayload = FSGSCommandFactory::Make(
@@ -263,8 +263,8 @@ bool FSGSPlan0005IllegalCommandTest::RunTest(const FString& Parameters)
 	FSGSCommand DirtyPass = FSGSCommandFactory::Make(
 		MakeTestCommandBuildRequest(TEXT("DirtyPass")),
 		FSGSPassCommandPayload());
-	DirtyPass.CardIds.Add(Dodge->CardId);
-	TestTrue(TEXT("Pass command with illegal legacy card mirror is rejected."),
+	DirtyPass.Payload = FInstancedStruct::Make(FSGSUseCardCommandPayload(Dodge->CardId, TArray<int32>()));
+	TestTrue(TEXT("Pass command with the wrong typed payload is rejected."),
 		Router.SubmitCommand(DirtyPass, ExecutionContext).HasError());
 
 	FSGSCommand ValidTypedPass = FSGSCommandFactory::Make(

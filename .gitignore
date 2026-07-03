@@ -11,6 +11,9 @@
 /Releases/
 /StagedBuilds/
 
+# Local reference repositories; useful for Agent comparison, never project source.
+/QSgsRef/
+
 # Unreal automation and crash artifacts
 *.automation.csproj
 *.automation.json

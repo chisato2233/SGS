@@ -9,12 +9,16 @@
 #include "Server/Commands/SGSCommandRouter.h"
 #include "Server/Effects/SGSEffectPipeline.h"
 #include "Server/Engine/SGSGameEvents.h"
+#include "Server/Rules/SGSRuleRegistry.h"
+#include "Server/Rules/SGSResolutionStack.h"
 #include "Server/Timing/SGSActiveEffectTimeline.h"
 #include "Shared/Decisions/SGSDecisionAgent.h"
 #include "SGSGameDriver.generated.h"
 
 class USGSGameContext;
 class USGSCard;
+class FSGSDriverRuleRuntime;
+struct FSGSRuleEventPayload;
 
 struct SGS_API FSGSGameStartConfig
 {
@@ -72,7 +76,10 @@ private:
 	// 出牌阶段动作的应答回调（可能同步或跨帧触发）。
 	void OnPlayActionDecided(const FSGSPlayPhaseDecision& Decision);
 	void OnResponseActionDecided(const FSGSResponseDecision& Decision);
-	bool SubmitCommandWithFallback(const FSGSCommand& Command);
+	bool ResolveCommandThroughRules(const FSGSCommand& Command);
+	TSGSResult<FSGSCommand> SubmitCommandWithFallback(
+		const FSGSCommand& Command,
+		const FSGSCommandExecutionContext& ExecutionContext);
 	FSGSCommandExecutionContext MakeCommandExecutionContext() const;
 	FSGSCommand MakeFallbackPassCommand(FName Reason) const;
 	FSGSEffectContext MakeEffectContext(FSGSCommandId CommandId = FSGSCommandId());
@@ -80,19 +87,16 @@ private:
 	void BuildInitialDeck(const TArray<FSGSDeckCardSpec>& InitialDeck, bool bShuffle);
 	FSGSPlayPhaseRequest MakePlayPhaseRequest();
 	FSGSResponseRequest MakeResponseRequest(int32 SeatIndex, FName WindowName, FName RequiredCardName, int32 EffectSourceSeat, int32 EffectTargetSeat);
-	void ResolvePlayPhaseCommand(const FSGSCommand& Command);
-	void ResolveResponseCommand(const FSGSCommand& Command);
-	void ResolveSlashCommand(const FSGSCommand& Command);
-	void ResolvePeachCommand(const FSGSCommand& Command, int32 HealTargetSeat);
-	void ResolveSlashDodgeResponse(const FSGSCommand& Command);
-	void ResolveDyingPeachResponse(const FSGSCommand& Command);
-	void RequestSlashDodge(int32 SourceSeat, int32 TargetSeat);
-	void ApplySlashDamageOrDying();
-	void BeginDyingPeachWindow(int32 DyingSeat);
-	void RequestNextDyingPeachResponder();
-	void FinishPendingCardResolution();
+	void DeferResponseRequest(const FSGSResponseRequest& Request, const TScriptInterface<ISGSDecisionAgent>& Agent);
+	void DispatchDeferredResponseRequest();
+	FSGSStatus FinishCurrentResolution(FName Reason = FName(TEXT("SGS.Resolution.Complete")));
+	FSGSStatus ResumeResolutionParentAfterChild(const FSGSResolutionFrame& CompletedFrame);
+	bool OpenNextDyingPeachResponseWindow(FSGSResolutionFrame& DyingFrame);
+	FSGSStatus ContinueDyingPeachFrame(FSGSResolutionFrame& DyingFrame);
+	void ClearDeferredResponseRequest();
+	FSGSStatus PublishTimingEvent(const FSGSRuleEventPayload& Payload);
 	void ExecuteDrawPhaseThroughPipeline();
-	void RunEffectStep(FSGSEffectStep Step, FSGSCommandId CommandId = FSGSCommandId());
+	FSGSStatus RunEffectStep(FSGSEffectStep Step, FSGSCommandId CommandId = FSGSCommandId());
 	void SyncReplayLog();
 
 	static FSGSPhase NextPhase(FSGSPhase Phase);
@@ -108,13 +112,9 @@ private:
 	FSGSCommandId PendingCommandId;
 	int32 NextCommandIdValue = 0;
 	int64 NextTimingSequence = 0;
-	FName PendingWindowName = NAME_None;
-	FName PendingRequiredCardName = NAME_None;
-	int32 PendingEffectSourceSeat = INDEX_NONE;
-	int32 PendingEffectTargetSeat = INDEX_NONE;
-	TObjectPtr<USGSCard> PendingSlashCard;
-	TArray<int32> PendingDyingResponders;
-	int32 PendingDyingResponderIndex = INDEX_NONE;
+	FSGSResponseRequest DeferredResponseRequest;
+	TScriptInterface<ISGSDecisionAgent> DeferredResponseAgent;
+	bool bHasDeferredResponseRequest = false;
 	int32 CurrentMaxTurns = 8;
 	int32 CurrentStartingHandSize = 4;
 
@@ -126,10 +126,14 @@ private:
 
 	FSGSOnGameEvent GameEventDelegate;
 	FSGSCommandRouter CommandRouter;
+	FSGSRuleRegistry RuleRegistry;
+	FSGSResolutionStack ResolutionStack;
 	FSGSEffectPipeline EffectPipeline;
 	FSGSActiveEffectTimeline ActiveEffectTimeline;
 	FSGSReplayLog ReplayLog;
 
 	// 摸牌阶段固定摸牌数（标准规则）。
 	static constexpr int32 DrawCountPerTurn = 2;
+
+	friend class FSGSDriverRuleRuntime;
 };

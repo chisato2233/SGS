@@ -16,4 +16,9 @@ protected:
 		const FSGSCommand& Command,
 		const FSGSPassCommandPayload& Payload,
 		const FSGSCommandExecutionContext& Context) const override;
+
+	virtual TSGSResult<FSGSRuleInvocation> BuildRuleInvocationTyped(
+		const FSGSCommand& Command,
+		const FSGSPassCommandPayload& Payload,
+		const FSGSCommandExecutionContext& Context) const override;
 };

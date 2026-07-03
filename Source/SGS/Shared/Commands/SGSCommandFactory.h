@@ -1,7 +1,7 @@
 #pragma once
 
 // FSGSCommandFactory 是 shared 命令构造门面。调用方提供公共构造请求与
-// typed payload；GameplayTag 和 legacy mirror 由 shared payload traits 决定。
+// typed payload；GameplayTag 由 shared payload traits 决定。
 
 #include "CoreMinimal.h"
 #include "Shared/Commands/SGSCommandPayloadTraits.h"
@@ -49,7 +49,6 @@ public:
 		Command.Payload = FInstancedStruct::Make(Payload);
 		Command.SourceChannel = Request.SourceChannel;
 		Command.SourceName = Request.SourceName;
-		TSGSCommandPayloadTraits<TPayload>::SyncLegacyMirror(Command);
 		return Command;
 	}
 };

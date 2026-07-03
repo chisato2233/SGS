@@ -22,6 +22,7 @@ namespace SGSStandardEffectSteps
 	SGS_API FSGSEffectStep MakeDrawCardsStep(int32 SeatIndex, int32 Count);
 	SGS_API FSGSEffectStep MakeDamageStep(int32 SourceSeat, int32 TargetSeat, int32 Amount);
 	SGS_API FSGSEffectStep MakeHealStep(int32 SeatIndex, int32 Amount);
+	SGS_API FSGSEffectStep MakeEliminateSeatStep(int32 SeatIndex, FName Reason);
 	SGS_API FSGSEffectStep MakeJudgementPlaceholderStep(int32 SeatIndex, FName Reason);
 	SGS_API FSGSEffectStep MakeReactionWindowStep(int32 SeatIndex, FName WindowName);
 	SGS_API FSGSEffectStep MakeExpireActiveEffectStep(FSGSStableHandle EffectHandle, FName Reason);

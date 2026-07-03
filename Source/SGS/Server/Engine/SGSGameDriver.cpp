@@ -8,50 +8,93 @@
 #include "Shared/Core/SGSLogChannels.h"
 #include "Server/Effects/SGSStandardEffectSteps.h"
 
-namespace
+class FSGSDriverRuleRuntime final : public ISGSRuleRuntime
 {
-const FSGSUseCardCommandPayload* GetUseCardPayload(const FSGSCommand& Command, const TCHAR* Caller)
-{
-	const FSGSUseCardCommandPayload* Payload = Command.GetPayload<FSGSUseCardCommandPayload>();
-	if (Payload == nullptr)
+public:
+	explicit FSGSDriverRuleRuntime(USGSGameDriver& InDriver)
+		: Driver(InDriver)
 	{
-		UE_LOG(LogSGSTurn, Warning, TEXT("%s expected FSGSUseCardCommandPayload: %s"), Caller, *Command.ToLogString());
 	}
-	return Payload;
-}
 
-const FSGSRespondCardCommandPayload* GetRespondCardPayload(const FSGSCommand& Command, const TCHAR* Caller)
-{
-	const FSGSRespondCardCommandPayload* Payload = Command.GetPayload<FSGSRespondCardCommandPayload>();
-	if (Payload == nullptr)
+	virtual FSGSStatus RunEffectStep(FSGSEffectStep Step, FSGSCommandId CommandId) override
 	{
-		UE_LOG(LogSGSTurn, Warning, TEXT("%s expected FSGSRespondCardCommandPayload: %s"), Caller, *Command.ToLogString());
+		return Driver.RunEffectStep(MoveTemp(Step), CommandId);
 	}
-	return Payload;
-}
 
-int32 GetTypedCommandCardId(const FSGSCommand& Command)
-{
-	if (const FSGSUseCardCommandPayload* UseCardPayload = Command.GetPayload<FSGSUseCardCommandPayload>())
+	virtual bool OpenResponseWindow(const FSGSRuleResponseWindowSpec& Spec) override
 	{
-		return UseCardPayload->CardId;
-	}
-	if (const FSGSRespondCardCommandPayload* RespondCardPayload = Command.GetPayload<FSGSRespondCardCommandPayload>())
-	{
-		return RespondCardPayload->CardId;
-	}
-	return INDEX_NONE;
-}
+		USGSSeat* Target = Driver.Context != nullptr ? Driver.Context->GetSeat(Spec.SeatIndex) : nullptr;
+		ISGSDecisionAgent* Agent = Target != nullptr ? Target->DecisionAgent.GetInterface() : nullptr;
+		if (Agent == nullptr)
+		{
+			return false;
+		}
 
-FName GetTypedResponseWindowName(const FSGSCommand& Command)
-{
-	if (const FSGSRespondCardCommandPayload* RespondCardPayload = Command.GetPayload<FSGSRespondCardCommandPayload>())
-	{
-		return RespondCardPayload->WindowName;
+		if (FSGSStatus Status = Driver.ResolutionStack.OpenResponseWindowOnCurrent(
+			Spec.WindowName,
+			Spec.RequiredCardName,
+			Spec.EffectSourceSeat,
+			Spec.EffectTargetSeat);
+			Status.HasError())
+		{
+			UE_LOG(LogSGSTurn, Error, TEXT("Open response window failed: %s"), *Status.GetError().ToLogString());
+			return false;
+		}
+
+		FSGSResponseRequest Request = Driver.MakeResponseRequest(
+			Spec.SeatIndex,
+			Spec.WindowName,
+			Spec.RequiredCardName,
+			Spec.EffectSourceSeat,
+			Spec.EffectTargetSeat);
+		Driver.PendingCommandId = Request.CommandId;
+		Driver.CurrentSeatIndex = Spec.SeatIndex;
+		Driver.bWaitingForDecision = true;
+		Driver.DeferResponseRequest(Request, Target->DecisionAgent);
+		return true;
 	}
-	return NAME_None;
-}
-}
+
+	virtual void AdvanceAfterPhase() override
+	{
+		Driver.PendingCommandId = FSGSCommandId();
+		Driver.AdvanceAfterPhase();
+	}
+
+	virtual FSGSStableHandle PushResolutionFrame(FSGSResolutionFrame Frame) override
+	{
+		return Driver.ResolutionStack.PushFrame(MoveTemp(Frame));
+	}
+
+	virtual FSGSStatus CompleteCurrentFrame(FName Reason) override
+	{
+		return Driver.FinishCurrentResolution(Reason);
+	}
+
+	virtual FSGSStatus AbortAllFrames(FName Reason) override
+	{
+		Driver.PendingCommandId = FSGSCommandId();
+		Driver.ClearDeferredResponseRequest();
+		return Driver.ResolutionStack.AbortAllFrames(Reason);
+	}
+
+	virtual FSGSResolutionStack& GetResolutionStack() override
+	{
+		return Driver.ResolutionStack;
+	}
+
+	virtual const FSGSResolutionStack& GetResolutionStack() const override
+	{
+		return Driver.ResolutionStack;
+	}
+
+	virtual FSGSStatus PublishTimingEvent(const FSGSRuleEventPayload& Payload) override
+	{
+		return Driver.PublishTimingEvent(Payload);
+	}
+
+private:
+	USGSGameDriver& Driver;
+};
 
 void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents, int32 RandomSeed)
 {
@@ -80,16 +123,14 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 	PendingCommandId = FSGSCommandId();
 	NextCommandIdValue = 0;
 	NextTimingSequence = 0;
-	PendingWindowName = NAME_None;
-	PendingRequiredCardName = NAME_None;
-	PendingEffectSourceSeat = INDEX_NONE;
-	PendingEffectTargetSeat = INDEX_NONE;
-	PendingSlashCard = nullptr;
-	PendingDyingResponders.Reset();
-	PendingDyingResponderIndex = INDEX_NONE;
+	DeferredResponseRequest = FSGSResponseRequest();
+	DeferredResponseAgent = TScriptInterface<ISGSDecisionAgent>();
+	bHasDeferredResponseRequest = false;
 	CurrentMaxTurns = FMath::Max(Config.MaxTurns, 1);
 	CurrentStartingHandSize = FMath::Max(Config.StartingHandSize, 0);
 	CommandRouter.Reset();
+	RuleRegistry.Reset();
+	ResolutionStack.Reset();
 	EffectPipeline.Reset();
 	ActiveEffectTimeline.Reset();
 	ReplayLog.Reset();
@@ -163,10 +204,7 @@ void USGSGameDriver::EnterCurrentPhase()
 	{
 		FSGSPlayPhaseRequest Request = MakePlayPhaseRequest();
 		PendingCommandId = Request.CommandId;
-		PendingWindowName = NAME_None;
-		PendingRequiredCardName = NAME_None;
-		PendingEffectSourceSeat = INDEX_NONE;
-		PendingEffectTargetSeat = INDEX_NONE;
+		ResolutionStack.Reset();
 
 		const USGSSeat* Seat = Context->GetSeat(CurrentSeatIndex);
 		ISGSDecisionAgent* Agent = Seat != nullptr ? Seat->DecisionAgent.GetInterface() : nullptr;
@@ -180,9 +218,11 @@ void USGSGameDriver::EnterCurrentPhase()
 				true,
 				FSGSError(),
 				TEXT("Seat has no decision agent."));
-			SubmitCommandWithFallback(FallbackCommand);
-			PendingCommandId = FSGSCommandId();
-			AdvanceAfterPhase();
+			if (!ResolveCommandThroughRules(FallbackCommand))
+			{
+				PendingCommandId = FSGSCommandId();
+				AdvanceAfterPhase();
+			}
 			return;
 		}
 
@@ -211,14 +251,14 @@ void USGSGameDriver::OnPlayActionDecided(const FSGSPlayPhaseDecision& Decision)
 	}
 
 	bWaitingForDecision = false;
-	if (SubmitCommandWithFallback(Decision.Command))
+	if (!ResolveCommandThroughRules(Decision.Command))
 	{
-		ResolvePlayPhaseCommand(Decision.Command);
-	}
-	else
-	{
-		PendingCommandId = FSGSCommandId();
-		AdvanceAfterPhase();
+		const FSGSCommand FallbackCommand = MakeFallbackPassCommand(TEXT("RuleFailure"));
+		if (!ResolveCommandThroughRules(FallbackCommand))
+		{
+			PendingCommandId = FSGSCommandId();
+			AdvanceAfterPhase();
+		}
 	}
 	Pump();
 }
@@ -232,23 +272,80 @@ void USGSGameDriver::OnResponseActionDecided(const FSGSResponseDecision& Decisio
 	}
 
 	bWaitingForDecision = false;
-	if (SubmitCommandWithFallback(Decision.Command))
+	if (!ResolveCommandThroughRules(Decision.Command))
 	{
-		ResolveResponseCommand(Decision.Command);
-	}
-	else
-	{
-		ResolveResponseCommand(MakeFallbackPassCommand(TEXT("InvalidResponseCommand")));
+		if (!ResolveCommandThroughRules(MakeFallbackPassCommand(TEXT("InvalidResponseCommand"))))
+		{
+			FinishCurrentResolution();
+		}
 	}
 	Pump();
 }
 
-bool USGSGameDriver::SubmitCommandWithFallback(const FSGSCommand& Command)
+bool USGSGameDriver::ResolveCommandThroughRules(const FSGSCommand& Command)
 {
 	const FSGSCommandExecutionContext ExecutionContext = MakeCommandExecutionContext();
+	TSGSResult<FSGSCommand> CommandResult = SubmitCommandWithFallback(Command, ExecutionContext);
+	if (!CommandResult.HasValue())
+	{
+		return false;
+	}
+	const FSGSCommand ValidatedCommand = CommandResult.GetValue();
+
+	TSGSResult<FSGSRuleInvocation> RuleInvocationResult = CommandRouter.BuildRuleInvocation(ValidatedCommand, ExecutionContext);
+	if (!RuleInvocationResult.HasValue())
+	{
+		CommandRouter.RecordLifecycle(
+			ValidatedCommand,
+			SGSCommandLifecycle::Rejected(),
+			false,
+			RuleInvocationResult.GetError(),
+			TEXT("Rule invocation build failed."));
+		SyncReplayLog();
+		return false;
+	}
+
+	FSGSDriverRuleRuntime Runtime(*this);
+	FSGSRuleExecutionContext RuleContext;
+	RuleContext.GameContext = Context;
+	RuleContext.Command = &ValidatedCommand;
+	RuleContext.CommandExecutionContext = &ExecutionContext;
+	RuleContext.ReplayLog = &ReplayLog;
+	RuleContext.ActiveEffects = &ActiveEffectTimeline;
+	RuleContext.TimingPoint = MakeCurrentTimingPoint(SGSTimingSteps::Resolve());
+	RuleContext.RuleInvocation = RuleInvocationResult.GetValue();
+	RuleContext.Runtime = &Runtime;
+
+	if (FSGSStatus Status = RuleRegistry.Resolve(RuleContext); Status.HasError())
+	{
+		CommandRouter.RecordLifecycle(
+			ValidatedCommand,
+			SGSCommandLifecycle::Rejected(),
+			false,
+			Status.GetError(),
+			TEXT("Rule execution failed."));
+		SyncReplayLog();
+		return false;
+	}
+
+	CommandRouter.RecordLifecycle(
+		ValidatedCommand,
+		SGSCommandLifecycle::Executed(),
+		true,
+		FSGSError(),
+		RuleContext.RuleInvocation.ToLogString());
+	SyncReplayLog();
+	DispatchDeferredResponseRequest();
+	return true;
+}
+
+TSGSResult<FSGSCommand> USGSGameDriver::SubmitCommandWithFallback(
+	const FSGSCommand& Command,
+	const FSGSCommandExecutionContext& ExecutionContext)
+{
 	if (FSGSStatus Status = CommandRouter.SubmitCommand(Command, ExecutionContext); Status.HasError())
 	{
-		UE_LOG(LogSGSTurn, Warning, TEXT("Invalid play command: %s. Falling back to pass."),
+		UE_LOG(LogSGSTurn, Warning, TEXT("Invalid command: %s. Falling back to pass."),
 			*Status.GetError().ToLogString());
 
 		const FSGSCommand FallbackCommand = MakeFallbackPassCommand(TEXT("InvalidCommand"));
@@ -261,12 +358,15 @@ bool USGSGameDriver::SubmitCommandWithFallback(const FSGSCommand& Command)
 		if (FSGSStatus FallbackStatus = CommandRouter.SubmitCommand(FallbackCommand, ExecutionContext); FallbackStatus.HasError())
 		{
 			UE_LOG(LogSGSTurn, Error, TEXT("Fallback pass command failed: %s"), *FallbackStatus.GetError().ToLogString());
+			SyncReplayLog();
+			return MakeError(FallbackStatus.GetError());
 		}
 		SyncReplayLog();
-		return false;
+		return MakeValue(FallbackCommand);
 	}
+
 	SyncReplayLog();
-	return true;
+	return MakeValue(Command);
 }
 
 FSGSCommandExecutionContext USGSGameDriver::MakeCommandExecutionContext() const
@@ -277,9 +377,13 @@ FSGSCommandExecutionContext USGSGameDriver::MakeCommandExecutionContext() const
 	ExecutionContext.ExpectedRequestId = PendingRequestId;
 	ExecutionContext.ExpectedSeatIndex = CurrentSeatIndex;
 	ExecutionContext.ExpectedPhase = CurrentPhase;
-	ExecutionContext.ExpectedWindowName = PendingWindowName;
-	ExecutionContext.RequiredCardName = PendingRequiredCardName;
-	ExecutionContext.EffectTargetSeatIndex = PendingEffectTargetSeat;
+	if (const FSGSResolutionFrame* Frame = ResolutionStack.GetCurrentFrame())
+	{
+		ExecutionContext.ExpectedWindowName = Frame->WindowName;
+		ExecutionContext.RequiredCardName = Frame->RequiredCardName;
+		ExecutionContext.EffectSourceSeatIndex = Frame->SourceSeat;
+		ExecutionContext.EffectTargetSeatIndex = Frame->TargetSeat;
+	}
 	return ExecutionContext;
 }
 
@@ -426,272 +530,120 @@ FSGSResponseRequest USGSGameDriver::MakeResponseRequest(
 	return Request;
 }
 
-void USGSGameDriver::ResolvePlayPhaseCommand(const FSGSCommand& Command)
+void USGSGameDriver::DeferResponseRequest(
+	const FSGSResponseRequest& Request,
+	const TScriptInterface<ISGSDecisionAgent>& Agent)
 {
-	PendingEffectSourceSeat = Command.SeatIndex;
-
-	if (Command.IsType(SGSGameplayTags::PlayAction_Pass))
-	{
-		PendingCommandId = FSGSCommandId();
-		AdvanceAfterPhase();
-		return;
-	}
-
-	if (!Command.IsType(SGSGameplayTags::PlayAction_UseCard))
-	{
-		UE_LOG(LogSGSTurn, Warning, TEXT("Unsupported play command after router validation: %s"), *Command.ToLogString());
-		PendingCommandId = FSGSCommandId();
-		AdvanceAfterPhase();
-		return;
-	}
-
-	const FSGSUseCardCommandPayload* UseCardPayload = GetUseCardPayload(Command, TEXT("ResolvePlayPhaseCommand"));
-	if (UseCardPayload == nullptr)
-	{
-		PendingCommandId = FSGSCommandId();
-		AdvanceAfterPhase();
-		return;
-	}
-
-	const FSGSCardState* State = Context->FindCardStateById(UseCardPayload->CardId);
-	if (State == nullptr)
-	{
-		PendingCommandId = FSGSCommandId();
-		AdvanceAfterPhase();
-		return;
-	}
-
-	if (State->CardName == TEXT("Slash"))
-	{
-		ResolveSlashCommand(Command);
-		return;
-	}
-
-	if (State->CardName == TEXT("Peach"))
-	{
-		const int32 HealTarget = UseCardPayload->TargetSeatIndices.Num() > 0 ? UseCardPayload->TargetSeatIndices[0] : Command.SeatIndex;
-		ResolvePeachCommand(Command, HealTarget);
-		FinishPendingCardResolution();
-		return;
-	}
-
-	UE_LOG(LogSGSTurn, Warning, TEXT("Unsupported basic card command for card %s."), *State->CardName.ToString());
-	FinishPendingCardResolution();
+	DeferredResponseRequest = Request;
+	DeferredResponseAgent = Agent;
+	bHasDeferredResponseRequest = true;
 }
 
-void USGSGameDriver::ResolveResponseCommand(const FSGSCommand& Command)
+void USGSGameDriver::ClearDeferredResponseRequest()
 {
-	if (Command.IsType(SGSGameplayTags::PlayAction_RespondCard))
-	{
-		const FName CommandWindowName = GetTypedResponseWindowName(Command);
-		if (!CommandWindowName.IsNone() && CommandWindowName != PendingWindowName)
-		{
-			UE_LOG(LogSGSTurn, Warning, TEXT("Response command window %s does not match pending window %s."),
-				*CommandWindowName.ToString(),
-				*PendingWindowName.ToString());
-		}
-	}
-
-	if (PendingWindowName == TEXT("Slash.Dodge"))
-	{
-		ResolveSlashDodgeResponse(Command);
-		return;
-	}
-
-	if (PendingWindowName == TEXT("Dying.Peach"))
-	{
-		ResolveDyingPeachResponse(Command);
-		return;
-	}
-
-	UE_LOG(LogSGSTurn, Warning, TEXT("No pending response window for command: %s"), *Command.ToLogString());
-	FinishPendingCardResolution();
+	DeferredResponseRequest = FSGSResponseRequest();
+	DeferredResponseAgent = TScriptInterface<ISGSDecisionAgent>();
+	bHasDeferredResponseRequest = false;
 }
 
-void USGSGameDriver::ResolveSlashCommand(const FSGSCommand& Command)
+void USGSGameDriver::DispatchDeferredResponseRequest()
 {
-	const FSGSUseCardCommandPayload* UseCardPayload = GetUseCardPayload(Command, TEXT("ResolveSlashCommand"));
-	if (UseCardPayload == nullptr)
+	if (!bHasDeferredResponseRequest)
 	{
-		FinishPendingCardResolution();
 		return;
 	}
 
-	if (UseCardPayload->TargetSeatIndices.Num() != 1)
-	{
-		UE_LOG(LogSGSTurn, Warning, TEXT("Slash command requires exactly one target."));
-		FinishPendingCardResolution();
-		return;
-	}
+	const FSGSResponseRequest Request = DeferredResponseRequest;
+	const TScriptInterface<ISGSDecisionAgent> AgentRef = DeferredResponseAgent;
+	DeferredResponseRequest = FSGSResponseRequest();
+	DeferredResponseAgent = TScriptInterface<ISGSDecisionAgent>();
+	bHasDeferredResponseRequest = false;
 
-	USGSCard* SlashCard = Context->FindCardById(UseCardPayload->CardId);
-	const int32 TargetSeat = UseCardPayload->TargetSeatIndices[0];
-	if (SlashCard == nullptr || Context->GetSeat(TargetSeat) == nullptr || TargetSeat == Command.SeatIndex)
-	{
-		UE_LOG(LogSGSTurn, Warning, TEXT("Slash command has invalid card or target."));
-		FinishPendingCardResolution();
-		return;
-	}
-
-	if (Context->GetDistance(Command.SeatIndex, TargetSeat) > 1)
-	{
-		UE_LOG(LogSGSTurn, Warning, TEXT("Slash target is out of distance."));
-		FinishPendingCardResolution();
-		return;
-	}
-
-	PendingSlashCard = SlashCard;
-	PendingEffectSourceSeat = Command.SeatIndex;
-	PendingEffectTargetSeat = TargetSeat;
-	RunEffectStep(SGSStandardEffectSteps::MakeMoveCardsStep(
-		TArray<USGSCard*>{ SlashCard },
-		SGSGameplayTags::CardZone_Hand.GetTag(),
-		Command.SeatIndex,
-		SGSGameplayTags::CardZone_Processing.GetTag(),
-		INDEX_NONE),
-		Command.CommandId);
-	RequestSlashDodge(Command.SeatIndex, TargetSeat);
-}
-
-void USGSGameDriver::ResolvePeachCommand(const FSGSCommand& Command, int32 HealTargetSeat)
-{
-	USGSCard* PeachCard = Context->FindCardById(GetTypedCommandCardId(Command));
-	if (PeachCard == nullptr || PeachCard->CardName != TEXT("Peach") || Context->GetSeat(HealTargetSeat) == nullptr)
-	{
-		UE_LOG(LogSGSTurn, Warning, TEXT("Invalid Peach command."));
-		return;
-	}
-
-	RunEffectStep(SGSStandardEffectSteps::MakeMoveCardsStep(
-		TArray<USGSCard*>{ PeachCard },
-		SGSGameplayTags::CardZone_Hand.GetTag(),
-		Command.SeatIndex,
-		SGSGameplayTags::CardZone_DiscardPile.GetTag(),
-		INDEX_NONE),
-		Command.CommandId);
-	RunEffectStep(SGSStandardEffectSteps::MakeHealStep(HealTargetSeat, 1), Command.CommandId);
-}
-
-void USGSGameDriver::RequestSlashDodge(int32 SourceSeat, int32 TargetSeat)
-{
-	USGSSeat* Target = Context->GetSeat(TargetSeat);
-	ISGSDecisionAgent* Agent = Target != nullptr ? Target->DecisionAgent.GetInterface() : nullptr;
+	ISGSDecisionAgent* Agent = AgentRef.GetInterface();
 	if (Agent == nullptr)
 	{
-		ApplySlashDamageOrDying();
+		UE_LOG(LogSGSTurn, Warning, TEXT("Deferred response request has no decision agent; using fallback pass."));
+		bWaitingForDecision = false;
+		if (!ResolveCommandThroughRules(MakeFallbackPassCommand(TEXT("MissingResponseAgent"))))
+		{
+			FinishCurrentResolution();
+		}
 		return;
 	}
-
-	FSGSResponseRequest Request = MakeResponseRequest(TargetSeat, TEXT("Slash.Dodge"), TEXT("Dodge"), SourceSeat, TargetSeat);
-	PendingCommandId = Request.CommandId;
-	PendingWindowName = Request.WindowName;
-	PendingRequiredCardName = Request.RequiredCardName;
-	PendingEffectSourceSeat = SourceSeat;
-	PendingEffectTargetSeat = TargetSeat;
-	CurrentSeatIndex = TargetSeat;
-	bWaitingForDecision = true;
 
 	FSGSResponseDecisionDelegate OnDecided;
 	OnDecided.BindUObject(this, &USGSGameDriver::OnResponseActionDecided);
 	Agent->RequestResponseAction(Request, OnDecided);
 }
 
-void USGSGameDriver::ResolveSlashDodgeResponse(const FSGSCommand& Command)
+FSGSStatus USGSGameDriver::FinishCurrentResolution(FName Reason)
 {
-	if (Command.IsType(SGSGameplayTags::PlayAction_RespondCard))
+	const int32 EffectSourceSeat = ResolutionStack.FindLatestEffectSourceSeat();
+	const int32 ActionSeat = EffectSourceSeat != INDEX_NONE ? EffectSourceSeat : CurrentSeatIndex;
+	TSGSResult<FSGSResolutionFrame> CompletedResult = ResolutionStack.CompleteCurrentFrame(Reason);
+	if (!CompletedResult.HasValue())
 	{
-		const FSGSRespondCardCommandPayload* RespondCardPayload = GetRespondCardPayload(Command, TEXT("ResolveSlashDodgeResponse"));
-		USGSCard* DodgeCard = Context->FindCardById(RespondCardPayload != nullptr ? RespondCardPayload->CardId : INDEX_NONE);
-		if (DodgeCard != nullptr && DodgeCard->CardName == TEXT("Dodge"))
-		{
-			RunEffectStep(SGSStandardEffectSteps::MakeMoveCardsStep(
-				TArray<USGSCard*>{ DodgeCard },
-				SGSGameplayTags::CardZone_Hand.GetTag(),
-				Command.SeatIndex,
-				SGSGameplayTags::CardZone_DiscardPile.GetTag(),
-				INDEX_NONE),
-				Command.CommandId);
-			if (PendingSlashCard != nullptr)
-			{
-				RunEffectStep(SGSStandardEffectSteps::MakeMoveCardsStep(
-					TArray<USGSCard*>{ PendingSlashCard.Get() },
-					SGSGameplayTags::CardZone_Processing.GetTag(),
-					INDEX_NONE,
-					SGSGameplayTags::CardZone_DiscardPile.GetTag(),
-					INDEX_NONE),
-					Command.CommandId);
-			}
-			FinishPendingCardResolution();
-			return;
-		}
+		UE_LOG(LogSGSTurn, Error, TEXT("FinishCurrentResolution failed: %s"), *CompletedResult.GetError().ToLogString());
+		return MakeError(CompletedResult.GetError());
 	}
 
-	ApplySlashDamageOrDying();
+	PendingCommandId = FSGSCommandId();
+	ClearDeferredResponseRequest();
+	if (ResolutionStack.GetCurrentFrame() != nullptr)
+	{
+		return ResumeResolutionParentAfterChild(CompletedResult.GetValue());
+	}
+
+	CurrentSeatIndex = ActionSeat;
+	if (!bGameOver)
+	{
+		AdvanceAfterPhase();
+	}
+
+	return MakeValue();
 }
 
-void USGSGameDriver::ApplySlashDamageOrDying()
+FSGSStatus USGSGameDriver::ResumeResolutionParentAfterChild(const FSGSResolutionFrame& CompletedFrame)
 {
-	if (PendingSlashCard != nullptr)
+	(void)CompletedFrame;
+
+	FSGSResolutionFrame* ParentFrame = ResolutionStack.GetCurrentFrame();
+	if (ParentFrame == nullptr)
 	{
-		RunEffectStep(SGSStandardEffectSteps::MakeMoveCardsStep(
-			TArray<USGSCard*>{ PendingSlashCard.Get() },
-			SGSGameplayTags::CardZone_Processing.GetTag(),
-			INDEX_NONE,
-			SGSGameplayTags::CardZone_DiscardPile.GetTag(),
-			INDEX_NONE),
-			PendingCommandId);
+		return MakeValue();
 	}
 
-	RunEffectStep(SGSStandardEffectSteps::MakeDamageStep(PendingEffectSourceSeat, PendingEffectTargetSeat, 1), PendingCommandId);
-	const USGSSeat* DamagedSeat = Context->GetSeat(PendingEffectTargetSeat);
-	if (DamagedSeat != nullptr && DamagedSeat->bIsAlive && DamagedSeat->Health <= 0)
+	if (ParentFrame->OnChildCompletedContinuation == SGSResolutionContinuations::FinishParentCardResolution())
 	{
-		BeginDyingPeachWindow(PendingEffectTargetSeat);
-		return;
+		return FinishCurrentResolution(SGSResolutionContinuations::FinishParentCardResolution());
 	}
 
-	FinishPendingCardResolution();
+	if (ParentFrame->OnChildCompletedContinuation == SGSResolutionContinuations::ResumeDyingPeach())
+	{
+		return ContinueDyingPeachFrame(*ParentFrame);
+	}
+
+	return MakeValue();
 }
 
-void USGSGameDriver::BeginDyingPeachWindow(int32 DyingSeat)
+bool USGSGameDriver::OpenNextDyingPeachResponseWindow(FSGSResolutionFrame& DyingFrame)
 {
-	PendingWindowName = TEXT("Dying.Peach");
-	PendingRequiredCardName = TEXT("Peach");
-	PendingEffectTargetSeat = DyingSeat;
-	PendingDyingResponders.Reset();
-	PendingDyingResponderIndex = 0;
-
-	if (Context->GetSeat(DyingSeat) != nullptr)
+	FSGSDyingPeachResolutionState* DyingState = DyingFrame.GetMutableState<FSGSDyingPeachResolutionState>();
+	if (Context == nullptr || DyingState == nullptr)
 	{
-		PendingDyingResponders.Add(DyingSeat);
-	}
-	for (int32 SeatIndex = 0; SeatIndex < Context->NumSeats(); ++SeatIndex)
-	{
-		if (SeatIndex != DyingSeat)
-		{
-			const USGSSeat* Seat = Context->GetSeat(SeatIndex);
-			if (Seat != nullptr && Seat->bIsAlive)
-			{
-				PendingDyingResponders.Add(SeatIndex);
-			}
-		}
+		return false;
 	}
 
-	RequestNextDyingPeachResponder();
-}
-
-void USGSGameDriver::RequestNextDyingPeachResponder()
-{
-	const USGSSeat* DyingSeat = Context->GetSeat(PendingEffectTargetSeat);
+	const USGSSeat* DyingSeat = Context->GetSeat(DyingState->DyingSeat);
 	if (DyingSeat == nullptr || !DyingSeat->bIsAlive || DyingSeat->Health > 0)
 	{
-		FinishPendingCardResolution();
-		return;
+		return false;
 	}
 
-	while (PendingDyingResponders.IsValidIndex(PendingDyingResponderIndex))
+	DyingState->bNeedsHealthRecheck = false;
+	while (DyingState->ResponderSeatIndices.IsValidIndex(DyingState->NextResponderIndex))
 	{
-		const int32 ResponderSeat = PendingDyingResponders[PendingDyingResponderIndex++];
+		const int32 ResponderSeat = DyingState->ResponderSeatIndices[DyingState->NextResponderIndex++];
 		USGSSeat* Responder = Context->GetSeat(ResponderSeat);
 		ISGSDecisionAgent* Agent = Responder != nullptr ? Responder->DecisionAgent.GetInterface() : nullptr;
 		if (Responder == nullptr || !Responder->bIsAlive || Agent == nullptr)
@@ -699,55 +651,59 @@ void USGSGameDriver::RequestNextDyingPeachResponder()
 			continue;
 		}
 
-		FSGSResponseRequest Request = MakeResponseRequest(ResponderSeat, TEXT("Dying.Peach"), TEXT("Peach"), PendingEffectSourceSeat, PendingEffectTargetSeat);
+		FSGSResponseRequest Request = MakeResponseRequest(
+			ResponderSeat,
+			FName(TEXT("Dying.Peach")),
+			FName(TEXT("Peach")),
+			DyingFrame.SourceSeat,
+			DyingFrame.TargetSeat);
 		PendingCommandId = Request.CommandId;
-		PendingWindowName = Request.WindowName;
-		PendingRequiredCardName = Request.RequiredCardName;
 		CurrentSeatIndex = ResponderSeat;
 		bWaitingForDecision = true;
-
-		FSGSResponseDecisionDelegate OnDecided;
-		OnDecided.BindUObject(this, &USGSGameDriver::OnResponseActionDecided);
-		Agent->RequestResponseAction(Request, OnDecided);
-		return;
+		DeferResponseRequest(Request, Responder->DecisionAgent);
+		return true;
 	}
 
-	Context->EliminateSeat(PendingEffectTargetSeat, TEXT("NoPeach"));
-	FinishPendingCardResolution();
+	return false;
 }
 
-void USGSGameDriver::ResolveDyingPeachResponse(const FSGSCommand& Command)
+FSGSStatus USGSGameDriver::ContinueDyingPeachFrame(FSGSResolutionFrame& DyingFrame)
 {
-	if (Command.IsType(SGSGameplayTags::PlayAction_RespondCard))
+	FSGSDyingPeachResolutionState* DyingState = DyingFrame.GetMutableState<FSGSDyingPeachResolutionState>();
+	if (DyingState == nullptr)
 	{
-		ResolvePeachCommand(Command, PendingEffectTargetSeat);
-		const USGSSeat* DyingSeat = Context->GetSeat(PendingEffectTargetSeat);
-		if (DyingSeat != nullptr && DyingSeat->Health > 0)
-		{
-			FinishPendingCardResolution();
-			return;
-		}
+		return MakeError(FSGSError::Make(
+			FName(TEXT("SGS.Rule.FrameStateMismatch")),
+			TEXT("DyingPeach continuation requires a DyingPeach frame state.")));
 	}
 
-	RequestNextDyingPeachResponder();
+	const USGSSeat* DyingSeat = Context != nullptr ? Context->GetSeat(DyingState->DyingSeat) : nullptr;
+	if (DyingSeat == nullptr || !DyingSeat->bIsAlive || DyingSeat->Health > 0)
+	{
+		return FinishCurrentResolution(FName(TEXT("SGS.Resolution.DyingPeachResolved")));
+	}
+
+	if (OpenNextDyingPeachResponseWindow(DyingFrame))
+	{
+		return MakeValue();
+	}
+
+	const FSGSCommandId CommandId = PendingCommandId.IsValid() ? PendingCommandId : DyingFrame.SourceCommandId;
+	if (FSGSStatus Status = RunEffectStep(
+		SGSStandardEffectSteps::MakeEliminateSeatStep(DyingState->DyingSeat, FName(TEXT("NoPeach"))),
+		CommandId);
+		Status.HasError())
+	{
+		return Status;
+	}
+
+	return FinishCurrentResolution(FName(TEXT("SGS.Resolution.DyingPeachNoPeach")));
 }
 
-void USGSGameDriver::FinishPendingCardResolution()
+FSGSStatus USGSGameDriver::PublishTimingEvent(const FSGSRuleEventPayload& Payload)
 {
-	const int32 ActionSeat = PendingEffectSourceSeat != INDEX_NONE ? PendingEffectSourceSeat : CurrentSeatIndex;
-	PendingCommandId = FSGSCommandId();
-	PendingWindowName = NAME_None;
-	PendingRequiredCardName = NAME_None;
-	PendingEffectSourceSeat = INDEX_NONE;
-	PendingEffectTargetSeat = INDEX_NONE;
-	PendingSlashCard = nullptr;
-	PendingDyingResponders.Reset();
-	PendingDyingResponderIndex = INDEX_NONE;
-	CurrentSeatIndex = ActionSeat;
-	if (!bGameOver)
-	{
-		AdvanceAfterPhase();
-	}
+	(void)Payload;
+	return MakeValue();
 }
 
 void USGSGameDriver::ExecuteDrawPhaseThroughPipeline()
@@ -762,7 +718,7 @@ void USGSGameDriver::ExecuteDrawPhaseThroughPipeline()
 	SyncReplayLog();
 }
 
-void USGSGameDriver::RunEffectStep(FSGSEffectStep Step, FSGSCommandId CommandId)
+FSGSStatus USGSGameDriver::RunEffectStep(FSGSEffectStep Step, FSGSCommandId CommandId)
 {
 	EffectPipeline.Reset();
 	EffectPipeline.Enqueue(MoveTemp(Step));
@@ -770,8 +726,11 @@ void USGSGameDriver::RunEffectStep(FSGSEffectStep Step, FSGSCommandId CommandId)
 	if (FSGSStatus Status = EffectPipeline.Run(EffectContext); Status.HasError())
 	{
 		UE_LOG(LogSGSTurn, Error, TEXT("Effect step failed: %s"), *Status.GetError().ToLogString());
+		SyncReplayLog();
+		return Status;
 	}
 	SyncReplayLog();
+	return MakeValue();
 }
 
 void USGSGameDriver::SyncReplayLog()

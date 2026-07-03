@@ -10,10 +10,14 @@ class SGS_API FSGSUseCardCommandType final : public TSGSCommandType<FSGSUseCardC
 {
 public:
 	virtual FGameplayTag GetType() const override;
-	virtual void SyncLegacyMirror(FSGSCommand& Command) const override;
 
 protected:
 	virtual FSGSStatus ValidateTyped(
+		const FSGSCommand& Command,
+		const FSGSUseCardCommandPayload& Payload,
+		const FSGSCommandExecutionContext& Context) const override;
+
+	virtual TSGSResult<FSGSRuleInvocation> BuildRuleInvocationTyped(
 		const FSGSCommand& Command,
 		const FSGSUseCardCommandPayload& Payload,
 		const FSGSCommandExecutionContext& Context) const override;

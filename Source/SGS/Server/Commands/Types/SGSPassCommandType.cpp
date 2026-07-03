@@ -1,6 +1,7 @@
 #include "Server/Commands/Types/SGSPassCommandType.h"
 
 #include "Shared/Commands/SGSCommandPayloadTraits.h"
+#include "Server/Rules/SGSRuleInvocation.h"
 
 FGameplayTag FSGSPassCommandType::GetType() const
 {
@@ -12,17 +13,28 @@ FSGSStatus FSGSPassCommandType::ValidateTyped(
 	const FSGSPassCommandPayload& Payload,
 	const FSGSCommandExecutionContext& Context) const
 {
-	if (Command.CardIds.Num() > 0
-		|| Command.TargetSeatIndices.Num() > 0
-		|| Command.CardHandles.Num() > 0
-		|| Command.TargetHandles.Num() > 0
-		|| Command.Parameters.Num() > 0
-		|| !Command.SkillName.IsNone())
-	{
-		return MakeError(FSGSError::Make(
-			FName(TEXT("SGS.Command.InvalidPayload")),
-			TEXT("Pass command must not include cards, targets, skills, or parameters.")));
-	}
-
 	return MakeValue();
+}
+
+TSGSResult<FSGSRuleInvocation> FSGSPassCommandType::BuildRuleInvocationTyped(
+	const FSGSCommand& Command,
+	const FSGSPassCommandPayload& Payload,
+	const FSGSCommandExecutionContext& Context) const
+{
+	FSGSPassRulePayload RulePayload;
+	RulePayload.WindowName = Context.ExpectedWindowName;
+	RulePayload.RequiredCardName = Context.RequiredCardName;
+	RulePayload.EffectSourceSeat = Context.EffectSourceSeatIndex;
+	RulePayload.EffectTargetSeat = Context.EffectTargetSeatIndex;
+
+	FSGSRuleInvocation Invocation;
+	Invocation.RuleKindTag = Context.ExpectedWindowName.IsNone() ? SGSRuleKinds::Action() : SGSRuleKinds::Response();
+	Invocation.IntentTag = Command.Type;
+	Invocation.SubjectName = NAME_None;
+	Invocation.ActorSeat = Command.SeatIndex;
+	Invocation.WindowName = Context.ExpectedWindowName;
+	Invocation.SourceCommandId = Command.CommandId;
+	Invocation.SourceRequestId = Command.RequestId;
+	Invocation.Payload = FInstancedStruct::Make(RulePayload);
+	return MakeValue(MoveTemp(Invocation));
 }

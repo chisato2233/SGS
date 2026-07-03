@@ -2,7 +2,7 @@
 
 // 服务器权威的 Command 校验与分发层。
 // 每个 Command 标签注册一个 CommandType，原始意图统一提交到这里并记录生命周期审计。
-// Router 负责通用信封检查；CommandType 负责具体类型的规则校验与执行。
+// Router 负责通用信封检查；CommandType 负责具体类型的规则校验与 RuleInvocation 构造。
 
 #include "CoreMinimal.h"
 #include "Shared/Core/SGSError.h"
@@ -40,6 +40,9 @@ public:
 	void RegisterCommandType(TSharedRef<ISGSCommandType> CommandType);
 
 	FSGSStatus SubmitCommand(const FSGSCommand& Command, const FSGSCommandExecutionContext& Context);
+	TSGSResult<FSGSRuleInvocation> BuildRuleInvocation(
+		const FSGSCommand& Command,
+		const FSGSCommandExecutionContext& Context) const;
 	void RecordLifecycle(const FSGSCommand& Command, FName Lifecycle, bool bSucceeded, FSGSError Error = FSGSError(), FString Detail = FString());
 
 	const TArray<FSGSCommandLogEntry>& GetLogEntries() const { return LogEntries; }

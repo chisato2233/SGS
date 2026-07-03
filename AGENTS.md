@@ -21,6 +21,14 @@
 - 代码结构和依赖关系由 graphify 维护，不在文档里手写类图/依赖图，也不要用规则文件替代 graphify 描述代码功能。
 - 规则层、UI、GAS、建模等任务按 `Source/Doc/Rules/README.md` 读取对应细则。
 
+## 本地参考仓库
+
+- `QSgsRef/` 是本机参考代码区，当前用于存放太阳神三国杀 / QSanguosha 仓库；它不是 SGS 项目源码、不是项目事实源，也不进入 Git 跟踪。
+- 日常开发默认不要读取 `QSgsRef/`，也不要把它并入主项目 `graphify-out/`。只有用户明确要求参考“太阳神三国杀 / QSanguosha”，或任务确实需要对照其规则、UI、资源组织、历史实现时，才按需读取。
+- 参考仓库路径：`QSgsRef/QSanguosha/`。它的独立 graphify 索引放在 `QSgsRef/QSanguosha/graphify-out/`。
+- 查询参考仓库时，优先使用它自己的图谱，例如在 `QSgsRef/QSanguosha/` 下运行 `graphify query "<问题>"`，或在项目根目录使用 `graphify query "<问题>" --graph .\QSgsRef\QSanguosha\graphify-out\graph.json`。不要因此改写主项目图谱。
+- 如果参考仓库图谱缺失或明显过期，在 `QSgsRef/QSanguosha/` 目录内运行 `graphify update .` 维护它；修改 SGS 项目源码后仍只按常规在项目根目录运行 `graphify update .`。
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

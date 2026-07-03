@@ -6,6 +6,88 @@
 
 ---
 
+## #16 — 2026-07-03 — 执行 0014-M3：ResolutionStack Resume 与受控 TimingEvent 地基
+
+**原话：**
+> PLEASE IMPLEMENT THIS PLAN:
+> # 0014-M3 执行计划：ResolutionStack Resume + 受控 TimingEvent 地基
+
+**上下文：**
+- Plan 0014-M2 已移除 legacy `FSGSRuleRequest` 路径，并把基础牌 pending 状态迁入 `ResolutionStack`。
+- 当前 `ResolutionStack` 仍偏向响应窗口容器，基础牌完成时会重置整栈，无法正确表达子结算完成后恢复父结算。
+- 用户明确要求测试相关修改和运行放到最后统一处理，前期优先运行时代码与文档状态更新。
+
+**要点拆解：**
+- 将 `ResolutionStack` 升级为可恢复结算栈：子 frame 完成后 pop 并按 continuation 恢复 parent。
+- 用通用 Runtime 接口替代基础牌专用的 processing card / dying responder API。
+- 迁移 Slash / Dodge / Peach / DyingPeach 到 LIFO resume 语义，支持嵌套濒死的长期方向。
+- 建立最小受控 TimingEvent / TriggerRule 接缝，但不完整实现 Trigger / Modifier / ViewAs。
+
+**关联计划：** `0014-M3-resolution-stack-resume-timing-event.md`。
+
+---
+
+## #15 — 2026-07-03 — 创建 0014 第二阶段执行计划，要求完全替代旧兼容层
+
+**原话：**
+> 开始构建第二阶段的开发计划，请注意，现在还在早期开发阶段，不要为了历史老旧版本做一些额外的降低代码优雅和质量的兼容层，完全的替代
+
+**上下文：**
+- Plan 0014 第一阶段已实现 typed `RuleInvocation` 与 Indexed RuleRegistry 地基。
+- 第一阶段为了保持基础牌回归，临时保留了 legacy `FSGSRuleRequest` 作为 BasicCardRules 兼容输入。
+- 用户明确要求第二阶段不要继续背负早期过渡兼容层，应直接替换旧结构。
+
+**要点拆解：**
+- 创建 0014 的 M2 子计划，范围聚焦 typed Rule、ResolutionStack、legacy request 删除。
+- `FSGSRuleRequest`、`BuildRuleRequest`、`SGSLegacyRuleRequests` 不再作为运行时代码路径存在。
+- `USGSGameDriver` 中基础牌 pending 状态迁移到显式 `ResolutionStack / ResolutionFrame`。
+- Trigger / Modifier / ViewAs 暂不并入 M2，避免第二阶段过大。
+
+**关联计划：** `0014-M2-typed-rules-resolution-stack.md`。
+
+---
+
+## #14 — 2026-07-03 — 创建 Rule 层长期重构计划
+
+**原话：**
+> 很好，按照目前的讨论，创建一份详细的开发计划用于重构Rule层，
+
+**上下文：**
+- Plan 0013 已建立基础 `Command -> Rule -> EffectPipeline` 管线，但 `FSGSRuleRequest` 有继续膨胀为万能参数包的风险。
+- 用户希望结合长期卡牌 / 技能开发需求，确定更适合海量 Rule、技能触发、modifier 和视为技的结构。
+- 讨论中参考了 QSanguosha 的技能架构：C++ 稳定接口、TriggerSkill / ViewAsSkill / DistanceSkill / TargetModSkill 分类、事件表和优先级触发；但 SGS 不应照搬 Lua / QVariant / 直接 Room mutation 风格。
+- 用户询问 `RuleRegistry` 是否能复用 `TSGSIndexedStore`，结论是适合作为 Registry 多索引底座。
+
+**要点拆解：**
+- 新建计划，重构 Rule 层为 typed `RuleInvocation`，避免继续给单一 `RuleRequest` 增加大量字段。
+- 将 Rule 分类为 Action / Trigger / Modifier / ViewAs 等长期扩展点。
+- 使用 `TSGSIndexedStore` 管理 `RuleEntry`，通过 `RuleDescriptor` 和索引查询候选 Rule。
+- 将 Driver 中的 pending 规则状态下沉到显式 `ResolutionStack / ResolutionFrame`。
+- 保持 CommandRouter、EffectPipeline、ReplayLog、GameContext 等服务器权威边界不变。
+
+**关联计划：** `0014-rule-layer-long-term-refactor.md`。
+
+---
+
+## #13 — 2026-07-01 — 构建 Command 到 Rule 到 Effect 的规则管线
+
+**原话：**
+> 下一步？构建一下从Command到Rule到Effect的管线规则，先新建一个计划
+
+**上下文：**
+- Command 已完成 typed payload 与 CommandType 收口。
+- UI 同步边界已拆到 GameState / PlayerController，下一步回到服务器权威规则层。
+- 当前基础牌规则仍有一部分 Slash / Peach / Dodge 分发逻辑直接写在 `USGSGameDriver` 中。
+
+**要点拆解：**
+- 新建计划，设计并落地从 Command 校验、Rule 分发、EffectPipeline 状态变更的统一管线。
+- Rule 层应承接卡牌 / 响应 / 后续技能规则，不让 Driver 继续膨胀为规则分支中心。
+- 保持服务器权威、CommandRouter、EffectPipeline、ReplayLog 等现有基础工具为默认入口。
+
+**关联计划：** `0013-command-rule-effect-pipeline.md`。
+
+---
+
 ## #12 — 2026-06-28 — 创建 Plan0005 与 Plan0011-M1，强调长期项目质量门
 
 **原话：**

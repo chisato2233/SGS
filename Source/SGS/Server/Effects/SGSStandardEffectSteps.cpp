@@ -125,6 +125,30 @@ FSGSEffectStep SGSStandardEffectSteps::MakeHealStep(int32 SeatIndex, int32 Amoun
 	return Step;
 }
 
+FSGSEffectStep SGSStandardEffectSteps::MakeEliminateSeatStep(int32 SeatIndex, FName Reason)
+{
+	FSGSEffectStep Step;
+	Step.StepName = FName(TEXT("SGS.Effect.EliminateSeat"));
+	Step.SourceName = FName(TEXT("StandardEffect.EliminateSeat"));
+	Step.Execute = [SeatIndex, Reason](FSGSEffectContext& Context)
+	{
+		if (Context.GameContext == nullptr)
+		{
+			return FSGSEffectResult::Failure(FSGSError::Make(
+				FName(TEXT("SGS.Effect.MissingContext")),
+				TEXT("EliminateSeat step has no GameContext.")));
+		}
+
+		Context.GameContext->EliminateSeat(SeatIndex, Reason);
+		AppendStandardEvent(Context, FName(TEXT("SGS.Event.EliminateSeat")), FString::Printf(
+			TEXT("Seat=%d Reason=%s"),
+			SeatIndex,
+			*Reason.ToString()));
+		return FSGSEffectResult::Success();
+	};
+	return Step;
+}
+
 FSGSEffectStep SGSStandardEffectSteps::MakeJudgementPlaceholderStep(int32 SeatIndex, FName Reason)
 {
 	FSGSEffectStep Step;

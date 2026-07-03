@@ -1,12 +1,13 @@
 #pragma once
 
 // Command type 是 SGS 命令协议的唯一事实源：一个类型同时声明 GameplayTag、
-// PayloadStruct、payload 日志、legacy mirror 同步，以及上下文相关校验 / 执行。
+// PayloadStruct、payload 日志、上下文相关校验，以及 typed payload -> RuleInvocation。
 // FSGSCommand 只保存公共头和 typed payload；构造与分发都回到这里查类型定义。
 
 #include "CoreMinimal.h"
 #include "Shared/Commands/SGSCommand.h"
 #include "Shared/Core/SGSError.h"
+#include "Server/Rules/SGSRuleInvocation.h"
 
 class FSGSCommandRouter;
 class USGSGameContext;
@@ -20,6 +21,7 @@ struct SGS_API FSGSCommandExecutionContext
 	FSGSPhase ExpectedPhase = SGSGameplayTags::Phase_None.GetTag();
 	FName ExpectedWindowName = NAME_None;
 	FName RequiredCardName = NAME_None;
+	int32 EffectSourceSeatIndex = INDEX_NONE;
 	int32 EffectTargetSeatIndex = INDEX_NONE;
 };
 
@@ -31,9 +33,10 @@ public:
 	virtual FGameplayTag GetType() const = 0;
 	virtual const UScriptStruct* GetPayloadStruct() const = 0;
 	virtual FString FormatPayloadSummary(const FSGSCommand& Command) const = 0;
-	virtual void SyncLegacyMirror(FSGSCommand& Command) const {}
 	virtual FSGSStatus Validate(const FSGSCommand& Command, const FSGSCommandExecutionContext& Context) const = 0;
-	virtual FSGSStatus Execute(const FSGSCommand& Command, const FSGSCommandExecutionContext& Context) const = 0;
+	virtual TSGSResult<FSGSRuleInvocation> BuildRuleInvocation(
+		const FSGSCommand& Command,
+		const FSGSCommandExecutionContext& Context) const = 0;
 
 	bool CheckInvariants() const
 	{
@@ -78,7 +81,9 @@ public:
 		return ValidateTyped(Command, *Payload, Context);
 	}
 
-	virtual FSGSStatus Execute(const FSGSCommand& Command, const FSGSCommandExecutionContext& Context) const override
+	virtual TSGSResult<FSGSRuleInvocation> BuildRuleInvocation(
+		const FSGSCommand& Command,
+		const FSGSCommandExecutionContext& Context) const override
 	{
 		const TPayload* Payload = Command.GetPayload<TPayload>();
 		if (Payload == nullptr)
@@ -88,16 +93,16 @@ public:
 				FString::Printf(TEXT("Command type %s requires payload %s."), *GetType().ToString(), *TPayload::StaticStruct()->GetName())));
 		}
 
-		return ExecuteTyped(Command, *Payload, Context);
+		return BuildRuleInvocationTyped(Command, *Payload, Context);
 	}
 
 protected:
 	virtual FSGSStatus ValidateTyped(const FSGSCommand& Command, const TPayload& Payload, const FSGSCommandExecutionContext& Context) const = 0;
 
-	virtual FSGSStatus ExecuteTyped(const FSGSCommand& Command, const TPayload& Payload, const FSGSCommandExecutionContext& Context) const
-	{
-		return MakeValue();
-	}
+	virtual TSGSResult<FSGSRuleInvocation> BuildRuleInvocationTyped(
+		const FSGSCommand& Command,
+		const TPayload& Payload,
+		const FSGSCommandExecutionContext& Context) const = 0;
 };
 
 namespace SGSCommandTypes

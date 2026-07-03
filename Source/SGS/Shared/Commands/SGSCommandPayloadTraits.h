@@ -1,6 +1,6 @@
 #pragma once
 
-// Protocol-level mapping from typed payload to command tag and legacy mirrors.
+// Protocol-level mapping from typed payload to command tag.
 // Server CommandType classes reuse these traits so client/shared construction and
 // server registration do not drift apart.
 
@@ -18,10 +18,6 @@ struct SGS_API TSGSCommandPayloadTraits<FSGSPassCommandPayload>
 	{
 		return SGSGameplayTags::PlayAction_Pass.GetTag();
 	}
-
-	static void SyncLegacyMirror(FSGSCommand& Command)
-	{
-	}
 };
 
 template <>
@@ -31,19 +27,6 @@ struct SGS_API TSGSCommandPayloadTraits<FSGSUseCardCommandPayload>
 	{
 		return SGSGameplayTags::PlayAction_UseCard.GetTag();
 	}
-
-	static void SyncLegacyMirror(FSGSCommand& Command)
-	{
-		const FSGSUseCardCommandPayload* Payload = Command.GetPayload<FSGSUseCardCommandPayload>();
-		if (Payload == nullptr)
-		{
-			return;
-		}
-
-		Command.CardIds.Reset();
-		Command.CardIds.Add(Payload->CardId);
-		Command.TargetSeatIndices = Payload->TargetSeatIndices;
-	}
 };
 
 template <>
@@ -52,20 +35,5 @@ struct SGS_API TSGSCommandPayloadTraits<FSGSRespondCardCommandPayload>
 	static FGameplayTag GetType()
 	{
 		return SGSGameplayTags::PlayAction_RespondCard.GetTag();
-	}
-
-	static void SyncLegacyMirror(FSGSCommand& Command)
-	{
-		const FSGSRespondCardCommandPayload* Payload = Command.GetPayload<FSGSRespondCardCommandPayload>();
-		if (Payload == nullptr)
-		{
-			return;
-		}
-
-		Command.CardIds.Reset();
-		Command.CardIds.Add(Payload->CardId);
-		Command.TargetSeatIndices = Payload->TargetSeatIndices;
-		Command.Parameters.Reset();
-		Command.Parameters.Add(FName(TEXT("WindowName")), Payload->WindowName.ToString());
 	}
 };

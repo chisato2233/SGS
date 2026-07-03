@@ -53,6 +53,8 @@
 - **枚举克制**：技术层内部、可证明封闭稳定、确实需要编译期分支时，才使用 enum。规则/内容概念默认不用封闭 enum，详见 `GameplayModeling.md`。
 - **头文件**：使用 `#pragma once`；一个头文件只放一个主类型，小型辅助 struct 可同文件；优先前向声明；公共 API 使用 `SGS_API`；`.generated.h` 必须是最后一个 include。
 - **UE 反射**：核心逻辑默认 C++，不要为了“未来可能蓝图扩展”提前加 `BlueprintCallable` / `BlueprintNativeEvent`。对象指针使用 `TObjectPtr<>`。`BlueprintReadOnly` 可用于调试可视化，不代表允许蓝图承载规则逻辑。
+- **复用优先**：最大程度使用 Unreal、SGS Tool 库和项目既有工具能力。新增自定义实现前，先确认 UE API、Gameplay 框架、项目工具库或 Plan 0012 工具入口是否已经提供可复用能力；不得为局部方便重复发明平行基础设施。
+- **控制膨胀**：避免复制粘贴和分支堆叠造成代码膨胀。若新增抽象层能实质降低重复率、集中不变量，或为后续卡牌、技能、UI、AI、网络等扩展提供稳定入口，应先完成该抽象工作，不因短期实现麻烦而把复杂度摊到多个调用点。
 - **注释**：非平凡主类 / 主工具头文件开头写 3-8 行中文用途注释：职责、典型入口、关键不变量。不写流水账注释、changelog、作者、日期；行内注释只解释 why、不变量、陷阱或 TODO。
 - **错误处理**：不使用 C++ 异常。不可恢复的不变量用 `check()`；可继续但不应发生的情况用 `ensure()`；业务日志使用集中声明的 SGS 日志分类；规则层失败路径优先使用项目结果/错误类型，而不是裸 `bool` 丢失原因。
 
@@ -125,4 +127,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\CheckLargeFiles.ps1 
 - 不修改 `0000-RawRequirements.md` 的历史条目，只能在顶部追加。
 - 完成并验证的 Plan 移入 `Source/Doc/Plan/Archive/`，主目录只保留当前工作面。
 
-Last reviewed: 2026-06-27
+Last reviewed: 2026-07-01

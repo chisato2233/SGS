@@ -3,6 +3,7 @@
 #include "Shared/Cards/SGSCard.h"
 #include "Shared/Commands/SGSCommandPayloadTraits.h"
 #include "Server/Engine/SGSGameContext.h"
+#include "Server/Rules/SGSRuleInvocation.h"
 
 namespace
 {
@@ -30,16 +31,18 @@ FGameplayTag FSGSUseCardCommandType::GetType() const
 	return TSGSCommandPayloadTraits<FSGSUseCardCommandPayload>::GetType();
 }
 
-void FSGSUseCardCommandType::SyncLegacyMirror(FSGSCommand& Command) const
-{
-	TSGSCommandPayloadTraits<FSGSUseCardCommandPayload>::SyncLegacyMirror(Command);
-}
-
 FSGSStatus FSGSUseCardCommandType::ValidateTyped(
 	const FSGSCommand& Command,
 	const FSGSUseCardCommandPayload& Payload,
 	const FSGSCommandExecutionContext& Context) const
 {
+	if (!Context.ExpectedWindowName.IsNone())
+	{
+		return MakeError(FSGSError::Make(
+			FName(TEXT("SGS.Command.UseCardDuringResponse")),
+			TEXT("UseCard is only valid outside response windows.")));
+	}
+
 	if (FindUseCardHandCardStateById(Payload.CardId, Command, Context) == nullptr)
 	{
 		return MakeError(FSGSError::Make(
@@ -47,12 +50,37 @@ FSGSStatus FSGSUseCardCommandType::ValidateTyped(
 			TEXT("UseCard requires exactly one card currently in the acting seat's hand.")));
 	}
 
-	if (Command.CardHandles.Num() > 0 || Command.TargetHandles.Num() > 0)
+	return MakeValue();
+}
+
+TSGSResult<FSGSRuleInvocation> FSGSUseCardCommandType::BuildRuleInvocationTyped(
+	const FSGSCommand& Command,
+	const FSGSUseCardCommandPayload& Payload,
+	const FSGSCommandExecutionContext& Context) const
+{
+	const FSGSCardState* State = FindUseCardHandCardStateById(Payload.CardId, Command, Context);
+	if (State == nullptr)
 	{
 		return MakeError(FSGSError::Make(
-			FName(TEXT("SGS.Command.UnsupportedHandlePayload")),
-			TEXT("Plan0005 commands use CardIds / TargetSeatIndices; handle payloads are reserved for later Client/UI/network paths.")));
+			FName(TEXT("SGS.Command.InvalidCard")),
+			TEXT("Cannot build RuleInvocation for a missing UseCard hand card.")));
 	}
 
-	return MakeValue();
+	FSGSUseCardRulePayload RulePayload;
+	RulePayload.CardId = Payload.CardId;
+	RulePayload.CardName = State->CardName;
+	RulePayload.TargetSeatIndices = Payload.TargetSeatIndices;
+	RulePayload.EffectSourceSeat = Command.SeatIndex;
+	RulePayload.EffectTargetSeat = Payload.TargetSeatIndices.Num() > 0 ? Payload.TargetSeatIndices[0] : Command.SeatIndex;
+
+	FSGSRuleInvocation Invocation;
+	Invocation.RuleKindTag = SGSRuleKinds::Action();
+	Invocation.IntentTag = Command.Type;
+	Invocation.SubjectName = State->CardName;
+	Invocation.ActorSeat = Command.SeatIndex;
+	Invocation.WindowName = Context.ExpectedWindowName;
+	Invocation.SourceCommandId = Command.CommandId;
+	Invocation.SourceRequestId = Command.RequestId;
+	Invocation.Payload = FInstancedStruct::Make(RulePayload);
+	return MakeValue(MoveTemp(Invocation));
 }
