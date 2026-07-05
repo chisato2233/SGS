@@ -7,7 +7,7 @@
 #include "CoreMinimal.h"
 #include "Shared/Commands/SGSCommand.h"
 #include "Shared/Core/SGSError.h"
-#include "Server/Rules/SGSRuleInvocation.h"
+#include "Server/Rules/Core/SGSRuleInvocation.h"
 
 class FSGSCommandRouter;
 class USGSGameContext;

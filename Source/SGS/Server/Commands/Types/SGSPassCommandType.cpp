@@ -1,7 +1,7 @@
 #include "Server/Commands/Types/SGSPassCommandType.h"
 
 #include "Shared/Commands/SGSCommandPayloadTraits.h"
-#include "Server/Rules/SGSRuleInvocation.h"
+#include "Server/Rules/Core/SGSRuleInvocation.h"
 
 FGameplayTag FSGSPassCommandType::GetType() const
 {

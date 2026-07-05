@@ -1,11 +1,16 @@
 #pragma once
 
-#include "Server/Rules/SGSRuleTypes.h"
+#include "Server/Rules/Core/SGSRuleTypes.h"
 
 template <typename TPayload>
 class TSGSTypedRule : public ISGSRule
 {
 public:
+	virtual const UScriptStruct* GetExpectedPayloadStruct() const override
+	{
+		return TPayload::StaticStruct();
+	}
+
 	virtual bool CanHandle(const FSGSRuleExecutionContext& Context) const override
 	{
 		const TPayload* Payload = Context.RuleInvocation.GetPayload<TPayload>();

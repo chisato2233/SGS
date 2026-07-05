@@ -1,10 +1,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Client/UI/Layout/SGSTableLayout.h"
 #include "Shared/UI/SGSTableViewTypes.h"
 #include "Widgets/SCompoundWidget.h"
 
 class ASGSPlayerController;
+struct FSlateDynamicImageBrush;
 
 class SGS_API SSGSTableHudWidget : public SCompoundWidget
 {
@@ -19,16 +21,20 @@ public:
 
 private:
 	EActiveTimerReturnType HandleRefreshTimer(double InCurrentTime, float InDeltaTime);
-	void Refresh();
+	void Refresh(bool bForceRebuild = false);
 	void NormalizeSelection();
+	bool ShouldRebuildContent() const;
+	void MarkContentRendered();
+	FVector2D GetLayoutViewSize() const;
+	const FSlateBrush* GetBackgroundBrush();
 
 	TSharedRef<SWidget> BuildContent();
 	TSharedRef<SWidget> BuildHeader() const;
-	TSharedRef<SWidget> BuildSeats();
-	TSharedRef<SWidget> BuildSeatButton(const FSGSSeatViewData& Seat);
+	TSharedRef<SWidget> BuildSeatButton(const FSGSSeatViewData& Seat, FVector2D Size);
 	TSharedRef<SWidget> BuildHand();
 	TSharedRef<SWidget> BuildCardButton(const FSGSCardViewData& Card);
 	TSharedRef<SWidget> BuildControls();
+	TSharedRef<SWidget> BuildCenterInfo() const;
 
 	FReply OnCardClicked(int32 CardId);
 	FReply OnSeatClicked(int32 SeatIndex);
@@ -45,4 +51,12 @@ private:
 	FSGSTableViewSnapshot Snapshot;
 	int32 SelectedCardId = INDEX_NONE;
 	int32 SelectedTargetSeat = INDEX_NONE;
+	int32 LastRenderedPublicRevision = INDEX_NONE;
+	int32 LastRenderedPrivateRevision = INDEX_NONE;
+	int32 LastRenderedSelectedCardId = INDEX_NONE;
+	int32 LastRenderedSelectedTargetSeat = INDEX_NONE;
+	FVector2D LastRenderedViewSize = FVector2D::ZeroVector;
+	FVector2D CurrentViewSize = FVector2D::ZeroVector;
+	TSharedPtr<FSlateDynamicImageBrush> BackgroundBrush;
+	bool bHasRenderedContent = false;
 };

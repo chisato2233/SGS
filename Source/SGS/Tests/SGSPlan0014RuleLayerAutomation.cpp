@@ -7,9 +7,13 @@
 #include "Server/AI/SGSScriptedDecisionAgent.h"
 #include "Server/Commands/SGSCommandRouter.h"
 #include "Server/Engine/SGSGameContext.h"
-#include "Server/Rules/SGSRuleInvocation.h"
-#include "Server/Rules/SGSRuleRegistry.h"
-#include "Server/Rules/SGSResolutionStack.h"
+#include "Server/Rules/Actions/BasicCards/SGSSlashRule.h"
+#include "Server/Rules/Core/SGSRuleInvocation.h"
+#include "Server/Rules/Core/SGSRuleRegistry.h"
+#include "Server/Rules/Core/SGSTypedRule.h"
+#include "Server/Rules/Resolution/SGSResolutionStack.h"
+#include "Server/Rules/Responses/BasicCards/SGSDyingPeachRules.h"
+#include "Server/Timing/SGSActiveEffectTimeline.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -67,6 +71,180 @@ FSGSRuleInvocation MakePlan0014LookupInvocation(
 	Invocation.SourceRequestId = 1;
 	Invocation.Payload = FInstancedStruct::Make(Payload);
 	return Invocation;
+}
+
+FSGSRuleInvocation MakePlan0014TriggerInvocation(FGameplayTag EventTag, FName TimingStep)
+{
+	FSGSRuleEventPayload Payload;
+	Payload.EventTag = EventTag;
+	Payload.EventName = FName(TEXT("SGS.Test.TriggerEvent"));
+	Payload.SourceSeat = 0;
+	Payload.TargetSeat = 1;
+	Payload.SourceCommandId = FSGSCommandId(1);
+	Payload.TimingPoint = FSGSTimingPoint::Make(
+		1,
+		0,
+		0,
+		0,
+		SGSGameplayTags::Phase_Play.GetTag(),
+		TimingStep);
+
+	FSGSRuleInvocation Invocation;
+	Invocation.RuleKindTag = SGSRuleKinds::Trigger();
+	Invocation.IntentTag = EventTag;
+	Invocation.SubjectName = NAME_None;
+	Invocation.ActorSeat = 0;
+	Invocation.WindowName = TimingStep;
+	Invocation.SourceCommandId = FSGSCommandId(1);
+	Invocation.SourceRequestId = 1;
+	Invocation.Payload = FInstancedStruct::Make(Payload);
+	return Invocation;
+}
+
+class FSGSPlan0014TestRuleRuntime final : public ISGSRuleRuntime
+{
+public:
+	virtual FSGSStatus RunEffectStep(FSGSEffectStep Step, FSGSCommandId CommandId) override
+	{
+		(void)Step;
+		(void)CommandId;
+		return MakeValue();
+	}
+
+	virtual bool OpenResponseWindow(const FSGSRuleResponseWindowSpec& Spec) override
+	{
+		(void)Spec;
+		return false;
+	}
+
+	virtual void AdvanceAfterPhase() override
+	{
+	}
+
+	virtual FSGSStableHandle PushResolutionFrame(FSGSResolutionFrame Frame) override
+	{
+		return Stack.PushFrame(MoveTemp(Frame));
+	}
+
+	virtual FSGSStatus CompleteCurrentFrame(FName Reason) override
+	{
+		if (Stack.CompleteCurrentFrame(Reason).HasValue())
+		{
+			return MakeValue();
+		}
+		return MakeError(FSGSError::Make(FName(TEXT("SGS.Test.NoFrame")), TEXT("No frame to complete.")));
+	}
+
+	virtual FSGSStatus AbortAllFrames(FName Reason) override
+	{
+		return Stack.AbortAllFrames(Reason);
+	}
+
+	virtual FSGSResolutionStack& GetResolutionStack() override
+	{
+		return Stack;
+	}
+
+	virtual const FSGSResolutionStack& GetResolutionStack() const override
+	{
+		return Stack;
+	}
+
+	virtual FSGSStatus PublishTimingEvent(const FSGSRuleEventPayload& Payload) override
+	{
+		(void)Payload;
+		return MakeValue();
+	}
+
+private:
+	FSGSResolutionStack Stack;
+};
+
+class FSGSPlan0014CountingTriggerRule final : public FSGSTriggerRuleBase<FSGSRuleEventPayload>
+{
+public:
+	FSGSPlan0014CountingTriggerRule(
+		FName InRuleName,
+		int32 InPriority,
+		TArray<FName>& InCalls,
+		bool bInCanHandle = true)
+		: RuleName(InRuleName)
+		, Priority(InPriority)
+		, Calls(&InCalls)
+		, bCanHandleEvent(bInCanHandle)
+	{
+	}
+
+	virtual FName GetRuleName() const override
+	{
+		return RuleName;
+	}
+
+	virtual FSGSRuleDescriptor GetDescriptor() const override
+	{
+		FSGSRuleDescriptor Descriptor;
+		Descriptor.RuleName = RuleName;
+		Descriptor.RuleKindTag = SGSRuleKinds::Trigger();
+		Descriptor.IntentTag = SGSGameplayTags::GameEvent_PhaseBegan.GetTag();
+		Descriptor.SubjectName = NAME_None;
+		Descriptor.WindowName = SGSTimingSteps::Begin();
+		Descriptor.Priority = Priority;
+		Descriptor.bWildcardSubject = true;
+		return Descriptor;
+	}
+
+protected:
+	virtual bool CanHandlePayload(const FSGSRuleExecutionContext& Context, const FSGSRuleEventPayload& Payload) const override
+	{
+		(void)Context;
+		return bCanHandleEvent
+			&& Payload.EventTag.MatchesTagExact(SGSGameplayTags::GameEvent_PhaseBegan.GetTag())
+			&& Payload.TimingPoint.Step == SGSTimingSteps::Begin();
+	}
+
+	virtual FSGSStatus ExecutePayload(FSGSRuleExecutionContext& Context, const FSGSRuleEventPayload& Payload) const override
+	{
+		(void)Context;
+		(void)Payload;
+		if (Calls != nullptr)
+		{
+			Calls->Add(RuleName);
+		}
+		return MakeValue();
+	}
+
+private:
+	FName RuleName = NAME_None;
+	int32 Priority = 0;
+	TArray<FName>* Calls = nullptr;
+	bool bCanHandleEvent = true;
+};
+
+FSGSRuleExecutionContext MakePlan0014RuleExecutionContext(
+	USGSGameContext* Context,
+	FSGSCommand& Command,
+	FSGSCommandExecutionContext& ExecutionContext,
+	FSGSReplayLog& ReplayLog,
+	FSGSActiveEffectTimeline& ActiveEffects,
+	ISGSRuleRuntime& Runtime,
+	const FSGSRuleInvocation& Invocation)
+{
+	FSGSRuleExecutionContext RuleContext;
+	RuleContext.GameContext = Context;
+	RuleContext.Command = &Command;
+	RuleContext.CommandExecutionContext = &ExecutionContext;
+	RuleContext.ReplayLog = &ReplayLog;
+	RuleContext.ActiveEffects = &ActiveEffects;
+	RuleContext.TimingPoint = FSGSTimingPoint::Make(
+		1,
+		0,
+		0,
+		0,
+		SGSGameplayTags::Phase_Play.GetTag(),
+		SGSTimingSteps::Begin());
+	RuleContext.RuleInvocation = Invocation;
+	RuleContext.Runtime = &Runtime;
+	return RuleContext;
 }
 }
 
@@ -192,6 +370,141 @@ bool FSGSPlan0014RuleRegistryIndexedLookupTest::RunTest(const FString& Parameter
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FSGSPlan0014TriggerDispatchAllTest,
+	"SGS.Plan0014.Trigger.DispatchAll",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FSGSPlan0014TriggerDispatchAllTest::RunTest(const FString& Parameters)
+{
+	USGSGameContext* Context = MakePlan0014Context();
+	FSGSRuleRegistry Registry;
+	TArray<FName> Calls;
+	Registry.RegisterRule(MakeShared<FSGSPlan0014CountingTriggerRule>(FName(TEXT("SGS.Rule.TestTriggerLow")), 10, Calls));
+	Registry.RegisterRule(MakeShared<FSGSPlan0014CountingTriggerRule>(FName(TEXT("SGS.Rule.TestTriggerHighA")), 30, Calls));
+	Registry.RegisterRule(MakeShared<FSGSPlan0014CountingTriggerRule>(FName(TEXT("SGS.Rule.TestTriggerHighB")), 30, Calls));
+
+	FSGSRuleInvocation Invocation = MakePlan0014TriggerInvocation(
+		SGSGameplayTags::GameEvent_PhaseBegan.GetTag(),
+		SGSTimingSteps::Begin());
+	FSGSCommand Command;
+	Command.CommandId = Invocation.SourceCommandId;
+	Command.RequestId = Invocation.SourceRequestId;
+	Command.SeatIndex = Invocation.ActorSeat;
+	Command.Type = Invocation.IntentTag;
+	Command.Phase = SGSGameplayTags::Phase_Play.GetTag();
+	Command.Payload = Invocation.Payload;
+	Command.SourceChannel = FName(TEXT("Test"));
+	Command.SourceName = FName(TEXT("DispatchAll"));
+	FSGSCommandExecutionContext ExecutionContext = MakePlan0014ExecutionContext(Context);
+	FSGSReplayLog ReplayLog;
+	FSGSActiveEffectTimeline ActiveEffects;
+	FSGSPlan0014TestRuleRuntime Runtime;
+	FSGSRuleExecutionContext RuleContext = MakePlan0014RuleExecutionContext(
+		Context,
+		Command,
+		ExecutionContext,
+		ReplayLog,
+		ActiveEffects,
+		Runtime,
+		Invocation);
+
+	TestFalse(TEXT("Trigger dispatch succeeds."), Registry.DispatchAll(RuleContext).HasError());
+	TestEqual(TEXT("All trigger candidates execute."), Calls.Num(), 3);
+	if (Calls.Num() == 3)
+	{
+		TestEqual(TEXT("Highest priority trigger executes first."), Calls[0], FName(TEXT("SGS.Rule.TestTriggerHighA")));
+		TestEqual(TEXT("Same priority preserves registration order."), Calls[1], FName(TEXT("SGS.Rule.TestTriggerHighB")));
+		TestEqual(TEXT("Lower priority trigger executes last."), Calls[2], FName(TEXT("SGS.Rule.TestTriggerLow")));
+	}
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FSGSPlan0014TriggerNoCandidateNoOpTest,
+	"SGS.Plan0014.Trigger.NoCandidateNoOp",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FSGSPlan0014TriggerNoCandidateNoOpTest::RunTest(const FString& Parameters)
+{
+	USGSGameContext* Context = MakePlan0014Context();
+	FSGSRuleRegistry Registry;
+	FSGSRuleInvocation Invocation = MakePlan0014TriggerInvocation(
+		SGSGameplayTags::GameEvent_GameEnded.GetTag(),
+		SGSTimingSteps::End());
+	FSGSCommand Command;
+	Command.CommandId = Invocation.SourceCommandId;
+	Command.RequestId = Invocation.SourceRequestId;
+	Command.SeatIndex = Invocation.ActorSeat;
+	Command.Type = Invocation.IntentTag;
+	Command.Phase = SGSGameplayTags::Phase_Play.GetTag();
+	Command.Payload = Invocation.Payload;
+	FSGSCommandExecutionContext ExecutionContext = MakePlan0014ExecutionContext(Context);
+	FSGSReplayLog ReplayLog;
+	FSGSActiveEffectTimeline ActiveEffects;
+	FSGSPlan0014TestRuleRuntime Runtime;
+	FSGSRuleExecutionContext RuleContext = MakePlan0014RuleExecutionContext(
+		Context,
+		Command,
+		ExecutionContext,
+		ReplayLog,
+		ActiveEffects,
+		Runtime,
+		Invocation);
+
+	TestFalse(TEXT("No-candidate trigger dispatch is a no-op success."), Registry.DispatchAll(RuleContext).HasError());
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FSGSPlan0014TriggerPayloadMismatchTest,
+	"SGS.Plan0014.Trigger.PayloadMismatch",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FSGSPlan0014TriggerPayloadMismatchTest::RunTest(const FString& Parameters)
+{
+	USGSGameContext* Context = MakePlan0014Context();
+	FSGSRuleRegistry Registry;
+	TArray<FName> Calls;
+	Registry.RegisterRule(MakeShared<FSGSPlan0014CountingTriggerRule>(FName(TEXT("SGS.Rule.TestTriggerMismatch")), 10, Calls));
+
+	FSGSPassRulePayload WrongPayload;
+	WrongPayload.WindowName = SGSTimingSteps::Begin();
+	FSGSRuleInvocation Invocation = MakePlan0014TriggerInvocation(
+		SGSGameplayTags::GameEvent_PhaseBegan.GetTag(),
+		SGSTimingSteps::Begin());
+	Invocation.Payload = FInstancedStruct::Make(WrongPayload);
+	FSGSCommand Command;
+	Command.CommandId = Invocation.SourceCommandId;
+	Command.RequestId = Invocation.SourceRequestId;
+	Command.SeatIndex = Invocation.ActorSeat;
+	Command.Type = Invocation.IntentTag;
+	Command.Phase = SGSGameplayTags::Phase_Play.GetTag();
+	Command.Payload = Invocation.Payload;
+	FSGSCommandExecutionContext ExecutionContext = MakePlan0014ExecutionContext(Context);
+	FSGSReplayLog ReplayLog;
+	FSGSActiveEffectTimeline ActiveEffects;
+	FSGSPlan0014TestRuleRuntime Runtime;
+	FSGSRuleExecutionContext RuleContext = MakePlan0014RuleExecutionContext(
+		Context,
+		Command,
+		ExecutionContext,
+		ReplayLog,
+		ActiveEffects,
+		Runtime,
+		Invocation);
+
+	FSGSStatus Status = Registry.DispatchAll(RuleContext);
+	TestTrue(TEXT("Mismatched trigger payload fails."), Status.HasError());
+	if (Status.HasError())
+	{
+		TestEqual(TEXT("Payload mismatch uses shared rule error code."), Status.GetError().Code, FName(TEXT("SGS.Rule.PayloadTypeMismatch")));
+	}
+	TestEqual(TEXT("Mismatched trigger does not execute."), Calls.Num(), 0);
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FSGSPlan0014ResolutionStackPopResumeTest,
 	"SGS.Plan0014.ResolutionStack.PopResume",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -304,13 +617,22 @@ bool FSGSPlan0014ResolutionStackNestedDyingTest::RunTest(const FString& Paramete
 	{
 		TestEqual(TEXT("Latest dying frame is child seat."), LatestDyingFrame->TargetSeat, 2);
 	}
-	TestNotNull(TEXT("Can find parent dying frame by seat."), Stack.FindLatestDyingFrameForSeat(1));
+	const FSGSResolutionFrame* FoundParentDyingFrame = Stack.FindLatestFrameByPredicate([](const FSGSResolutionFrame& Frame)
+	{
+		const FSGSDyingPeachResolutionState* DyingState = Frame.GetState<FSGSDyingPeachResolutionState>();
+		return DyingState != nullptr && DyingState->DyingSeat == 1;
+	});
+	TestNotNull(TEXT("Can find parent dying frame by seat."), FoundParentDyingFrame);
 
 	TSGSResult<FSGSResolutionFrame> CompletedChild = Stack.CompleteCurrentFrame(FName(TEXT("Test.ChildDyingComplete")));
 	TestTrue(TEXT("Completing nested child dying succeeds."), CompletedChild.HasValue());
 	TestEqual(TEXT("Parent dying resumes as current frame."), Stack.GetCurrentFrameHandle(), ParentHandle);
 
-	FSGSResolutionFrame* DuplicateSeatFrame = Stack.FindLatestDyingFrameForSeat(1);
+	FSGSResolutionFrame* DuplicateSeatFrame = Stack.FindLatestFrameByPredicate([](FSGSResolutionFrame& Frame)
+	{
+		const FSGSDyingPeachResolutionState* DyingState = Frame.GetState<FSGSDyingPeachResolutionState>();
+		return DyingState != nullptr && DyingState->DyingSeat == 1;
+	});
 	TestNotNull(TEXT("Duplicate same-seat dying resolves to existing frame."), DuplicateSeatFrame);
 	if (DuplicateSeatFrame != nullptr)
 	{

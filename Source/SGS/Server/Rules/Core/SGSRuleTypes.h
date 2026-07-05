@@ -7,9 +7,9 @@
 #include "Shared/Commands/SGSCommand.h"
 #include "Shared/Core/SGSError.h"
 #include "Server/Effects/SGSEffectPipeline.h"
-#include "Server/Rules/SGSResolutionStack.h"
-#include "Server/Rules/SGSRuleDescriptor.h"
-#include "Server/Rules/SGSRuleInvocation.h"
+#include "Server/Rules/Core/SGSRuleDescriptor.h"
+#include "Server/Rules/Core/SGSRuleInvocation.h"
+#include "Server/Rules/Resolution/SGSResolutionStack.h"
 
 class USGSCard;
 class USGSGameContext;
@@ -73,6 +73,7 @@ public:
 
 	virtual FName GetRuleName() const = 0;
 	virtual FSGSRuleDescriptor GetDescriptor() const = 0;
+	virtual const UScriptStruct* GetExpectedPayloadStruct() const { return nullptr; }
 	virtual bool CanHandle(const FSGSRuleExecutionContext& Context) const = 0;
 	virtual FSGSStatus Validate(FSGSRuleExecutionContext& Context) const = 0;
 	virtual FSGSStatus Execute(FSGSRuleExecutionContext& Context) const = 0;

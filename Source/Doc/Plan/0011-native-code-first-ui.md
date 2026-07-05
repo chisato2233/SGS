@@ -67,7 +67,7 @@ SGSUI 不是通用 UI 引擎，只包含 SGS 需要的薄层：
 
 ### M1：最小代码优先牌桌 UI 纵切
 
-详见 `0011-M1-minimal-code-first-table-ui.md`。M1 只做本地最小可操作牌桌 HUD，并依赖 `0005-basic-card-playable-rules.md` 的真实基础牌规则路径；静态假界面不能作为 M1 完成依据。
+详见 `0011-M1-minimal-code-first-table-ui.md`。M1 只做本地最小可操作牌桌 HUD，并依赖 `Archive/0005-basic-card-playable-rules.md` 的真实基础牌规则路径；静态假界面不能作为 M1 完成依据。
 
 ### 后续 UI 任务池
 

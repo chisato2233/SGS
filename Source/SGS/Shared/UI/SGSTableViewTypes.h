@@ -184,6 +184,12 @@ struct SGS_API FSGSTableViewSnapshot
 	GENERATED_BODY()
 
 	UPROPERTY()
+	int32 PublicRevision = 0;
+
+	UPROPERTY()
+	int32 PrivateRevision = 0;
+
+	UPROPERTY()
 	int32 ViewerSeat = INDEX_NONE;
 
 	UPROPERTY()
@@ -219,6 +225,8 @@ inline FSGSTableViewSnapshot SGSComposeTableViewSnapshot(
 	const FSGSPlayerPrivateSnapshot& PrivateSnapshot)
 {
 	FSGSTableViewSnapshot Snapshot;
+	Snapshot.PublicRevision = PublicSnapshot.Revision;
+	Snapshot.PrivateRevision = PrivateSnapshot.Revision;
 	Snapshot.ViewerSeat = PrivateSnapshot.ViewerSeat;
 	Snapshot.CurrentPhase = PublicSnapshot.CurrentPhase;
 	Snapshot.CurrentSeatIndex = PublicSnapshot.CurrentSeatIndex;

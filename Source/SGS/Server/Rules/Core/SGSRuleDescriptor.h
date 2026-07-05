@@ -4,6 +4,7 @@
 // 它不描述执行逻辑，只提供候选查询、wildcard 匹配和稳定排序所需的元数据。
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 
 struct SGS_API FSGSRuleDescriptor
 {

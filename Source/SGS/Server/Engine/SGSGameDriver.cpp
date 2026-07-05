@@ -7,6 +7,7 @@
 #include "Server/Players/SGSSeat.h"
 #include "Shared/Core/SGSLogChannels.h"
 #include "Server/Effects/SGSStandardEffectSteps.h"
+#include "Server/Rules/Responses/BasicCards/SGSDyingPeachRules.h"
 
 class FSGSDriverRuleRuntime final : public ISGSRuleRuntime
 {
@@ -702,8 +703,77 @@ FSGSStatus USGSGameDriver::ContinueDyingPeachFrame(FSGSResolutionFrame& DyingFra
 
 FSGSStatus USGSGameDriver::PublishTimingEvent(const FSGSRuleEventPayload& Payload)
 {
-	(void)Payload;
-	return MakeValue();
+	if (Context == nullptr)
+	{
+		return MakeError(FSGSError::Make(
+			FName(TEXT("SGS.Rule.MissingContext")),
+			TEXT("Cannot publish a timing event without a game context.")));
+	}
+
+	FSGSRuleEventPayload DispatchPayload = Payload;
+	if (!DispatchPayload.CheckInvariants())
+	{
+		return MakeError(FSGSError::Make(
+			FName(TEXT("SGS.Rule.InvalidTimingEvent")),
+			FString::Printf(TEXT("Invalid timing event payload: %s"), *DispatchPayload.ToPayloadLogString())));
+	}
+
+	const int32 ActorSeat = DispatchPayload.SourceSeat != INDEX_NONE
+		? DispatchPayload.SourceSeat
+		: (DispatchPayload.TargetSeat != INDEX_NONE ? DispatchPayload.TargetSeat : CurrentSeatIndex);
+	if (ActorSeat == INDEX_NONE)
+	{
+		return MakeError(FSGSError::Make(
+			FName(TEXT("SGS.Rule.InvalidTimingEvent")),
+			FString::Printf(TEXT("Timing event has no actor seat: %s"), *DispatchPayload.ToPayloadLogString())));
+	}
+
+	if (!DispatchPayload.SourceCommandId.IsValid())
+	{
+		DispatchPayload.SourceCommandId = AllocateCommandId();
+	}
+	const int32 SourceRequestId = PendingRequestId > 0 ? PendingRequestId : 1;
+
+	FSGSRuleInvocation Invocation;
+	Invocation.RuleKindTag = SGSRuleKinds::Trigger();
+	Invocation.IntentTag = DispatchPayload.EventTag;
+	Invocation.SubjectName = NAME_None;
+	Invocation.ActorSeat = ActorSeat;
+	Invocation.WindowName = DispatchPayload.TimingPoint.Step;
+	Invocation.SourceCommandId = DispatchPayload.SourceCommandId;
+	Invocation.SourceRequestId = SourceRequestId;
+	Invocation.Payload = FInstancedStruct::Make(DispatchPayload);
+
+	FSGSCommand EventCommand;
+	EventCommand.CommandId = DispatchPayload.SourceCommandId;
+	EventCommand.RequestId = SourceRequestId;
+	EventCommand.SeatIndex = ActorSeat;
+	EventCommand.Type = DispatchPayload.EventTag;
+	EventCommand.Phase = CurrentPhase;
+	EventCommand.Payload = FInstancedStruct::Make(DispatchPayload);
+	EventCommand.SourceChannel = FName(TEXT("TimingEvent"));
+	EventCommand.SourceName = DispatchPayload.EventName;
+
+	FSGSCommandExecutionContext ExecutionContext = MakeCommandExecutionContext();
+	ExecutionContext.ExpectedCommandId = EventCommand.CommandId;
+	ExecutionContext.ExpectedRequestId = EventCommand.RequestId;
+	ExecutionContext.ExpectedSeatIndex = EventCommand.SeatIndex;
+	ExecutionContext.ExpectedPhase = CurrentPhase;
+
+	FSGSDriverRuleRuntime Runtime(*this);
+	FSGSRuleExecutionContext RuleContext;
+	RuleContext.GameContext = Context;
+	RuleContext.Command = &EventCommand;
+	RuleContext.CommandExecutionContext = &ExecutionContext;
+	RuleContext.ReplayLog = &ReplayLog;
+	RuleContext.ActiveEffects = &ActiveEffectTimeline;
+	RuleContext.TimingPoint = DispatchPayload.TimingPoint;
+	RuleContext.RuleInvocation = MoveTemp(Invocation);
+	RuleContext.Runtime = &Runtime;
+
+	FSGSStatus Status = RuleRegistry.DispatchAll(RuleContext);
+	SyncReplayLog();
+	return Status;
 }
 
 void USGSGameDriver::ExecuteDrawPhaseThroughPipeline()

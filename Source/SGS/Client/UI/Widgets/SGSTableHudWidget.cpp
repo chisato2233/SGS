@@ -2,13 +2,19 @@
 
 #include "Client/Game/SGSPlayerController.h"
 #include "Client/UI/Theme/SGSUITheme.h"
+#include "Brushes/SlateDynamicImageBrush.h"
+#include "Misc/Paths.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SBorder.h"
+#include "Widgets/Layout/SConstraintCanvas.h"
+#include "Widgets/SOverlay.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/SNullWidget.h"
+#include "Widgets/Images/SImage.h"
 #include "Widgets/Text/STextBlock.h"
+#include "Styling/CoreStyle.h"
 
 namespace
 {
@@ -53,7 +59,7 @@ void SSGSTableHudWidget::Construct(const FArguments& InArgs)
 		SNullWidget::NullWidget
 	];
 
-	Refresh();
+	Refresh(/*bForceRebuild*/ true);
 	RegisterActiveTimer(FSGSUITheme::RefreshIntervalSeconds(), FWidgetActiveTimerDelegate::CreateSP(this, &SSGSTableHudWidget::HandleRefreshTimer));
 }
 
@@ -63,7 +69,7 @@ EActiveTimerReturnType SSGSTableHudWidget::HandleRefreshTimer(double InCurrentTi
 	return EActiveTimerReturnType::Continue;
 }
 
-void SSGSTableHudWidget::Refresh()
+void SSGSTableHudWidget::Refresh(bool bForceRebuild)
 {
 	if (const ASGSPlayerController* Controller = PlayerController.Get())
 	{
@@ -74,12 +80,19 @@ void SSGSTableHudWidget::Refresh()
 		Snapshot = SnapshotProvider ? SnapshotProvider() : FSGSTableViewSnapshot();
 	}
 	Snapshot.ViewerSeat = ViewerSeat;
+	CurrentViewSize = GetLayoutViewSize();
 	NormalizeSelection();
+
+	if (!bForceRebuild && !ShouldRebuildContent())
+	{
+		return;
+	}
 
 	ChildSlot
 	[
 		BuildContent()
 	];
+	MarkContentRendered();
 }
 
 void SSGSTableHudWidget::NormalizeSelection()
@@ -102,42 +115,129 @@ void SSGSTableHudWidget::NormalizeSelection()
 	}
 }
 
+bool SSGSTableHudWidget::ShouldRebuildContent() const
+{
+	return !bHasRenderedContent
+		|| Snapshot.PublicRevision != LastRenderedPublicRevision
+		|| Snapshot.PrivateRevision != LastRenderedPrivateRevision
+		|| SelectedCardId != LastRenderedSelectedCardId
+		|| SelectedTargetSeat != LastRenderedSelectedTargetSeat
+		|| !CurrentViewSize.Equals(LastRenderedViewSize, 1.0f);
+}
+
+void SSGSTableHudWidget::MarkContentRendered()
+{
+	LastRenderedPublicRevision = Snapshot.PublicRevision;
+	LastRenderedPrivateRevision = Snapshot.PrivateRevision;
+	LastRenderedSelectedCardId = SelectedCardId;
+	LastRenderedSelectedTargetSeat = SelectedTargetSeat;
+	LastRenderedViewSize = CurrentViewSize;
+	bHasRenderedContent = true;
+}
+
+FVector2D SSGSTableHudWidget::GetLayoutViewSize() const
+{
+	const FVector2D LocalSize = GetCachedGeometry().GetLocalSize();
+	if (LocalSize.X >= 800.0f && LocalSize.Y >= 540.0f)
+	{
+		return LocalSize;
+	}
+	return FVector2D(1280.0f, 720.0f);
+}
+
+const FSlateBrush* SSGSTableHudWidget::GetBackgroundBrush()
+{
+	if (!BackgroundBrush.IsValid())
+	{
+		const FString BackgroundPath = FPaths::ProjectContentDir() / TEXT("ImportedAssets/NoName/Background/ol_bg.jpg");
+		BackgroundBrush = MakeShared<FSlateDynamicImageBrush>(
+			FName(*BackgroundPath),
+			FVector2D(1366.0f, 768.0f));
+	}
+	return BackgroundBrush.Get();
+}
+
 TSharedRef<SWidget> SSGSTableHudWidget::BuildContent()
 {
-	TSharedRef<SVerticalBox> Root = SNew(SVerticalBox);
+	const FSGSTableLayoutMetrics Layout = FSGSTableLayoutMetrics::Make(
+		CurrentViewSize,
+		Snapshot.Seats.Num(),
+		Snapshot.ViewerSeat);
 
-	Root->AddSlot()
-	.AutoHeight()
-	.Padding(FSGSUITheme::SectionPadding())
-	[
-		BuildHeader()
-	];
+	TSharedRef<SConstraintCanvas> Canvas = SNew(SConstraintCanvas);
 
-	Root->AddSlot()
-	.AutoHeight()
-	.Padding(FSGSUITheme::SectionPadding())
-	[
-		BuildSeats()
-	];
-
-	Root->AddSlot()
-	.FillHeight(1.0f)
-	.Padding(FSGSUITheme::SectionPadding())
-	[
-		BuildHand()
-	];
-
-	Root->AddSlot()
-	.AutoHeight()
-	.Padding(FSGSUITheme::SectionPadding())
-	[
-		BuildControls()
-	];
-
-	return SNew(SBorder)
-		.Padding(FSGSUITheme::RootPadding())
+	const FSlateRect CenterArea = Layout.CenterArea;
+	Canvas->AddSlot()
+		.Anchors(FAnchors(0.0f, 0.0f))
+		.Offset(FMargin(
+			CenterArea.Left,
+			CenterArea.Top,
+			FMath::Max(0.0f, CenterArea.Right - CenterArea.Left),
+			FMath::Max(0.0f, CenterArea.Bottom - CenterArea.Top)))
 		[
-			Root
+			BuildCenterInfo()
+		];
+
+	for (const FSGSSeatViewData& Seat : Snapshot.Seats)
+	{
+		const FSGSTableSeatLayout* SeatLayout = Layout.FindSeat(Seat.SeatIndex);
+		if (SeatLayout == nullptr)
+		{
+			continue;
+		}
+
+		Canvas->AddSlot()
+			.Anchors(FAnchors(0.0f, 0.0f))
+			.Offset(FMargin(
+				SeatLayout->Position.X,
+				SeatLayout->Position.Y,
+				SeatLayout->Size.X,
+				SeatLayout->Size.Y))
+			[
+				BuildSeatButton(Seat, SeatLayout->Size)
+			];
+	}
+
+	const FSlateRect ControlArea = Layout.ControlArea;
+	Canvas->AddSlot()
+		.Anchors(FAnchors(0.0f, 0.0f))
+		.Offset(FMargin(
+			ControlArea.Left,
+			ControlArea.Top,
+			FMath::Max(0.0f, ControlArea.Right - ControlArea.Left),
+			FMath::Max(0.0f, ControlArea.Bottom - ControlArea.Top)))
+		[
+			BuildControls()
+		];
+
+	const FSlateRect HandArea = Layout.HandArea;
+	Canvas->AddSlot()
+		.Anchors(FAnchors(0.0f, 0.0f))
+		.Offset(FMargin(
+			HandArea.Left,
+			HandArea.Top,
+			FMath::Max(0.0f, HandArea.Right - HandArea.Left),
+			FMath::Max(0.0f, HandArea.Bottom - HandArea.Top)))
+		[
+			BuildHand()
+		];
+
+	return SNew(SOverlay)
+		+ SOverlay::Slot()
+		[
+			SNew(SImage)
+				.Image(GetBackgroundBrush())
+				.ColorAndOpacity(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f))
+		]
+		+ SOverlay::Slot()
+		[
+			SNew(SBorder)
+				.BorderImage(FCoreStyle::Get().GetBrush(TEXT("WhiteBrush")))
+				.BorderBackgroundColor(FLinearColor(0.0f, 0.0f, 0.0f, 0.30f))
+		]
+		+ SOverlay::Slot()
+		[
+			Canvas
 		];
 }
 
@@ -157,22 +257,7 @@ TSharedRef<SWidget> SSGSTableHudWidget::BuildHeader() const
 		.AutoWrapText(true);
 }
 
-TSharedRef<SWidget> SSGSTableHudWidget::BuildSeats()
-{
-	TSharedRef<SHorizontalBox> Seats = SNew(SHorizontalBox);
-	for (const FSGSSeatViewData& Seat : Snapshot.Seats)
-	{
-		Seats->AddSlot()
-		.FillWidth(1.0f)
-		.Padding(FSGSUITheme::ItemPadding())
-		[
-			BuildSeatButton(Seat)
-		];
-	}
-	return Seats;
-}
-
-TSharedRef<SWidget> SSGSTableHudWidget::BuildSeatButton(const FSGSSeatViewData& Seat)
+TSharedRef<SWidget> SSGSTableHudWidget::BuildSeatButton(const FSGSSeatViewData& Seat, FVector2D Size)
 {
 	const bool bSelected = Seat.SeatIndex == SelectedTargetSeat;
 	const FString StateText = Seat.bIsAlive ? TEXT("Alive") : TEXT("Out");
@@ -185,10 +270,9 @@ TSharedRef<SWidget> SSGSTableHudWidget::BuildSeatButton(const FSGSSeatViewData& 
 		Seat.HandCount,
 		*StateText);
 
-	const FVector2D MinSize = FSGSUITheme::SeatButtonMinSize();
 	return SNew(SBox)
-		.MinDesiredWidth(MinSize.X)
-		.MinDesiredHeight(MinSize.Y)
+		.WidthOverride(Size.X)
+		.HeightOverride(Size.Y)
 		[
 			SNew(SButton)
 			.ButtonColorAndOpacity(ButtonTint(bSelected, Seat.bIsSelectableTarget, Seat.bIsCurrent))
@@ -322,6 +406,36 @@ TSharedRef<SWidget> SSGSTableHudWidget::BuildControls()
 	}
 
 	return Controls;
+}
+
+TSharedRef<SWidget> SSGSTableHudWidget::BuildCenterInfo() const
+{
+	TSharedRef<SVerticalBox> Center = SNew(SVerticalBox);
+	Center->AddSlot()
+		.AutoHeight()
+		[
+			BuildHeader()
+		];
+
+	if (!Snapshot.LastCommand.IsEmpty())
+	{
+		Center->AddSlot()
+			.AutoHeight()
+			.Padding(FSGSUITheme::PromptGapPadding())
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(Snapshot.LastCommand))
+				.AutoWrapText(true)
+			];
+	}
+
+	return SNew(SBorder)
+		.BorderImage(FCoreStyle::Get().GetBrush(TEXT("WhiteBrush")))
+		.BorderBackgroundColor(FLinearColor(0.02f, 0.025f, 0.03f, 0.35f))
+		.Padding(FSGSUITheme::RootPadding())
+		[
+			Center
+		];
 }
 
 FReply SSGSTableHudWidget::OnCardClicked(int32 CardId)

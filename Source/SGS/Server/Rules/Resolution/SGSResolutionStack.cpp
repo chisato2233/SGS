@@ -1,43 +1,4 @@
-#include "Server/Rules/SGSResolutionStack.h"
-
-FString FSGSSlashResolutionState::ToLogString() const
-{
-	return FString::Printf(TEXT("SlashCard=%d Source=%d Target=%d"), SlashCardId, SourceSeat, TargetSeat);
-}
-
-bool FSGSSlashResolutionState::CheckInvariants() const
-{
-	bool bOk = true;
-	bOk &= ensureMsgf(SlashCardId != INDEX_NONE, TEXT("SlashResolutionState requires a Slash card id."));
-	bOk &= ensureMsgf(SourceSeat != INDEX_NONE, TEXT("SlashResolutionState requires a source seat."));
-	bOk &= ensureMsgf(TargetSeat != INDEX_NONE, TEXT("SlashResolutionState requires a target seat."));
-	return bOk;
-}
-
-FString FSGSDyingPeachResolutionState::ToLogString() const
-{
-	return FString::Printf(
-		TEXT("DyingSeat=%d Responders=%d Next=%d Recheck=%s"),
-		DyingSeat,
-		ResponderSeatIndices.Num(),
-		NextResponderIndex,
-		bNeedsHealthRecheck ? TEXT("true") : TEXT("false"));
-}
-
-bool FSGSDyingPeachResolutionState::CheckInvariants() const
-{
-	bool bOk = true;
-	bOk &= ensureMsgf(DyingSeat != INDEX_NONE, TEXT("DyingPeachResolutionState requires a dying seat."));
-	bOk &= ensureMsgf(NextResponderIndex >= 0, TEXT("DyingPeachResolutionState requires a non-negative responder index."));
-	bOk &= ensureMsgf(
-		NextResponderIndex <= ResponderSeatIndices.Num(),
-		TEXT("DyingPeachResolutionState responder index is out of range."));
-	for (int32 SeatIndex : ResponderSeatIndices)
-	{
-		bOk &= ensureMsgf(SeatIndex != INDEX_NONE, TEXT("DyingPeachResolutionState contains an invalid responder."));
-	}
-	return bOk;
-}
+#include "Server/Rules/Resolution/SGSResolutionStack.h"
 
 FString FSGSResolutionFrame::GetStateTypeName() const
 {
@@ -71,14 +32,6 @@ bool FSGSResolutionFrame::CheckInvariants() const
 	bOk &= ensureMsgf(SourceCommandId.IsValid(), TEXT("ResolutionFrame requires a source command id."));
 	bOk &= ensureMsgf(ActorSeat != INDEX_NONE, TEXT("ResolutionFrame requires an actor seat."));
 	bOk &= ensureMsgf(StackSequence >= 0, TEXT("ResolutionFrame requires a non-negative stack sequence."));
-	if (const FSGSSlashResolutionState* SlashState = GetState<FSGSSlashResolutionState>())
-	{
-		bOk &= SlashState->CheckInvariants();
-	}
-	if (const FSGSDyingPeachResolutionState* DyingPeachState = GetState<FSGSDyingPeachResolutionState>())
-	{
-		bOk &= DyingPeachState->CheckInvariants();
-	}
 	return bOk;
 }
 
@@ -252,36 +205,6 @@ FSGSStatus FSGSResolutionStack::ClearResponseWindowOnCurrent()
 		Frame.WindowName = NAME_None;
 		Frame.RequiredCardName = NAME_None;
 	});
-}
-
-FSGSResolutionFrame* FSGSResolutionStack::FindLatestDyingFrameForSeat(int32 DyingSeat)
-{
-	for (int32 Index = StackOrder.Num() - 1; Index >= 0; --Index)
-	{
-		FSGSResolutionFrame* Frame = Frames.Find(StackOrder[Index]);
-		FSGSDyingPeachResolutionState* DyingState = Frame != nullptr ? Frame->GetMutableState<FSGSDyingPeachResolutionState>() : nullptr;
-		if (DyingState != nullptr && DyingState->DyingSeat == DyingSeat)
-		{
-			return Frame;
-		}
-	}
-
-	return nullptr;
-}
-
-const FSGSResolutionFrame* FSGSResolutionStack::FindLatestDyingFrameForSeat(int32 DyingSeat) const
-{
-	for (int32 Index = StackOrder.Num() - 1; Index >= 0; --Index)
-	{
-		const FSGSResolutionFrame* Frame = Frames.Find(StackOrder[Index]);
-		const FSGSDyingPeachResolutionState* DyingState = Frame != nullptr ? Frame->GetState<FSGSDyingPeachResolutionState>() : nullptr;
-		if (DyingState != nullptr && DyingState->DyingSeat == DyingSeat)
-		{
-			return Frame;
-		}
-	}
-
-	return nullptr;
 }
 
 int32 FSGSResolutionStack::FindLatestProcessingCardId() const

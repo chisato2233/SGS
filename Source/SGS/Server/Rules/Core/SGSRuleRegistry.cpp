@@ -1,6 +1,6 @@
-#include "Server/Rules/SGSRuleRegistry.h"
+#include "Server/Rules/Core/SGSRuleRegistry.h"
 
-#include "Server/Rules/SGSBasicCardRules.h"
+#include "Server/Rules/BasicCards/SGSBasicCardRules.h"
 
 namespace
 {
@@ -74,6 +74,36 @@ bool DescriptorMatchesInvocation(const FSGSRuleDescriptor& Descriptor, const FSG
 	}
 	return true;
 }
+
+FString JoinRuleNames(const TArray<FName>& RuleNames)
+{
+	TArray<FString> Parts;
+	Parts.Reserve(RuleNames.Num());
+	for (const FName& RuleName : RuleNames)
+	{
+		Parts.Add(RuleName.ToString());
+	}
+	return Parts.Num() > 0 ? FString::Join(Parts, TEXT(",")) : TEXT("None");
+}
+
+FString FormatExpectedPayloadStructs(const TArray<const FSGSRuleEntry*>& Entries)
+{
+	TArray<FString> Parts;
+	for (const FSGSRuleEntry* Entry : Entries)
+	{
+		if (Entry == nullptr)
+		{
+			continue;
+		}
+
+		const UScriptStruct* ExpectedPayloadStruct = Entry->Rule->GetExpectedPayloadStruct();
+		Parts.Add(FString::Printf(
+			TEXT("%s:%s"),
+			*Entry->Descriptor.RuleName.ToString(),
+			ExpectedPayloadStruct != nullptr ? *ExpectedPayloadStruct->GetName() : TEXT("Any")));
+	}
+	return Parts.Num() > 0 ? FString::Join(Parts, TEXT(",")) : TEXT("None");
+}
 }
 
 FSGSRuleRegistry::FSGSRuleRegistry()
@@ -135,6 +165,10 @@ FSGSStatus FSGSRuleRegistry::Resolve(FSGSRuleExecutionContext& Context) const
 	}
 
 	const TArray<const FSGSRuleEntry*> CandidateEntries = FindCandidateEntries(Context.RuleInvocation);
+	TArray<FName> CandidateRuleNames;
+	TArray<FName> PayloadMismatchRuleNames;
+	int32 PayloadCompatibleCandidateCount = 0;
+
 	for (const FSGSRuleEntry* Entry : CandidateEntries)
 	{
 		if (Entry == nullptr)
@@ -143,6 +177,18 @@ FSGSStatus FSGSRuleRegistry::Resolve(FSGSRuleExecutionContext& Context) const
 		}
 
 		const TSharedRef<ISGSRule>& Rule = Entry->Rule;
+		CandidateRuleNames.Add(Entry->Descriptor.RuleName);
+
+		const UScriptStruct* ExpectedPayloadStruct = Rule->GetExpectedPayloadStruct();
+		const UScriptStruct* ActualPayloadStruct = Context.RuleInvocation.GetPayloadStruct();
+		if (ExpectedPayloadStruct != nullptr && ExpectedPayloadStruct != ActualPayloadStruct)
+		{
+			PayloadMismatchRuleNames.Add(Entry->Descriptor.RuleName);
+			continue;
+		}
+
+		++PayloadCompatibleCandidateCount;
+
 		if (!Rule->CanHandle(Context))
 		{
 			continue;
@@ -156,9 +202,99 @@ FSGSStatus FSGSRuleRegistry::Resolve(FSGSRuleExecutionContext& Context) const
 		return Rule->Execute(Context);
 	}
 
+	if (CandidateEntries.Num() > 0 && PayloadCompatibleCandidateCount == 0 && PayloadMismatchRuleNames.Num() > 0)
+	{
+		return MakeError(FSGSError::Make(
+			FName(TEXT("SGS.Rule.PayloadTypeMismatch")),
+			FString::Printf(
+				TEXT("No SGS rule candidate accepted payload %s. Candidates=[%s] Expected=[%s] Invocation={%s}"),
+				*Context.RuleInvocation.GetPayloadTypeName(),
+				*JoinRuleNames(CandidateRuleNames),
+				*FormatExpectedPayloadStructs(CandidateEntries),
+				*Context.RuleInvocation.ToLogString())));
+	}
+
 	return MakeError(FSGSError::Make(
 		FName(TEXT("SGS.Rule.NotFound")),
-		FString::Printf(TEXT("No SGS rule registered for invocation: %s"), *Context.RuleInvocation.ToLogString())));
+		FString::Printf(
+			TEXT("No SGS rule registered for invocation: %s Candidates=[%s] PayloadMismatches=[%s]"),
+			*Context.RuleInvocation.ToLogString(),
+			*JoinRuleNames(CandidateRuleNames),
+			*JoinRuleNames(PayloadMismatchRuleNames))));
+}
+
+FSGSStatus FSGSRuleRegistry::DispatchAll(FSGSRuleExecutionContext& Context) const
+{
+	if (!Context.CheckInvariants())
+	{
+		return MakeError(FSGSError::Make(
+			FName(TEXT("SGS.Rule.InvariantViolation")),
+			TEXT("Rule execution context failed invariants.")));
+	}
+
+	if (Context.RuleInvocation.RuleKindTag != SGSRuleKinds::Trigger())
+	{
+		return MakeError(FSGSError::Make(
+			FName(TEXT("SGS.Rule.InvalidDispatchKind")),
+			FString::Printf(
+				TEXT("DispatchAll is reserved for trigger invocations. Invocation={%s}"),
+				*Context.RuleInvocation.ToLogString())));
+	}
+
+	const TArray<const FSGSRuleEntry*> CandidateEntries = FindCandidateEntries(Context.RuleInvocation);
+	TArray<FName> CandidateRuleNames;
+	TArray<FName> PayloadMismatchRuleNames;
+	int32 PayloadCompatibleCandidateCount = 0;
+
+	for (const FSGSRuleEntry* Entry : CandidateEntries)
+	{
+		if (Entry == nullptr)
+		{
+			continue;
+		}
+
+		const TSharedRef<ISGSRule>& Rule = Entry->Rule;
+		CandidateRuleNames.Add(Entry->Descriptor.RuleName);
+
+		const UScriptStruct* ExpectedPayloadStruct = Rule->GetExpectedPayloadStruct();
+		const UScriptStruct* ActualPayloadStruct = Context.RuleInvocation.GetPayloadStruct();
+		if (ExpectedPayloadStruct != nullptr && ExpectedPayloadStruct != ActualPayloadStruct)
+		{
+			PayloadMismatchRuleNames.Add(Entry->Descriptor.RuleName);
+			continue;
+		}
+
+		++PayloadCompatibleCandidateCount;
+
+		if (!Rule->CanHandle(Context))
+		{
+			continue;
+		}
+
+		if (FSGSStatus Status = Rule->Validate(Context); Status.HasError())
+		{
+			return Status;
+		}
+
+		if (FSGSStatus Status = Rule->Execute(Context); Status.HasError())
+		{
+			return Status;
+		}
+	}
+
+	if (CandidateEntries.Num() > 0 && PayloadCompatibleCandidateCount == 0 && PayloadMismatchRuleNames.Num() > 0)
+	{
+		return MakeError(FSGSError::Make(
+			FName(TEXT("SGS.Rule.PayloadTypeMismatch")),
+			FString::Printf(
+				TEXT("No SGS trigger rule candidate accepted payload %s. Candidates=[%s] Expected=[%s] Invocation={%s}"),
+				*Context.RuleInvocation.GetPayloadTypeName(),
+				*JoinRuleNames(CandidateRuleNames),
+				*FormatExpectedPayloadStructs(CandidateEntries),
+				*Context.RuleInvocation.ToLogString())));
+	}
+
+	return MakeValue();
 }
 
 bool FSGSRuleRegistry::CheckInvariants() const
@@ -271,11 +407,5 @@ TArray<const FSGSRuleEntry*> FSGSRuleRegistry::FindCandidateEntries(const FSGSRu
 
 void SGSRules::RegisterDefaultRules(FSGSRuleRegistry& Registry)
 {
-	Registry.RegisterRule(MakeShared<FSGSDodgeResponseRule>());
-	Registry.RegisterRule(MakeShared<FSGSDodgePassRule>());
-	Registry.RegisterRule(MakeShared<FSGSDyingPeachRule>());
-	Registry.RegisterRule(MakeShared<FSGSDyingPeachPassRule>());
-	Registry.RegisterRule(MakeShared<FSGSSlashRule>());
-	Registry.RegisterRule(MakeShared<FSGSPeachRule>());
-	Registry.RegisterRule(MakeShared<FSGSPassRule>());
+	SGSBasicCardRules::Register(Registry);
 }

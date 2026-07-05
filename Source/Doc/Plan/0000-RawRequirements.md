@@ -6,6 +6,67 @@
 
 ---
 
+## #19 — 2026-07-04 — 收束 Plan0014：Rule 骨架阶段到此为止
+
+**原话：**
+> 先将Rule骨架留在这里，我们还没有开始真正的游戏逻辑的开发，比如距离计算这些东西。。。修改Plan0014
+
+**上下文：**
+- Plan 0014-M2/M3/M4/M5 已完成 typed Rule、ResolutionStack、Trigger dispatch 和目录组织地基。
+- 父计划仍把 Modifier / ViewAs / 距离或目标修正写作后续未完成项，容易造成文档偏移。
+- 用户明确要求 Rule 骨架先停在这里；距离计算等真实游戏逻辑后续另起计划。
+
+**要点拆解：**
+- 将 `0014-rule-layer-long-term-refactor.md` 收束为“Rule 层骨架已完成”的归档计划。
+- Modifier、ViewAs、距离/目标修正、具体技能、更多卡牌逻辑不再作为 0014 未完成项。
+- 本次只做文档边界调整，不修改运行时代码。
+
+**关联计划：** `Archive/0014-rule-layer-long-term-refactor.md`。
+
+---
+
+## #18 — 2026-07-04 — 执行 0014-M5：TriggerRule Dispatch 地基
+
+**原话：**
+> PLEASE IMPLEMENT THIS PLAN:
+> # Plan 0014-M5：TriggerRule Dispatch 地基
+
+**上下文：**
+- Plan 0014-M2/M3/M4 已完成 typed Rule、可恢复 ResolutionStack、TimingEvent 接缝和 Rule 目录整理。
+- M3 留下的 `PublishTimingEvent` 仍是空实现，`TriggerRule` 尚未通过 `RuleRegistry` 被索引和同步调度。
+- 用户要求本阶段只完成 Trigger dispatch，不引入 Modifier / ViewAs，也不新增正式技能规则。
+
+**要点拆解：**
+- 将 `TimingEvent` 映射为 `RuleKind=Trigger` 的 typed `FSGSRuleInvocation`。
+- `RuleRegistry` 新增 Trigger 专用 `DispatchAll`：候选按 descriptor 查询、priority/order 排序并同步执行全部可处理规则。
+- `USGSGameDriver::PublishTimingEvent` 接通 Registry dispatch；无默认 Trigger 时保持当前基础牌行为不变。
+- 新增最小自动化覆盖 Trigger 排序执行、无候选 no-op、payload mismatch 诊断。
+
+**关联计划：** `0014-M5-trigger-rule-dispatch.md`。
+
+---
+
+## #17 — 2026-07-03 — 执行 0014-M4：Rule 目录与 Payload 组织重构
+
+**原话：**
+> PLEASE IMPLEMENT THIS PLAN:
+> # Plan 0014-M4：Rule 目录与 Payload 组织重构
+
+**上下文：**
+- Plan 0014-M2/M3 已完成 typed Rule、ResolutionStack、resume 和 TimingEvent 地基。
+- 当前 Rule 文件仍主要平铺在 `Source/SGS/Server/Rules/`，`SGSBasicCardRules.*` 与 `SGSRulePayloads.h` 继续增长会影响后续新增卡牌 / 技能的落点。
+- 用户明确要求本阶段不新增玩法 Rule，先优化结构。
+
+**要点拆解：**
+- 按 `RuleKind + 内容包` 组织目录：Core、Payloads、Resolution、Actions/BasicCards、Responses/BasicCards、BasicCards。
+- 拆分 payload headers，保留 `SGSRulePayloads.h` 作为 umbrella include。
+- 将 Slash / DyingPeach frame state 从通用 `ResolutionStack` 移到对应 Rule 模块。
+- 基础牌通过内容包注册入口统一注册，默认规则注册不直接 include 每个具体 Rule。
+
+**关联计划：** `0014-M4-rule-module-layout.md`。
+
+---
+
 ## #16 — 2026-07-03 — 执行 0014-M3：ResolutionStack Resume 与受控 TimingEvent 地基
 
 **原话：**

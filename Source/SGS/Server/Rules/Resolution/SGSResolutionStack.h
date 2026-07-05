@@ -5,46 +5,6 @@
 #include "Shared/Core/SGSIds.h"
 #include "Shared/Core/SGSIndexedStore.h"
 #include "StructUtils/InstancedStruct.h"
-#include "SGSResolutionStack.generated.h"
-
-USTRUCT()
-struct SGS_API FSGSSlashResolutionState
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	int32 SlashCardId = INDEX_NONE;
-
-	UPROPERTY()
-	int32 SourceSeat = INDEX_NONE;
-
-	UPROPERTY()
-	int32 TargetSeat = INDEX_NONE;
-
-	FString ToLogString() const;
-	bool CheckInvariants() const;
-};
-
-USTRUCT()
-struct SGS_API FSGSDyingPeachResolutionState
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	int32 DyingSeat = INDEX_NONE;
-
-	UPROPERTY()
-	TArray<int32> ResponderSeatIndices;
-
-	UPROPERTY()
-	int32 NextResponderIndex = 0;
-
-	UPROPERTY()
-	bool bNeedsHealthRecheck = false;
-
-	FString ToLogString() const;
-	bool CheckInvariants() const;
-};
 
 namespace SGSResolutionContinuations
 {
@@ -141,8 +101,35 @@ public:
 		return nullptr;
 	}
 
-	FSGSResolutionFrame* FindLatestDyingFrameForSeat(int32 DyingSeat);
-	const FSGSResolutionFrame* FindLatestDyingFrameForSeat(int32 DyingSeat) const;
+	template <typename Predicate>
+	FSGSResolutionFrame* FindLatestFrameByPredicate(Predicate&& Matches)
+	{
+		for (int32 Index = StackOrder.Num() - 1; Index >= 0; --Index)
+		{
+			FSGSResolutionFrame* Frame = Frames.Find(StackOrder[Index]);
+			if (Frame != nullptr && Matches(*Frame))
+			{
+				return Frame;
+			}
+		}
+
+		return nullptr;
+	}
+
+	template <typename Predicate>
+	const FSGSResolutionFrame* FindLatestFrameByPredicate(Predicate&& Matches) const
+	{
+		for (int32 Index = StackOrder.Num() - 1; Index >= 0; --Index)
+		{
+			const FSGSResolutionFrame* Frame = Frames.Find(StackOrder[Index]);
+			if (Frame != nullptr && Matches(*Frame))
+			{
+				return Frame;
+			}
+		}
+
+		return nullptr;
+	}
 
 	int32 FindLatestProcessingCardId() const;
 	int32 FindLatestEffectSourceSeat() const;

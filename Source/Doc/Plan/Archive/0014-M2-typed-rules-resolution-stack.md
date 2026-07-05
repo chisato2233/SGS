@@ -2,7 +2,7 @@
 
 | 字段 | 值 |
 |---|---|
-| 状态 | `In Progress` |
+| 状态 | `Archived` |
 | 创建日期 | 2026-07-03 |
 | 最近更新 | 2026-07-03 |
 | 关联需求 | `0000-RawRequirements.md` 中的第 15 条 |
@@ -40,7 +40,7 @@
 - 删除 BasicCardRules 对 `RuleRequest` 字段的依赖。
 - 删除 Driver 中只服务基础牌结算的 pending card / pending window / dying responder 状态。
 
-当前实现状态（2026-07-03）：上述核心替换已完成。运行时代码中 legacy request 关键符号已清空，基础牌规则已改为 typed payload，`USGSGameDriver` 的基础牌 pending 状态已迁入 `FSGSResolutionStack`。本计划暂不标 `Done`，因为 M2 专项自动化、Plan0013 / Plan0014 完整回归与旧 Plan0014 测试预期修正尚未完成。
+归档状态（2026-07-04）：上述核心替换已完成。运行时代码中 legacy request 关键符号已清空，基础牌规则已改为 typed payload，`USGSGameDriver` 的基础牌 pending 状态已迁入 `FSGSResolutionStack`；旧 Plan0014 测试预期、ResolutionStack resume 语义和 Rule 模块布局已由 M3 / M4 后续阶段完成并验证。
 
 不做的事：
 
@@ -288,10 +288,10 @@ rg -n "FSGSRuleRequest|RuleRequest|BuildRuleRequest|SGSLegacyRuleRequests" Sourc
 - [x] 改造 `USGSGameDriver`：删除基础牌 pending 字段，`MakeCommandExecutionContext` 从 stack 当前窗口构造上下文。
 - [x] 迁移 Pass / Slash / Peach 到 typed action/card rules。
 - [x] 迁移 DodgeResponse / DyingPeach 到 typed response rules，并把 Slash.Dodge / Dying.Peach continuation 迁入 frame state。
-- [ ] 更新 `FSGSRuleRegistry::Resolve` 的错误日志，使 NotFound / PayloadMismatch 能打印 invocation 与候选 rule name。
-- [ ] 更新自动化测试，覆盖 typed rules、ResolutionStack、legacy 删除和 Plan 0005 / 0013 回归。
+- [x] 更新 `FSGSRuleRegistry::Resolve` 的错误日志，使 NotFound / PayloadMismatch 能打印 invocation 与候选 rule name。
+- [x] 更新自动化测试，覆盖 typed rules、ResolutionStack、legacy 删除和 Plan 0005 / 0013 回归。
 - [x] 运行 Development 构建、legacy 静态删除检查、`SGS.Plan0005.BasicCards` 和 `graphify update .`。
-- [ ] 运行 Plan0013 / Plan0014 完整相关回归，并修正旧测试预期。
+- [x] 运行 Plan0013 / Plan0014 完整相关回归，并修正旧测试预期。
 
 ## 6. 验收标准
 
@@ -327,22 +327,21 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\Unreal.ps1 -Action B
   - Rule 状态变更仍只通过 `EffectPipeline`。
   - `graphify update .` 后能查询到 `RuleInvocation -> TypedRule -> ResolutionStack -> EffectPipeline` 路径。
 
-### 6.1 当前验收状态
+### 6.1 归档验收状态
 
 已完成：
 
 - Development 构建通过。
 - 静态删除检查无运行时代码命中：`FSGSRuleRequest|RuleRequest|BuildRuleRequest|SGSLegacyRuleRequests`。
 - `SGS.Plan0005.BasicCards` 通过。
+- `SGS.Plan0013.RulePipeline` 通过。
+- `SGS.Plan0014` 通过。
+- 旧 `DyingPeachPass` 测试预期已在 M3 阶段修正。
+- M2 中未单独新增的专项自动化已由 M3 的 ResolutionStack resume / nested / duplicate same-seat 和 Plan0014 registry / payload 测试覆盖。
 - `graphify update .` 已运行。
-
-未完成 / 已知偏移：
-
-- `SGS.Plan0014.RuleRegistry.IndexedLookup` 仍包含第一阶段 wildcard 预期：Dying.Peach 的 Pass 仍期望命中 `SGS.Rule.DyingPeach`，而 M2 实现已拆为 `SGS.Rule.DyingPeachPass`。
-- M2 计划中的 typed rules / ResolutionStack / legacy boundary 专项自动化尚未补齐。
-- `SGS.Plan0013.RulePipeline.*` 与 Plan0014 完整相关回归尚未在 M2 后统一执行。
 
 ## 7. 进度与决策记录
 
 - 2026-07-03：创建 M2 计划。决策：早期开发阶段不保留 legacy compatibility；第二阶段以完全替代 `FSGSRuleRequest`、typed Rule 基类、ResolutionStack 迁移为目标。Trigger / Modifier / ViewAs 留到后续阶段，避免与基础响应结算重构相互缠绕。
 - 2026-07-03：完成 M2 核心代码实现。删除 legacy request 运行时代码路径；新增 `TSGSTypedRule` 与 `FSGSResolutionStack`；基础牌规则改为 typed payload；响应 Pass 拆为 `DodgePass` / `DyingPeachPass`；`USGSGameDriver` 删除基础牌 pending window / processing card / dying responder 状态。验证：Development 构建通过，legacy 静态删除检查无命中，`SGS.Plan0005.BasicCards` 通过，`graphify update .` 已运行。状态保持 `In Progress`，等待测试预期修正与 M2 专项自动化补齐。
+- 2026-07-04：完成 M2 收尾并归档。`FSGSRuleRegistry::Resolve` 已补强 NotFound / PayloadTypeMismatch 诊断，错误上下文包含 invocation、候选 Rule 名称与期望 payload；Plan0013 / Plan0014 相关回归通过，legacy 静态删除检查无命中，Development build 与 `graphify update .` 已完成。M3 / M4 已覆盖并验证 M2 后续的 ResolutionStack resume 与目录组织任务。

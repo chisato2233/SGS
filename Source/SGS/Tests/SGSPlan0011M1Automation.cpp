@@ -8,6 +8,7 @@
 #include "Server/Engine/SGSGameDriver.h"
 #include "Server/Players/SGSSeat.h"
 #include "Server/UI/SGSTableSnapshotBuilder.h"
+#include "Client/UI/Layout/SGSTableLayout.h"
 #include "Client/UI/Bridge/SGSLocalHumanDecisionAgent.h"
 #include "Client/UI/Widgets/SGSTableHudWidget.h"
 
@@ -34,7 +35,7 @@ TScriptInterface<ISGSDecisionAgent> MakeLocalAgent(USGSLocalHumanDecisionAgent*&
 	return Ref;
 }
 
-TScriptInterface<ISGSDecisionAgent> MakeScriptedAgent(USGSScriptedDecisionAgent*& OutAgent)
+TScriptInterface<ISGSDecisionAgent> MakePlan0011ScriptedAgent(USGSScriptedDecisionAgent*& OutAgent)
 {
 	OutAgent = NewObject<USGSScriptedDecisionAgent>();
 	TScriptInterface<ISGSDecisionAgent> Ref;
@@ -96,7 +97,7 @@ USGSGameDriver* StartTwoSeatGame(
 {
 	TArray<TScriptInterface<ISGSDecisionAgent>> Agents;
 	Agents.Add(MakeLocalAgent(OutLocalAgent));
-	Agents.Add(MakeScriptedAgent(OutScriptedAgent));
+	Agents.Add(MakePlan0011ScriptedAgent(OutScriptedAgent));
 
 	FSGSGameStartConfig Config;
 	Config.RandomSeed = 11;
@@ -118,7 +119,7 @@ USGSGameDriver* StartFourSeatLocalGame(USGSLocalHumanDecisionAgent*& OutLocalAge
 	for (int32 SeatIndex = 1; SeatIndex < 4; ++SeatIndex)
 	{
 		USGSScriptedDecisionAgent* ScriptedAgent = nullptr;
-		Agents.Add(MakeScriptedAgent(ScriptedAgent));
+		Agents.Add(MakePlan0011ScriptedAgent(ScriptedAgent));
 	}
 
 	FSGSGameStartConfig Config;
@@ -139,7 +140,7 @@ USGSGameDriver* StartLocalDyingPeachGame(
 {
 	TArray<TScriptInterface<ISGSDecisionAgent>> Agents;
 	Agents.Add(MakeLocalAgent(OutLocalAgent));
-	Agents.Add(MakeScriptedAgent(OutScriptedAgent));
+	Agents.Add(MakePlan0011ScriptedAgent(OutScriptedAgent));
 
 	FSGSGameStartConfig Config;
 	Config.RandomSeed = 17;
@@ -211,6 +212,46 @@ FSGSTableViewSnapshot BuildLocalTableSnapshot(
 		FSGSTableSnapshotBuilder::BuildPublicSnapshot(Driver),
 		FSGSTableSnapshotBuilder::BuildPrivateSnapshot(Driver, Agent, ViewerSeat));
 }
+
+bool HasAnyOpponentSeatOverlap(const FSGSTableLayoutMetrics& Layout)
+{
+	for (int32 Index = 0; Index < Layout.Seats.Num(); ++Index)
+	{
+		const FSGSTableSeatLayout& A = Layout.Seats[Index];
+		if (A.RelativePosition == 0)
+		{
+			continue;
+		}
+
+		for (int32 OtherIndex = Index + 1; OtherIndex < Layout.Seats.Num(); ++OtherIndex)
+		{
+			const FSGSTableSeatLayout& B = Layout.Seats[OtherIndex];
+			if (B.RelativePosition == 0)
+			{
+				continue;
+			}
+
+			if (FSGSTableLayoutMetrics::RectsOverlap(Layout.GetSeatRect(A), Layout.GetSeatRect(B)))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool OpponentSeatsOverlapHandArea(const FSGSTableLayoutMetrics& Layout)
+{
+	for (const FSGSTableSeatLayout& Seat : Layout.Seats)
+	{
+		if (Seat.RelativePosition != 0
+			&& FSGSTableLayoutMetrics::RectsOverlap(Layout.GetSeatRect(Seat), Layout.HandArea))
+		{
+			return true;
+		}
+	}
+	return false;
+}
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -281,6 +322,16 @@ bool FSGSPlan0011M1LocalUIBridgeTest::RunTest(const FString& Parameters)
 	const FVector2D FourSeatDesiredSize = FourSeatHudWidget->GetDesiredSize();
 	TestTrue(TEXT("Four-seat Slate HUD has non-zero desired size."),
 		FourSeatDesiredSize.X > 0.0f && FourSeatDesiredSize.Y > 0.0f);
+
+	const FSGSTableLayoutMetrics EightSeatDesktopLayout = FSGSTableLayoutMetrics::Make(FVector2D(1920.0f, 1080.0f), 8, 0);
+	TestEqual(TEXT("Eight-seat desktop layout exposes eight seats."), EightSeatDesktopLayout.Seats.Num(), 8);
+	TestFalse(TEXT("Eight-seat desktop opponent seats do not overlap."), HasAnyOpponentSeatOverlap(EightSeatDesktopLayout));
+	TestFalse(TEXT("Eight-seat desktop opponent seats do not overlap the hand area."), OpponentSeatsOverlapHandArea(EightSeatDesktopLayout));
+
+	const FSGSTableLayoutMetrics EightSeatSmallDesktopLayout = FSGSTableLayoutMetrics::Make(FVector2D(1280.0f, 720.0f), 8, 0);
+	TestEqual(TEXT("Eight-seat small desktop layout exposes eight seats."), EightSeatSmallDesktopLayout.Seats.Num(), 8);
+	TestFalse(TEXT("Eight-seat small desktop opponent seats do not overlap."), HasAnyOpponentSeatOverlap(EightSeatSmallDesktopLayout));
+	TestFalse(TEXT("Eight-seat small desktop opponent seats do not overlap the hand area."), OpponentSeatsOverlapHandArea(EightSeatSmallDesktopLayout));
 
 	USGSLocalHumanDecisionAgent* ResponseLocalAgent = nullptr;
 	USGSScriptedDecisionAgent* ResponseSeat1Agent = nullptr;

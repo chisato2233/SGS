@@ -49,26 +49,21 @@
 
 ### 已完成基线
 
-- `0001` 素材导入、`0002` 核心逻辑路线、`0003` 权威对局骨架、`0004` 对局数据模型、`0012` 基础工具库均已完成并归档到 `Source/Doc/Plan/Archive/`。
+- `0001` 素材导入、`0002` 核心逻辑路线、`0003` 权威对局骨架、`0004` 对局数据模型、`0005` 基础牌可玩规则、`0012` 基础工具库、`0013` Command -> Rule -> Effect 管线、`0014` Rule 层骨架长期重构均已完成并归档到 `Source/Doc/Plan/Archive/`。
 - `0003` 已通过命令行 smoke，`0004` 已通过自动化验收 `SGS.Plan0004.GameContextPrimitives`。
 - 规则层已有核心地基：Command、RuleRegistry、RandomAudit、IndexedStore/TargetQuery、Timing/ActiveEffect、EffectPipeline、ReplayLog、`USGSGameContext`、`USGSGameDriver`。Plan 0005 已补齐杀 / 闪 / 桃与濒死求桃的最小可玩规则纵切；Plan 0013 已将基础牌结算迁移到 `Command -> Rule -> EffectPipeline` 单一管线。代码细节不要在本文件展开，使用 graphify 查询。
 
 ### 当前工作面
 
-- `Source/Doc/Plan/0005-basic-card-playable-rules.md` — `Done`。基础牌可玩规则纵切已实现并通过 `SGS.Plan0005.BasicCards` 自动化验收；待统一归档。
 - `Source/Doc/Plan/0011-native-code-first-ui.md` — `Ready`。UI 长期技术路线父计划。
 - `Source/Doc/Plan/0011-M1-minimal-code-first-table-ui.md` — `In Progress`。最小代码优先牌桌 UI 纵切代码已实现，`SGS.Plan0011M1.LocalUI.DecisionBridge` 自动化通过，`-game` 本地入口确认 `LocalHuman=true`；等待 PIE / Standalone 手工视觉与点击验收。
-- `Source/Doc/Plan/0013-command-rule-effect-pipeline.md` — `Done`。基础牌规则已从 Driver 内联分支迁移到 `Command -> Rule -> EffectPipeline` 管线，Command legacy mirror 与旧执行接口已删除；待统一归档。
-- `Source/Doc/Plan/0014-rule-layer-long-term-refactor.md` — `In Progress`。第一阶段 typed `RuleInvocation` + Indexed RuleRegistry 地基已实现；M2 已删除 legacy `FSGSRuleRequest` / `BuildRuleRequest` 路径并迁移基础牌到 typed Rule；M3 已将 `ResolutionStack` 升级为可恢复结算栈，并建立受控 TimingEvent / TriggerRule 地基。后续重点是完整 TriggerRule 调度、Modifier / ViewAs 和更多牌 / 技能内容。
-- `Source/Doc/Plan/0014-M2-typed-rules-resolution-stack.md` — `In Progress`。核心实现已完成；M3 已顺手修正 Plan0014 旧 `DyingPeachPass` 测试预期并跑过 Plan0013 / Plan0014 相关回归。是否单独标 `Done` 等待后续统一整理 M2 剩余文档任务。
-- `Source/Doc/Plan/0014-M3-resolution-stack-resume-timing-event.md` — `Done`。完成 stack pop/resume、Runtime 通用化、基础牌 resume 语义和最小 TimingEvent / TriggerRule 地基；Development build、legacy 静态检查、Plan0005、Plan0013、Plan0014 与 `graphify update .` 均已通过。
-- 当前主要 `In Progress` 工作面：`0011-M1` 视觉 / 点击验收、`0014-M2` 文档收尾、`0014` 下一阶段设计。下一候选实现方向：完整 TriggerRule 调度、Modifier / ViewAs，再接锦囊 / 装备 / 武将技纵切。
+- 当前主要 `In Progress` 工作面：`0011-M1` 视觉 / 点击验收。Rule 层骨架已在 `0014` 收束，后续真实玩法逻辑应另起 gameplay / card / skill 计划。
 - `Source/Doc/Plan/0000-RawRequirements.md` 是原始需求历史，不算活跃 Plan，默认不要全文读取。
 
 ### 下一步建议
 
-- 在 PIE / Standalone 中验收 `0011-M1` 的最小 HUD 与点击操作；通过后将 `0005` 与 `0011-M1` 按流程归档或推进父计划 0011 的下一阶段。
-- 推进 `0014` 下一阶段：在 M3 的可恢复结算栈上设计完整 TriggerRule 调度、Modifier / ViewAs 接口，并选择一条低风险技能 / 卡牌纵切验证。
+- 在 PIE / Standalone 中验收 `0011-M1` 的最小 HUD 与点击操作；通过后将 `0011-M1` 按流程归档或推进父计划 0011 的下一阶段。
+- 新建真实玩法计划：优先明确距离 / 目标合法性 / 坐骑与技能修正等游戏逻辑边界，再推进更多卡牌、锦囊、装备和首个武将技纵切。
 
 ---
 
@@ -116,4 +111,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\GraphifyVisualFilter
 - 每次完成实质性 Plan 或改变项目阶段时，更新第 4 节；不要把 Plan README 变成索引表。
 - 如果内容开始像“所有 Agent 必须遵守的规则”，移到 `Rulers.md`；如果内容只服务某个领域，移到 `Source/Doc/Rules/*`；如果内容是一次开发的方案或验收，留在对应 Plan。
 
-Last reviewed: 2026-07-03
+Last reviewed: 2026-07-04

@@ -4,7 +4,7 @@
 // validation. Driver owns the registry; rules mutate state only through Runtime.
 
 #include "CoreMinimal.h"
-#include "Server/Rules/SGSRuleTypes.h"
+#include "Server/Rules/Core/SGSRuleTypes.h"
 #include "Shared/Core/SGSIndexedStore.h"
 
 struct SGS_API FSGSRuleEntry
@@ -39,6 +39,7 @@ public:
 	void RegisterRule(TSharedRef<ISGSRule> Rule);
 	TArray<FName> FindCandidateRuleNames(const FSGSRuleInvocation& Invocation) const;
 	FSGSStatus Resolve(FSGSRuleExecutionContext& Context) const;
+	FSGSStatus DispatchAll(FSGSRuleExecutionContext& Context) const;
 	bool CheckInvariants() const;
 
 private:

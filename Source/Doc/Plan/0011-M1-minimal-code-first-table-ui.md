@@ -7,7 +7,7 @@
 | 最近更新 | 2026-06-28 |
 | 关联需求 | `0000-RawRequirements.md` 中的第 12 条 |
 | 父计划 | `0011-native-code-first-ui.md` |
-| 前置计划 | `0005-basic-card-playable-rules.md` 的真实规则路径 |
+| 前置计划 | `Archive/0005-basic-card-playable-rules.md` 的真实规则路径 |
 | 关联代码 | `Source/SGS/UI/`（新增）、`Source/SGS/Game/`、`Source/SGS/Logic/Players/`、`Source/SGS/Logic/Commands/` |
 
 ---
@@ -179,3 +179,4 @@ M1 的 UI 不维护独立 demo state。所有显示来自真实对局：
 - 2026-06-28：创建 M1 子计划。定位为 Plan 0011 的第一个可操作 UI 纵切，依赖 Plan 0005 的真实基础牌规则，不接受静态假界面作为 Done。
 - 2026-06-28：完成代码实现与自动化桥接验证。新增 `USGSLocalHumanDecisionAgent`、`FSGSTableViewModel`、`SSGSTableHudWidget`、`ASGSPlayerController` 和 `FSGSUITheme`；本地开发路径 seat 0 使用 LocalHuman，命令行 / 无人值守路径仍使用 AI。`Development` 构建通过；`SGS.Plan0011M1.LocalUI.DecisionBridge` 自动化测试 `Success`，日志确认 `LocalUI` 提交 UseCard / Pass / RespondCard。
 - 2026-06-28：补强 HUD 质量门。座位、手牌、操作按钮改为 theme token 驱动的稳定尺寸；自动化测试实际构造 `SSGSTableHudWidget` 并验证非零期望尺寸；非 `Unattended` 的 `-game -NullRHI` smoke 确认默认本地入口走 `LocalHuman=true`。剩余验收项是 PIE / Standalone 下的人工视觉与点击操作确认。
+- 2026-07-04：参考 `QSgsRef/NoName` 的 `nova` 八人布局，将 HUD 从纵向调试列表改为 `ol_bg` 背景上的 Slate 原生牌桌布局。新增布局计算层，seat 0 固定主视角底栏，其他玩家按 Nova 边缘公式排布；`SGS.Plan0011M1.LocalUI.DecisionBridge` 自动化补充 8 人 1920x1080 / 1280x720 不重叠断言并通过。PIE 视觉与点击验收仍待人工确认。

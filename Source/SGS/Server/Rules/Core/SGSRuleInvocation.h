@@ -4,7 +4,7 @@
 // 它用开放 FName / GameplayTag 描述 kind、intent、subject、window，并用 FInstancedStruct 承载 typed payload。
 
 #include "CoreMinimal.h"
-#include "Server/Rules/SGSRulePayloads.h"
+#include "Server/Rules/Payloads/SGSRulePayloads.h"
 #include "Shared/Core/SGSIds.h"
 #include "StructUtils/InstancedStruct.h"
 

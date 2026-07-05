@@ -3,6 +3,10 @@
 #include "Server/AI/SGSBasicAIAgent.h"
 #include "Shared/Core/SGSLogChannels.h"
 #include "Client/Game/SGSPlayerController.h"
+#include "Client/Game/SGSTablePawn.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMeshActor.h"
+#include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Server/Engine/SGSGameDriver.h"
 #include "Server/UI/SGSTableSnapshotBuilder.h"
@@ -15,8 +19,44 @@
 ASGSGameMode::ASGSGameMode()
 {
 	PlayerControllerClass = ASGSPlayerController::StaticClass();
+	DefaultPawnClass = ASGSTablePawn::StaticClass();
 	GameStateClass = ASGSGameState::StaticClass();
 	PlayerStateClass = ASGSPlayerState::StaticClass();
+}
+
+void ASGSGameMode::SpawnDevelopmentTableScene()
+{
+	UWorld* World = GetWorld();
+	if (World == nullptr)
+	{
+		return;
+	}
+
+	UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+	if (CubeMesh == nullptr)
+	{
+		UE_LOG(LogSGSUI, Warning, TEXT("Development table scene skipped: /Engine/BasicShapes/Cube is missing."));
+		return;
+	}
+
+	FActorSpawnParameters SpawnParameters;
+	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	AStaticMeshActor* TableActor = World->SpawnActor<AStaticMeshActor>(
+		FVector(0.0f, 0.0f, -8.0f),
+		FRotator::ZeroRotator,
+		SpawnParameters);
+	if (TableActor == nullptr || TableActor->GetStaticMeshComponent() == nullptr)
+	{
+		return;
+	}
+
+	UStaticMeshComponent* MeshComponent = TableActor->GetStaticMeshComponent();
+	MeshComponent->SetStaticMesh(CubeMesh);
+	MeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	TableActor->SetActorScale3D(FVector(12.0f, 7.0f, 0.08f));
+#if WITH_EDITOR
+	TableActor->SetActorLabel(TEXT("SGS Development Table"));
+#endif
 }
 
 void ASGSGameMode::RefreshViewSnapshots()
@@ -41,6 +81,8 @@ void ASGSGameMode::BeginPlay()
 	{
 		return;
 	}
+
+	SpawnDevelopmentTableScene();
 
 	const int32 SeatCount = FMath::Max(NumSeats, 1);
 	LocalHumanPlayerController = Cast<ASGSPlayerController>(UGameplayStatics::GetPlayerController(this, 0));

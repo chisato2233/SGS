@@ -27,6 +27,8 @@ protected:
 	int32 NumSeats = 4;
 
 private:
+	void SpawnDevelopmentTableScene();
+
 	UPROPERTY()
 	TObjectPtr<USGSGameDriver> GameDriver;
 

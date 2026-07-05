@@ -17,6 +17,7 @@
 | UI / Slate / UMG / CommonUI | `UI.md` |
 | GAS / GameplayEffect / GameplayTag / Attribute | `GAS.md` |
 | Command、RandomAudit、Store、TargetQuery、EffectPipeline、ReplayLog | `RuleToolkit.md` |
+| 新增 Rule / Payload / Command / Card / Skill 等工程概念 | `Authoring/README.md`，再按任务读取具体作者指南 |
 
 只读取和当前任务有关的文件。不要默认读取整个目录。
 
@@ -30,3 +31,4 @@
 - 不在规则文件里维护类清单、调用链、依赖图或模块地图；这些由 graphify 提供。
 - 不把历史拆成大量 decision 文件；历史细节保留在 git、归档 Plan、RawRequirements 和 graphify 中。
 - 若规则来自某个 Plan，只在规则里保留最终结论；详细理由由归档 Plan 或 git 追溯。
+- 作者指南放在 `Authoring/`，只写新增内容的落点、边界、不变量和最小验收；不维护对象清单。

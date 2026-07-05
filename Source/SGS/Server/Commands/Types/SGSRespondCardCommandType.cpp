@@ -3,7 +3,7 @@
 #include "Shared/Cards/SGSCard.h"
 #include "Shared/Commands/SGSCommandPayloadTraits.h"
 #include "Server/Engine/SGSGameContext.h"
-#include "Server/Rules/SGSRuleInvocation.h"
+#include "Server/Rules/Core/SGSRuleInvocation.h"
 
 namespace
 {
