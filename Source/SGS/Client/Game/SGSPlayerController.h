@@ -6,7 +6,12 @@
 #include "SGSPlayerController.generated.h"
 
 class SSGSTableHudWidget;
+class SSGSUIToastLayerWidget;
+class FSGSTableFeatureController;
+class FSGSUIContext;
 class USGSLocalHumanDecisionAgent;
+class ASGSGameState;
+class ULocalPlayer;
 class FLifetimeProperty;
 
 UCLASS()
@@ -51,6 +56,10 @@ private:
 
 	void AttachLocalHud();
 	void RemoveTableHud();
+	void BindTableSnapshotSource();
+	void UnbindTableSnapshotSource();
+	void HandlePublicSnapshotChanged();
+	void RefreshTableFeature();
 	bool SubmitUseCardOnServer(int32 CardId, int32 TargetSeatIndex);
 	bool SubmitResponseCardOnServer(int32 CardId, int32 TargetSeatIndex);
 	bool SubmitPassOnServer();
@@ -67,5 +76,11 @@ private:
 
 	TFunction<FSGSPlayerPrivateSnapshot()> PrivateSnapshotProvider;
 	TFunction<void()> ServerViewRefreshHandler;
+	TWeakObjectPtr<ULocalPlayer> HudLocalPlayer;
+	TWeakObjectPtr<ASGSGameState> ObservedGameState;
+	FDelegateHandle PublicSnapshotChangedHandle;
+	TSharedPtr<FSGSUIContext> UIContext;
+	TSharedPtr<FSGSTableFeatureController> TableFeatureController;
 	TSharedPtr<SSGSTableHudWidget> TableHudWidget;
+	TSharedPtr<SSGSUIToastLayerWidget> ToastLayerWidget;
 };

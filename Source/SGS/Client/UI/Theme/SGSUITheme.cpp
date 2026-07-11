@@ -37,12 +37,12 @@ FMargin FSGSUITheme::ButtonGapPadding()
 
 FVector2D FSGSUITheme::SeatButtonMinSize()
 {
-	return FVector2D(120.0f, 86.0f);
+	return FVector2D(150.0f, 196.0f);
 }
 
 FVector2D FSGSUITheme::CardButtonSize()
 {
-	return FVector2D(112.0f, 72.0f);
+	return FVector2D(78.0f, 110.0f);
 }
 
 FVector2D FSGSUITheme::ActionButtonMinSize()

@@ -1,9 +1,12 @@
 #include "Client/Game/SGSPlayerController.h"
 
 #include "Client/UI/Bridge/SGSLocalHumanDecisionAgent.h"
+#include "Client/UI/Core/Context/SGSUIContext.h"
+#include "Client/UI/Features/Table/Controller/SGSTableFeatureController.h"
+#include "Client/UI/Features/Toast/SGSUIToastLayerWidget.h"
 #include "Client/UI/Widgets/SGSTableHudWidget.h"
-#include "Engine/Engine.h"
 #include "Engine/GameViewportClient.h"
+#include "Engine/LocalPlayer.h"
 #include "Net/UnrealNetwork.h"
 #include "Shared/Game/SGSGameState.h"
 #include "Shared/Game/SGSPlayerState.h"
@@ -57,6 +60,7 @@ void ASGSPlayerController::RefreshPrivateSnapshotFromServer()
 	NewSnapshot.Revision = PrivateSnapshot.Revision + 1;
 	NewSnapshot.ViewerSeat = ViewerSeat;
 	PrivateSnapshot = MoveTemp(NewSnapshot);
+	RefreshTableFeature();
 }
 
 FSGSTableViewSnapshot ASGSPlayerController::BuildTableViewSnapshot() const
@@ -134,22 +138,57 @@ void ASGSPlayerController::ServerSubmitPass_Implementation()
 
 void ASGSPlayerController::OnRep_PrivateSnapshot()
 {
+	RefreshTableFeature();
 }
 
 void ASGSPlayerController::AttachLocalHud()
 {
-	if (!IsLocalController() || GEngine == nullptr || GEngine->GameViewport == nullptr)
+	ULocalPlayer* LocalPlayer = GetLocalPlayer();
+	UGameViewportClient* ViewportClient = LocalPlayer != nullptr
+		? LocalPlayer->ViewportClient
+		: nullptr;
+	if (!IsLocalController() || LocalPlayer == nullptr || ViewportClient == nullptr)
 	{
 		return;
 	}
 
 	RemoveTableHud();
+	UIContext = MakeShared<FSGSUIContext>();
+	FSGSTableFeatureBindings Bindings;
+	const TWeakObjectPtr<ASGSPlayerController> WeakThis(this);
+	Bindings.ReadSnapshot = [WeakThis]()
+	{
+		return WeakThis.IsValid()
+			? WeakThis->BuildTableViewSnapshot()
+			: FSGSTableViewSnapshot();
+	};
+	Bindings.SubmitUseCard = [WeakThis](int32 CardId, int32 TargetSeat)
+	{
+		return WeakThis.IsValid() && WeakThis->SubmitUseCard(CardId, TargetSeat);
+	};
+	Bindings.SubmitResponseCard = [WeakThis](int32 CardId, int32 TargetSeat)
+	{
+		return WeakThis.IsValid() && WeakThis->SubmitResponseCard(CardId, TargetSeat);
+	};
+	Bindings.SubmitPass = [WeakThis]()
+	{
+		return WeakThis.IsValid() && WeakThis->SubmitPass();
+	};
+	TableFeatureController = MakeShared<FSGSTableFeatureController>(
+		ViewerSeat,
+		MoveTemp(Bindings),
+		UIContext.ToSharedRef());
+	TableFeatureController->RefreshFromHost();
 
 	SAssignNew(TableHudWidget, SSGSTableHudWidget)
-		.PlayerController(this)
-		.ViewerSeat(ViewerSeat);
+		.Controller(TableFeatureController);
+	SAssignNew(ToastLayerWidget, SSGSUIToastLayerWidget)
+		.UIContext(UIContext);
 
-	GEngine->GameViewport->AddViewportWidgetContent(TableHudWidget.ToSharedRef(), 10);
+	ViewportClient->AddViewportWidgetForPlayer(LocalPlayer, TableHudWidget.ToSharedRef(), 10);
+	ViewportClient->AddViewportWidgetForPlayer(LocalPlayer, ToastLayerWidget.ToSharedRef(), 20);
+	HudLocalPlayer = LocalPlayer;
+	BindTableSnapshotSource();
 	TableHudWidget->SlatePrepass();
 	const FVector2D DesiredSize = TableHudWidget->GetDesiredSize();
 	UE_LOG(LogSGSUI, Log, TEXT("Local HUD attached. ViewerSeat=%d DesiredSize=%.1fx%.1f"),
@@ -228,9 +267,67 @@ void ASGSPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void ASGSPlayerController::RemoveTableHud()
 {
-	if (TableHudWidget.IsValid() && GEngine != nullptr && GEngine->GameViewport != nullptr)
+	UnbindTableSnapshotSource();
+	ULocalPlayer* LocalPlayer = HudLocalPlayer.Get();
+	if (LocalPlayer == nullptr)
 	{
-		GEngine->GameViewport->RemoveViewportWidgetContent(TableHudWidget.ToSharedRef());
+		LocalPlayer = GetLocalPlayer();
 	}
+	UGameViewportClient* ViewportClient = LocalPlayer != nullptr
+		? LocalPlayer->ViewportClient
+		: nullptr;
+	if (TableHudWidget.IsValid() && LocalPlayer != nullptr && ViewportClient != nullptr)
+	{
+		ViewportClient->RemoveViewportWidgetForPlayer(LocalPlayer, TableHudWidget.ToSharedRef());
+	}
+	if (ToastLayerWidget.IsValid() && LocalPlayer != nullptr && ViewportClient != nullptr)
+	{
+		ViewportClient->RemoveViewportWidgetForPlayer(LocalPlayer, ToastLayerWidget.ToSharedRef());
+	}
+	HudLocalPlayer.Reset();
 	TableHudWidget.Reset();
+	ToastLayerWidget.Reset();
+	TableFeatureController.Reset();
+	UIContext.Reset();
+}
+
+void ASGSPlayerController::BindTableSnapshotSource()
+{
+	UnbindTableSnapshotSource();
+	ASGSGameState* GameState = GetWorld() != nullptr
+		? GetWorld()->GetGameState<ASGSGameState>()
+		: nullptr;
+	if (GameState == nullptr)
+	{
+		return;
+	}
+
+	ObservedGameState = GameState;
+	PublicSnapshotChangedHandle = GameState->OnPublicSnapshotChanged().AddUObject(
+		this,
+		&ASGSPlayerController::HandlePublicSnapshotChanged);
+}
+
+void ASGSPlayerController::UnbindTableSnapshotSource()
+{
+	if (ASGSGameState* GameState = ObservedGameState.Get();
+		GameState != nullptr && PublicSnapshotChangedHandle.IsValid())
+	{
+		GameState->OnPublicSnapshotChanged().Remove(PublicSnapshotChangedHandle);
+	}
+	ObservedGameState.Reset();
+	PublicSnapshotChangedHandle.Reset();
+}
+
+void ASGSPlayerController::HandlePublicSnapshotChanged()
+{
+	RefreshTableFeature();
+}
+
+void ASGSPlayerController::RefreshTableFeature()
+{
+	if (TableFeatureController.IsValid())
+	{
+		TableFeatureController->RefreshFromHost();
+	}
 }

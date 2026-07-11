@@ -24,7 +24,7 @@ protected:
 
 	// 骨架期座位数。
 	UPROPERTY(EditDefaultsOnly, Category = "SGS")
-	int32 NumSeats = 4;
+	int32 NumSeats = 8;
 
 private:
 	void SpawnDevelopmentTableScene();

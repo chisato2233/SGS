@@ -6,6 +6,85 @@
 
 ---
 
+## #23 — 2026-07-11 — 完成 M2.3 至 M2.6，Token 集中于生产代码
+
+**原话：**
+> 继续按照这上面的计划，完成M2.3 - M2.6，依然是不要把token花费在测试或者测试代码开发上
+
+**要点拆解：**
+- 完成通用 State/Binding、typed signal/lifetime、Host/Feature 边界和第二真实消费者。
+- 不新增测试、不扩写测试场景、不运行自动化；仅允许为生产接口迁移做最小现有测试编译适配。
+- Token 优先投入生产框架代码、真实 Table 接入和规则固化。
+
+**关联计划：** `0011-M2-react-inspired-ui-foundation-events.md`。
+
+---
+
+## #22 — 2026-07-11 — 将 M2 重心纠偏为业务无关组件框架与 Anti-God-Widget
+
+**原话：**
+> 审查一下这一份计划，，我更想构建的是与业务无关的参考React的UI代码框架。。。。。并且最大的目的是拆分Widget并避免后续出现类似Widget这种指责单一的东西，像一个资深工程师一样审视这份框架计划，保留或增加价值最高的地方，删掉不必要的部分
+
+**上下文：**
+- 原 M2 把 LocalPlayer Store、Selector、Action Dispatcher 与完整 Event Hub 放在组件拆分之前，容易先建设业务基础设施，迟迟不解决单体 Widget 膨胀。
+- 已实现的 `FSGSLocalUIStateStore` 直接依赖 Table Snapshot，具有真实价值，但不满足业务无关 Core 的定义。
+- 用户明确将最大目标调整为组件职责拆分、组合复用与防止新的 God Widget。
+
+**要点拆解：**
+- 通用 Core 不依赖 Table、PlayerController、GameDriver、Server 或卡牌 / 玩家类型。
+- React 思想映射为 props、callback、state ownership、context、composition 与生命周期安全订阅，不复制虚拟 DOM。
+- 将组件契约和牌桌 God Widget 拆分提前，Store / Dispatcher / Event Hub 只按真实消费者逐步提炼。
+- UI 事件框架缩减为 typed signal + subscription handle + lifetime scope；普通父子交互继续使用 callback。
+- 现有 `FSGSLocalUIStateStore` 保留为 Table feature 临时适配器，后续迁出 Foundation Core。
+
+**关联计划：** `0011-M2-react-inspired-ui-foundation-events.md`。
+
+---
+
+## #21 — 2026-07-11 — 制定 React-inspired UI Foundation 与 UI 事件框架计划
+
+**原话：**
+> 我需要你制定一个详细的执行计划以达成我们的目标，为了省token不要写代码，目标是借鉴React的模块化，单向数据流和组件组合思想，实现一套健壮的UI开发框架，同时也顺便构建一套复用性高的专属于UI的事件框架，让我们开始吧
+
+**上下文：**
+- 当前 M1 已建立真实牌桌 Snapshot、布局、Theme 与决策路径，但牌桌根 Widget 同时承担刷新、绘制、资源、选择和动作提交，继续增加装备、技能与交互会加速膨胀。
+- 项目仍坚持 Unreal Native Code-first UI，不采用 React / WebView 作为运行时；本需求只借鉴现代前端的架构思想。
+- 用户明确要求本阶段只制定详细执行计划，不编写代码，并继续遵守 graphify 优先与截图逐次确认的 Token 节省规则。
+
+**要点拆解：**
+- 建立 Snapshot / Local State / Props / Action / Event 的明确语义与单向数据流。
+- 建立 local-player UI store、selector、typed action dispatcher、scope/lifecycle 和可诊断的 UI Event Hub。
+- 以现有牌桌真实路径渐进拆分 Container、Presentational Component、Primitives 与 Host Adapter。
+- UI Event 只服务表现通知，不复制 CommandRouter、ReplayLog、规则 TimingEvent 或 RPC。
+- 用自动化覆盖 revision、scope 隔离、订阅生命周期、重入、事件风暴、过期动作和真实基础牌纵切。
+
+**关联计划：** `0011-M2-react-inspired-ui-foundation-events.md`。
+
+---
+
+## #20 — 2026-07-11 — 修正牌桌摄像机并按 NoName 重建原始牌桌布局
+
+**原话：**
+> 目前是这个情况。。。。。1. 摄像头错位了，修一下摄像头，2. 武将牌的显示和玩家武将的显示，以及玩家的手牌区没有很好的格式化，我们着重开始搭建最原始的牌桌的正确布局，可以参考NoName代码的布局！
+>
+> NoName代码在QSgsRef/NoName，记得用graphify省token
+
+**上下文：**
+- 当前 0011-M1 已有八人 Nova 坐标与本地决策桥，但 PIE 截图中牌桌只覆盖左上区域，世界网格大面积露出。
+- 玩家区仍是纯文本黑框，手牌使用横向文本按钮，没有形成武将面板与牌面底栏。
+- 用户明确授权参考 `QSgsRef/NoName`，并要求优先使用它自己的 graphify 图谱缩小读取范围。
+
+**要点拆解：**
+- 修正牌桌 Pawn 的摄像机位置和朝向，使正交相机居中俯视世界桌面。
+- 背景成为全视口独立底层；布局使用本帧真实 Slate geometry，兼容高 DPI 与紧凑窗口。
+- 按 NoName Nova 语义拆分完整 seat 0、其他玩家武将面板、手牌底栏和独立控制条。
+- 使用已导入素材形成第一版武将图与基础牌面展示；在武将规则模型建立前，武将图仅为表现占位，不进入规则事实源。
+- 增加摄像机与 640×360 至 1920×1080 的八人布局自动化，并保留 PIE 点击验收。
+
+**关联计划：** `0011-M1-minimal-code-first-table-ui.md`。
+
+---
+
 ## #19 — 2026-07-04 — 收束 Plan0014：Rule 骨架阶段到此为止
 
 **原话：**

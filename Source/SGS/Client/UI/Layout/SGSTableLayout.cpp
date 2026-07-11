@@ -1,58 +1,123 @@
 #include "Client/UI/Layout/SGSTableLayout.h"
 
+#include "Client/UI/Theme/SGSUITheme.h"
+
 namespace
 {
-float ClampX(float X, float Width, float ViewWidth, float Padding)
+constexpr float ReferenceViewWidth = 1280.0f;
+constexpr float ReferenceViewHeight = 720.0f;
+
+float ClampCoordinate(float Value, float Extent, float ViewExtent, float SafeMargin)
 {
-	return FMath::Clamp(X, Padding, FMath::Max(Padding, ViewWidth - Width - Padding));
+	const float MaxValue = ViewExtent - Extent - SafeMargin;
+	if (MaxValue < SafeMargin)
+	{
+		return FMath::Max(0.0f, (ViewExtent - Extent) * 0.5f);
+	}
+	return FMath::Clamp(Value, SafeMargin, MaxValue);
 }
 
-float ClampY(float Y, float Height, float ViewHeight, float Padding)
-{
-	return FMath::Clamp(Y, Padding, FMath::Max(Padding, ViewHeight - Height - Padding));
-}
-
-FVector2D MakePosition(float X, float Y, const FVector2D& Size, const FVector2D& ViewSize, float Padding)
+FVector2D MakePosition(
+	float X,
+	float Y,
+	const FVector2D& Size,
+	const FVector2D& ViewSize,
+	float SafeMargin)
 {
 	return FVector2D(
-		ClampX(X, Size.X, ViewSize.X, Padding),
-		ClampY(Y, Size.Y, ViewSize.Y, Padding));
+		ClampCoordinate(X, Size.X, ViewSize.X, SafeMargin),
+		ClampCoordinate(Y, Size.Y, ViewSize.Y, SafeMargin));
 }
 
-FVector2D MakeNovaEightPosition(int32 RelativePosition, const FVector2D& ViewSize, const FVector2D& SeatSize, float Padding)
+FVector2D MakeNovaEightPosition(
+	int32 RelativePosition,
+	const FSlateRect& ArenaArea,
+	const FVector2D& ViewSize,
+	const FVector2D& SeatSize,
+	float SafeMargin)
 {
+	// Source reference:
+	// QSgsRef/NoName/noname-for-dummies-main/layout/nova/layout.css
+	// section: "位置(8人)", selectors [data-number="8"] > .player[data-position="N"].
+	const FVector2D ArenaSize(
+		ArenaArea.Right - ArenaArea.Left,
+		ArenaArea.Bottom - ArenaArea.Top);
 	switch (RelativePosition)
 	{
 	case 1:
-		return MakePosition(ViewSize.X - 150.0f, ViewSize.Y * 0.55f - 143.0f, SeatSize, ViewSize, Padding);
+		return MakePosition(
+			ArenaArea.Right - SeatSize.X,
+			ArenaArea.Top + ArenaSize.Y * 0.55f - SeatSize.Y * (143.0f / 196.0f),
+			SeatSize,
+			ViewSize,
+			SafeMargin);
 	case 2:
-		return MakePosition(ViewSize.X - 150.0f, ViewSize.Y * 0.10f - 50.0f, SeatSize, ViewSize, Padding);
+		return MakePosition(
+			ArenaArea.Right - SeatSize.X,
+			ArenaArea.Top + ArenaSize.Y * 0.10f - SeatSize.Y * (50.0f / 196.0f),
+			SeatSize,
+			ViewSize,
+			SafeMargin);
 	case 3:
-		return MakePosition(ViewSize.X * 0.75f - 112.5f, 0.0f, SeatSize, ViewSize, Padding);
+		return MakePosition(
+			ArenaArea.Left + (ArenaSize.X - SeatSize.X) * 0.75f,
+			ArenaArea.Top,
+			SeatSize,
+			ViewSize,
+			SafeMargin);
 	case 4:
-		return MakePosition(ViewSize.X * 0.50f - 75.0f, 0.0f, SeatSize, ViewSize, Padding);
+		return MakePosition(
+			ArenaArea.Left + (ArenaSize.X - SeatSize.X) * 0.50f,
+			ArenaArea.Top,
+			SeatSize,
+			ViewSize,
+			SafeMargin);
 	case 5:
-		return MakePosition(ViewSize.X * 0.25f - 37.5f, 0.0f, SeatSize, ViewSize, Padding);
+		return MakePosition(
+			ArenaArea.Left + (ArenaSize.X - SeatSize.X) * 0.25f,
+			ArenaArea.Top,
+			SeatSize,
+			ViewSize,
+			SafeMargin);
 	case 6:
-		return MakePosition(0.0f, ViewSize.Y * 0.10f - 50.0f, SeatSize, ViewSize, Padding);
+		return MakePosition(
+			ArenaArea.Left,
+			ArenaArea.Top + ArenaSize.Y * 0.10f - SeatSize.Y * (50.0f / 196.0f),
+			SeatSize,
+			ViewSize,
+			SafeMargin);
 	case 7:
-		return MakePosition(0.0f, ViewSize.Y * 0.55f - 143.0f, SeatSize, ViewSize, Padding);
+		return MakePosition(
+			ArenaArea.Left,
+			ArenaArea.Top + ArenaSize.Y * 0.55f - SeatSize.Y * (143.0f / 196.0f),
+			SeatSize,
+			ViewSize,
+			SafeMargin);
 	default:
 		return FVector2D::ZeroVector;
 	}
 }
 
-FVector2D MakeFallbackRingPosition(int32 RelativePosition, int32 SeatCount, const FVector2D& ViewSize, const FVector2D& SeatSize, float Padding)
+FVector2D MakeFallbackRingPosition(
+	int32 RelativePosition,
+	int32 SeatCount,
+	const FSlateRect& ArenaArea,
+	const FVector2D& ViewSize,
+	const FVector2D& SeatSize,
+	float SafeMargin)
 {
 	const int32 OpponentCount = FMath::Max(SeatCount - 1, 1);
 	const float T = OpponentCount > 1
 		? static_cast<float>(RelativePosition - 1) / static_cast<float>(OpponentCount - 1)
 		: 0.5f;
-	const float X = FMath::Lerp(Padding, ViewSize.X - SeatSize.X - Padding, T);
+	const float X = FMath::Lerp(ArenaArea.Left, ArenaArea.Right - SeatSize.X, T);
 	const float Y = RelativePosition == 1 && SeatCount <= 2
-		? Padding
-		: FMath::Lerp(Padding, ViewSize.Y * 0.22f, FMath::Abs(0.5f - T) * 2.0f);
-	return MakePosition(X, Y, SeatSize, ViewSize, Padding);
+		? ArenaArea.Top
+		: FMath::Lerp(
+			ArenaArea.Top,
+			ArenaArea.Top + (ArenaArea.Bottom - ArenaArea.Top) * 0.22f,
+			FMath::Abs(0.5f - T) * 2.0f);
+	return MakePosition(X, Y, SeatSize, ViewSize, SafeMargin);
 }
 
 int32 RelativeSeatPosition(int32 SeatIndex, int32 SeatCount, int32 ViewerSeat)
@@ -69,30 +134,56 @@ FSGSTableLayoutMetrics FSGSTableLayoutMetrics::Make(FVector2D InViewSize, int32 
 {
 	FSGSTableLayoutMetrics Metrics;
 	Metrics.ViewSize = FVector2D(
-		FMath::Max(InViewSize.X, 800.0f),
-		FMath::Max(InViewSize.Y, 540.0f));
+		FMath::Max(InViewSize.X, 1.0f),
+		FMath::Max(InViewSize.Y, 1.0f));
+	Metrics.LayoutScale = FMath::Clamp(
+		FMath::Min(
+			Metrics.ViewSize.X / ReferenceViewWidth,
+			Metrics.ViewSize.Y / ReferenceViewHeight),
+		0.50f,
+		1.0f);
+	Metrics.SeatSize = FSGSUITheme::SeatButtonMinSize();
+	Metrics.MainSeatSize = FSGSUITheme::SeatButtonMinSize();
+	Metrics.HandCardSize = FSGSUITheme::CardButtonSize();
+	Metrics.SafeMargin *= Metrics.LayoutScale;
+	Metrics.SeatSize *= Metrics.LayoutScale;
+	Metrics.MainSeatSize *= Metrics.LayoutScale;
+	Metrics.HandCardSize *= Metrics.LayoutScale;
+	Metrics.BackgroundArea = MakeBackgroundCoverRect(Metrics.ViewSize, Metrics.BackgroundImageSize);
+	Metrics.ArenaArea = FSlateRect(
+		Metrics.ViewSize.X * 0.03f,
+		Metrics.ViewSize.Y * 0.03f,
+		Metrics.ViewSize.X * 0.97f,
+		Metrics.ViewSize.Y + 30.0f * Metrics.LayoutScale);
 
-	const float Padding = Metrics.ScreenPadding.Left;
-	const float BottomRailHeight = 180.0f;
-	const float MainSeatTop = Metrics.ViewSize.Y - Metrics.MainSeatSize.Y - Metrics.BottomRailPadding.Bottom;
-	const float HandLeft = Metrics.MainSeatSize.X + 24.0f;
-	const float HandRight = Metrics.ViewSize.X - 24.0f;
-	const float HandTop = Metrics.ViewSize.Y - 136.0f;
+	// Nova 的 position 0 是独立的完整武将面板，底部留 40px；手牌栏从其右侧开始。
+	const float MainSeatTop = Metrics.ArenaArea.Bottom - 40.0f * Metrics.LayoutScale - Metrics.MainSeatSize.Y;
+	const float HandLeft = Metrics.ArenaArea.Left + Metrics.MainSeatSize.X;
+	const float HandRight = FMath::Max(HandLeft, Metrics.ArenaArea.Right);
+	const float HandRailHeight = 120.0f * Metrics.LayoutScale;
+	const float HandBottom = Metrics.ArenaArea.Bottom - 38.0f * Metrics.LayoutScale;
+	const float HandTop = HandBottom - HandRailHeight;
 	Metrics.HandArea = FSlateRect(
 		HandLeft,
 		HandTop,
-		FMath::Max(HandLeft + 120.0f, HandRight),
-		Metrics.ViewSize.Y - 16.0f);
+		HandRight,
+		HandBottom);
+	const float ControlBottom = Metrics.ArenaArea.Bottom - 160.0f * Metrics.LayoutScale;
+	const float ControlHeight = 40.0f * Metrics.LayoutScale;
 	Metrics.ControlArea = FSlateRect(
 		HandLeft,
-		FMath::Max(220.0f, Metrics.ViewSize.Y - BottomRailHeight - 56.0f),
-		FMath::Max(HandLeft + 120.0f, HandRight),
-		FMath::Max(260.0f, Metrics.ViewSize.Y - BottomRailHeight - 8.0f));
+		ControlBottom - ControlHeight,
+		HandRight,
+		ControlBottom);
+	const float CenterWidth = FMath::Min(
+		520.0f * Metrics.LayoutScale,
+		FMath::Max(160.0f * Metrics.LayoutScale, Metrics.ViewSize.X - 2.0f * (Metrics.SeatSize.X + Metrics.SafeMargin * 2.0f)));
+	const float CenterHeight = 64.0f * Metrics.LayoutScale;
 	Metrics.CenterArea = FSlateRect(
-		Metrics.MainSeatSize.X + 32.0f,
-		Metrics.SeatSize.Y + 16.0f,
-		Metrics.ViewSize.X - Metrics.SeatSize.X - 32.0f,
-		Metrics.ViewSize.Y - BottomRailHeight - 72.0f);
+		Metrics.ViewSize.X * 0.5f - CenterWidth * 0.5f,
+		Metrics.ViewSize.Y * 0.5f - CenterHeight * 0.5f,
+		Metrics.ViewSize.X * 0.5f + CenterWidth * 0.5f,
+		Metrics.ViewSize.Y * 0.5f + CenterHeight * 0.5f);
 
 	const int32 SafeSeatCount = FMath::Max(SeatCount, 0);
 	Metrics.Seats.Reserve(SafeSeatCount);
@@ -107,21 +198,57 @@ FSGSTableLayoutMetrics FSGSTableLayoutMetrics::Make(FVector2D InViewSize, int32 
 
 		if (SeatLayout.RelativePosition == 0)
 		{
-			SeatLayout.Position = MakePosition(Padding, MainSeatTop, SeatLayout.Size, Metrics.ViewSize, Padding);
+			SeatLayout.Position = MakePosition(
+				Metrics.ArenaArea.Left,
+				MainSeatTop,
+				SeatLayout.Size,
+				Metrics.ViewSize,
+				Metrics.SafeMargin);
 		}
 		else if (SafeSeatCount == 8)
 		{
-			SeatLayout.Position = MakeNovaEightPosition(SeatLayout.RelativePosition, Metrics.ViewSize, SeatLayout.Size, Padding);
+			SeatLayout.Position = MakeNovaEightPosition(
+				SeatLayout.RelativePosition,
+				Metrics.ArenaArea,
+				Metrics.ViewSize,
+				SeatLayout.Size,
+				Metrics.SafeMargin);
 		}
 		else
 		{
-			SeatLayout.Position = MakeFallbackRingPosition(SeatLayout.RelativePosition, SafeSeatCount, Metrics.ViewSize, SeatLayout.Size, Padding);
+			SeatLayout.Position = MakeFallbackRingPosition(
+				SeatLayout.RelativePosition,
+				SafeSeatCount,
+				Metrics.ArenaArea,
+				Metrics.ViewSize,
+				SeatLayout.Size,
+				Metrics.SafeMargin);
 		}
 
 		Metrics.Seats.Add(MoveTemp(SeatLayout));
 	}
 
 	return Metrics;
+}
+
+FSlateRect FSGSTableLayoutMetrics::MakeBackgroundCoverRect(FVector2D ViewSize, FVector2D ImageSize)
+{
+	const FVector2D SafeViewSize(
+		FMath::Max(ViewSize.X, 1.0f),
+		FMath::Max(ViewSize.Y, 1.0f));
+	const FVector2D SafeImageSize(
+		FMath::Max(ImageSize.X, 1.0f),
+		FMath::Max(ImageSize.Y, 1.0f));
+	const float Scale = FMath::Max(
+		SafeViewSize.X / SafeImageSize.X,
+		SafeViewSize.Y / SafeImageSize.Y);
+	const FVector2D ScaledSize = SafeImageSize * Scale;
+	const FVector2D Offset = (SafeViewSize - ScaledSize) * 0.5f;
+	return FSlateRect(
+		Offset.X,
+		Offset.Y,
+		Offset.X + ScaledSize.X,
+		Offset.Y + ScaledSize.Y);
 }
 
 bool FSGSTableLayoutMetrics::RectsOverlap(const FSlateRect& A, const FSlateRect& B)

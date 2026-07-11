@@ -4,7 +4,7 @@
 |---|---|
 | 状态 | `In Progress` |
 | 创建日期 | 2026-06-28 |
-| 最近更新 | 2026-06-28 |
+| 最近更新 | 2026-07-11 |
 | 关联需求 | `0000-RawRequirements.md` 中的第 12 条 |
 | 父计划 | `0011-native-code-first-ui.md` |
 | 前置计划 | `Archive/0005-basic-card-playable-rules.md` 的真实规则路径 |
@@ -99,7 +99,7 @@ ViewModel 不执行规则校验的最终裁决。它可以提供 UI 提示，但
 
 最小牌桌 HUD 包含：
 
-- 四个座位区：名称 / 座位号、体力、手牌数、状态标记。
+- 八个座位区：名称 / 座位号、体力、手牌数、状态标记。
 - 中央信息区：当前阶段、当前行动者、牌堆 / 弃牌堆数量、最近事件摘要。
 - 手牌区：本地玩家手牌卡片按钮，显示牌名、花色、点数。
 - 决策区：确认、Pass、取消选择；响应窗口显示需要 `Dodge` / `Peach` 的提示。
@@ -156,6 +156,9 @@ M1 的 UI 不维护独立 demo state。所有显示来自真实对局：
 - [x] 将 HUD 挂到本地 PlayerController / viewport，并让默认开发路径可选择 1 真人 + AI 座位。
 - [x] 接入 Plan 0005 的 `Slash` / `Dodge` / `Peach` 决策提示与 Command 提交。
 - [x] 增加调试日志或轻量自动化，确认 UI 提交的 Command 进入 `CommandRouter`，且 SourceChannel 为 `LocalUI`。
+- [x] 修正牌桌正交摄像机，并按 NoName Nova 的 arena / seat 0 / 手牌底栏 / 控制条语义重建基础布局。
+- [x] 将武将面板和基础牌按钮接入已导入图像素材；武将图目前只作 seat-index 表现占位，不进入 ViewModel 或规则事实源。
+- [x] 增加高 DPI 紧凑窗口布局回归，并用 1280x720 离屏 `Shot ShowUI` 验证全视口背景和八人布局。
 - [ ] 在 PIE / Standalone 完成手工验收记录，并更新父 Plan 0011 与 ProjectBrief 状态。
 
 ---
@@ -165,7 +168,7 @@ M1 的 UI 不维护独立 demo state。所有显示来自真实对局：
 必须全部满足：
 
 - Development Editor 编译通过。
-- PIE 或 Standalone 启动后，显示最小牌桌 HUD：四个座位、体力、阶段、当前行动者、牌堆 / 弃牌堆、本地手牌。
+- PIE 或 Standalone 启动后，显示最小牌桌 HUD：八个座位、体力、阶段、当前行动者、牌堆 / 弃牌堆、本地手牌。
 - 本地玩家在出牌阶段可以选择一张真实手牌 `Slash`，选择合法目标并确认；日志显示 `LocalUI` Command 进入 `FSGSCommandRouter`，状态通过规则层改变。
 - 本地玩家在被 `Slash` 指定时，若手牌有 `Dodge`，可以点击响应；若不响应，真实体力减少。
 - 本地玩家或 AI 进入濒死 / 求桃窗口时，`Peach` 可通过 UI 或 AI 决策桥救回；UI 状态随真实结果刷新。
@@ -180,3 +183,5 @@ M1 的 UI 不维护独立 demo state。所有显示来自真实对局：
 - 2026-06-28：完成代码实现与自动化桥接验证。新增 `USGSLocalHumanDecisionAgent`、`FSGSTableViewModel`、`SSGSTableHudWidget`、`ASGSPlayerController` 和 `FSGSUITheme`；本地开发路径 seat 0 使用 LocalHuman，命令行 / 无人值守路径仍使用 AI。`Development` 构建通过；`SGS.Plan0011M1.LocalUI.DecisionBridge` 自动化测试 `Success`，日志确认 `LocalUI` 提交 UseCard / Pass / RespondCard。
 - 2026-06-28：补强 HUD 质量门。座位、手牌、操作按钮改为 theme token 驱动的稳定尺寸；自动化测试实际构造 `SSGSTableHudWidget` 并验证非零期望尺寸；非 `Unattended` 的 `-game -NullRHI` smoke 确认默认本地入口走 `LocalHuman=true`。剩余验收项是 PIE / Standalone 下的人工视觉与点击操作确认。
 - 2026-07-04：参考 `QSgsRef/NoName` 的 `nova` 八人布局，将 HUD 从纵向调试列表改为 `ol_bg` 背景上的 Slate 原生牌桌布局。新增布局计算层，seat 0 固定主视角底栏，其他玩家按 Nova 边缘公式排布；`SGS.Plan0011M1.LocalUI.DecisionBridge` 自动化补充 8 人 1920x1080 / 1280x720 不重叠断言并通过。PIE 视觉与点击验收仍待人工确认。
+- 2026-07-05：修正 Nova 牌桌实现方向。PIE 默认座位数改为 8；HUD 不再使用固定 `1366x768` 画布整体缩放，而是按真实 viewport 尺寸直接计算 NoName `layout/nova/layout.css` 的八人坐标；`ol_bg` 背景改为保持 `1366:768` 比例的 cover/crop 渲染。`SGS.Plan0011M1.LocalUI.DecisionBridge` 已补充 1920x1080 / 1600x900 / 1280x720 布局断言和背景 cover 断言并通过；Development 构建通过。PIE 视觉点击仍待人工确认。
+- 2026-07-11：根据用户 PIE 截图完成牌桌布局纠偏。graphify 定位 SGS 挂载链，并用 `QSgsRef/NoName` 独立图谱将参考读取收敛到 Nova/newlayout 相关实现。牌桌 Pawn 改为 `(0,0,1200)` 的纯俯视正交相机；背景恢复为独立全视口 cover 层；HUD 在 Slate `Tick(AllottedGeometry)` 中按本帧真实尺寸重排，并显式使用 Canvas 左上 pivot，修复高 DPI/首帧只显示左上半桌的问题。八个 seat 使用 `150x196` 武将面板与已导入武将素材；seat 0 独立固定左下，手牌从其右侧开始并支持压叠、滚动、选中上抬，Slash/Dodge/Peach 使用已导入牌面。图片 Brush 最终加载已导入、可 Cook 的 `UTexture2D` 资产，不依赖磁盘 jpg/png；武将图当前是表现层占位，待正式武将模型提供 `GeneralId` 后替换，不视为规则状态。Development Editor 构建通过；`SGS.Plan0011M1.LocalUI.DecisionBridge` 在新增摄像机、1920x1080/1600x900/1280x720/960x540/640x360 布局断言后 `Success`；1280x720 离屏 `Shot ShowUI` 已人工检查背景覆盖、八人环形、本地武将区、手牌区与控制区均正确。仍需用户在 PIE/Standalone 完成真实鼠标点击与主观视觉验收。

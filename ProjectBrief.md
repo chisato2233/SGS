@@ -56,13 +56,15 @@
 ### 当前工作面
 
 - `Source/Doc/Plan/0011-native-code-first-ui.md` — `Ready`。UI 长期技术路线父计划。
-- `Source/Doc/Plan/0011-M1-minimal-code-first-table-ui.md` — `In Progress`。最小代码优先牌桌 UI 纵切代码已实现，`SGS.Plan0011M1.LocalUI.DecisionBridge` 自动化通过，`-game` 本地入口确认 `LocalHuman=true`；等待 PIE / Standalone 手工视觉与点击验收。
-- 当前主要 `In Progress` 工作面：`0011-M1` 视觉 / 点击验收。Rule 层骨架已在 `0014` 收束，后续真实玩法逻辑应另起 gameplay / card / skill 计划。
+- `Source/Doc/Plan/0011-M1-minimal-code-first-table-ui.md` — `In Progress`。最小代码优先牌桌 UI 纵切代码已实现，PIE 默认进入 8 人 Nova 牌桌；摄像机、全视口背景、武将面板和压叠手牌底栏已按 NoName 布局纠偏，1280x720 离屏 UI 截图通过人工检查；`SGS.Plan0011M1.LocalUI.DecisionBridge` 自动化通过，等待 PIE / Standalone 真实点击与主观视觉验收。
+- `Source/Doc/Plan/0011-M2-react-inspired-ui-foundation-events.md` — `In Progress`。M2.2-M2.6 生产实现已完成：业务无关 state/signal/lifetime/context、Table Controller/Shell/叶组件、Host adapter、精准区域更新以及真实 Toast/Focus 消费者已经接入；Development Editor 编译通过。按用户要求未运行自动化，等待独立测试模型完成 Core、交互与多 LocalPlayer 验收。
+- 当前主要 `In Progress` 工作面：`0011-M1` 视觉 / 点击验收与 `0011-M2` 独立测试验收。Rule 层骨架已在 `0014` 收束，后续真实玩法逻辑应另起 gameplay / card / skill 计划。
 - `Source/Doc/Plan/0000-RawRequirements.md` 是原始需求历史，不算活跃 Plan，默认不要全文读取。
 
 ### 下一步建议
 
-- 在 PIE / Standalone 中验收 `0011-M1` 的最小 HUD 与点击操作；通过后将 `0011-M1` 按流程归档或推进父计划 0011 的下一阶段。
+- 在 PIE / Standalone 中验收 `0011-M1` 的 8 人 Nova HUD、窗口缩放与 Slash / Dodge / Peach / Pass 点击操作；通过后将 `0011-M1` 按流程归档或推进父计划 0011 的下一阶段。
+- 由独立测试模型验收 `0011-M2` 的 observable/batch/selector、lifetime teardown、typed signal、Table 真实操作链和多 LocalPlayer 隔离；通过后再将 M2 标记 Done。Motion 等两个真实消费者出现后再提炼，CommonUI / 菜单栈按明确需求另立计划。
 - 新建真实玩法计划：优先明确距离 / 目标合法性 / 坐骑与技能修正等游戏逻辑边界，再推进更多卡牌、锦囊、装备和首个武将技纵切。
 
 ---
@@ -111,4 +113,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\GraphifyVisualFilter
 - 每次完成实质性 Plan 或改变项目阶段时，更新第 4 节；不要把 Plan README 变成索引表。
 - 如果内容开始像“所有 Agent 必须遵守的规则”，移到 `Rulers.md`；如果内容只服务某个领域，移到 `Source/Doc/Rules/*`；如果内容是一次开发的方案或验收，留在对应 Plan。
 
-Last reviewed: 2026-07-04
+Last reviewed: 2026-07-11

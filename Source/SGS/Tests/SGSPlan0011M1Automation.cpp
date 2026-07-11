@@ -1,5 +1,7 @@
 #include "Misc/AutomationTest.h"
 
+#include "Camera/CameraComponent.h"
+#include "Client/Game/SGSTablePawn.h"
 #include "Server/AI/SGSScriptedDecisionAgent.h"
 #include "Shared/Core/SGSGameplayTags.h"
 #include "Shared/Cards/SGSDeckTypes.h"
@@ -8,6 +10,9 @@
 #include "Server/Engine/SGSGameDriver.h"
 #include "Server/Players/SGSSeat.h"
 #include "Server/UI/SGSTableSnapshotBuilder.h"
+#include "Client/UI/Features/Table/State/SGSTableUIStateStore.h"
+#include "Client/UI/Features/Table/Controller/SGSTableFeatureController.h"
+#include "Client/UI/Core/Context/SGSUIContext.h"
 #include "Client/UI/Layout/SGSTableLayout.h"
 #include "Client/UI/Bridge/SGSLocalHumanDecisionAgent.h"
 #include "Client/UI/Widgets/SGSTableHudWidget.h"
@@ -111,12 +116,12 @@ USGSGameDriver* StartTwoSeatGame(
 	return Driver;
 }
 
-USGSGameDriver* StartFourSeatLocalGame(USGSLocalHumanDecisionAgent*& OutLocalAgent)
+USGSGameDriver* StartEightSeatLocalGame(USGSLocalHumanDecisionAgent*& OutLocalAgent)
 {
 	TArray<TScriptInterface<ISGSDecisionAgent>> Agents;
 	Agents.Add(MakeLocalAgent(OutLocalAgent));
 
-	for (int32 SeatIndex = 1; SeatIndex < 4; ++SeatIndex)
+	for (int32 SeatIndex = 1; SeatIndex < 8; ++SeatIndex)
 	{
 		USGSScriptedDecisionAgent* ScriptedAgent = nullptr;
 		Agents.Add(MakePlan0011ScriptedAgent(ScriptedAgent));
@@ -124,7 +129,7 @@ USGSGameDriver* StartFourSeatLocalGame(USGSLocalHumanDecisionAgent*& OutLocalAge
 
 	FSGSGameStartConfig Config;
 	Config.RandomSeed = 13;
-	Config.InitialDeck = SGSDeckDefinitions::MakePlan0005SmokeDeck(4);
+	Config.InitialDeck = SGSDeckDefinitions::MakePlan0005SmokeDeck(8);
 	Config.bShuffleInitialDeck = false;
 	Config.StartingHandSize = 4;
 	Config.MaxTurns = 1;
@@ -252,6 +257,64 @@ bool OpponentSeatsOverlapHandArea(const FSGSTableLayoutMetrics& Layout)
 	}
 	return false;
 }
+
+bool MainTableAreasOverlap(const FSGSTableLayoutMetrics& Layout)
+{
+	const FSGSTableSeatLayout* MainSeat = Layout.FindSeat(0);
+	if (MainSeat == nullptr)
+	{
+		return true;
+	}
+
+	const FSlateRect MainSeatRect = Layout.GetSeatRect(*MainSeat);
+	return FSGSTableLayoutMetrics::RectsOverlap(MainSeatRect, Layout.HandArea)
+		|| FSGSTableLayoutMetrics::RectsOverlap(MainSeatRect, Layout.ControlArea)
+		|| FSGSTableLayoutMetrics::RectsOverlap(Layout.HandArea, Layout.ControlArea);
+}
+
+bool BackgroundCoversView(const FSlateRect& BackgroundArea, FVector2D ViewSize)
+{
+	const float Tolerance = 0.5f;
+	return BackgroundArea.Left <= Tolerance
+		&& BackgroundArea.Top <= Tolerance
+		&& BackgroundArea.Right + Tolerance >= ViewSize.X
+		&& BackgroundArea.Bottom + Tolerance >= ViewSize.Y;
+}
+
+bool BackgroundKeepsAspect(const FSlateRect& BackgroundArea, FVector2D ImageSize)
+{
+	const float Width = BackgroundArea.Right - BackgroundArea.Left;
+	const float Height = BackgroundArea.Bottom - BackgroundArea.Top;
+	if (Width <= 0.0f || Height <= 0.0f || ImageSize.X <= 0.0f || ImageSize.Y <= 0.0f)
+	{
+		return false;
+	}
+	return FMath::IsNearlyEqual(Width / Height, ImageSize.X / ImageSize.Y, 0.001f);
+}
+
+bool RectIsInsideView(const FSlateRect& Rect, FVector2D ViewSize)
+{
+	const float Tolerance = 0.5f;
+	return Rect.Left >= -Tolerance
+		&& Rect.Top >= -Tolerance
+		&& Rect.Right <= ViewSize.X + Tolerance
+		&& Rect.Bottom <= ViewSize.Y + Tolerance;
+}
+
+bool TableContentStaysInsideView(const FSGSTableLayoutMetrics& Layout)
+{
+	for (const FSGSTableSeatLayout& Seat : Layout.Seats)
+	{
+		if (!RectIsInsideView(Layout.GetSeatRect(Seat), Layout.ViewSize))
+		{
+			return false;
+		}
+	}
+
+	return RectIsInsideView(Layout.HandArea, Layout.ViewSize)
+		&& RectIsInsideView(Layout.ControlArea, Layout.ViewSize)
+		&& RectIsInsideView(Layout.CenterArea, Layout.ViewSize);
+}
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -261,6 +324,21 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FSGSPlan0011M1LocalUIBridgeTest::RunTest(const FString& Parameters)
 {
+	const ASGSTablePawn* TablePawnCDO = GetDefault<ASGSTablePawn>();
+	const UCameraComponent* TableCamera = TablePawnCDO != nullptr
+		? TablePawnCDO->FindComponentByClass<UCameraComponent>()
+		: nullptr;
+	TestNotNull(TEXT("Table pawn owns a camera component."), TableCamera);
+	if (TableCamera != nullptr)
+	{
+		TestEqual(TEXT("Table camera uses orthographic projection."), TableCamera->ProjectionMode, ECameraProjectionMode::Orthographic);
+		TestTrue(TEXT("Table camera is centered over the world table."),
+			TableCamera->GetRelativeLocation().Equals(FVector(0.0f, 0.0f, 1200.0f), 0.1f));
+		TestTrue(TEXT("Table camera looks straight down at the table."),
+			TableCamera->GetRelativeRotation().Vector().Equals(FVector(0.0f, 0.0f, -1.0f), 0.001f));
+		TestTrue(TEXT("Table camera width contains the development table."), TableCamera->OrthoWidth >= 1200.0f);
+	}
+
 	USGSLocalHumanDecisionAgent* PlayLocalAgent = nullptr;
 	USGSScriptedDecisionAgent* PlaySeat1Agent = nullptr;
 	PlaySeat1Agent = nullptr;
@@ -283,12 +361,18 @@ bool FSGSPlan0011M1LocalUIBridgeTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("ViewModel exposes a local play prompt."), PlaySnapshot.Prompt.bHasPrompt && !PlaySnapshot.Prompt.bIsResponse);
 	TestEqual(TEXT("ViewModel exposes two seats."), PlaySnapshot.Seats.Num(), 2);
 	TestTrue(TEXT("ViewModel exposes local hand cards."), PlaySnapshot.HandCards.Num() > 0);
+	FSGSTableFeatureBindings PlayUIBindings;
+	PlayUIBindings.ReadSnapshot = [PlayDriver, PlayLocalAgent]()
+	{
+		return BuildLocalTableSnapshot(PlayDriver, PlayLocalAgent, 0);
+	};
+	TSharedRef<FSGSTableFeatureController> PlayUIController = MakeShared<FSGSTableFeatureController>(
+		0,
+		MoveTemp(PlayUIBindings),
+		MakeShared<FSGSUIContext>());
+	PlayUIController->RefreshFromHost();
 	TSharedRef<SSGSTableHudWidget> HudWidget = SNew(SSGSTableHudWidget)
-		.SnapshotProvider([PlayDriver, PlayLocalAgent]()
-			{
-				return BuildLocalTableSnapshot(PlayDriver, PlayLocalAgent, 0);
-			})
-		.ViewerSeat(0);
+		.Controller(PlayUIController);
 	TestTrue(TEXT("Slate HUD widget can be constructed for the local match."), HudWidget->GetVisibility().IsVisible());
 	HudWidget->SlatePrepass();
 	TestTrue(TEXT("Slate HUD widget has non-zero desired size."), HudWidget->GetDesiredSize().X > 0.0f && HudWidget->GetDesiredSize().Y > 0.0f);
@@ -301,37 +385,69 @@ bool FSGSPlan0011M1LocalUIBridgeTest::RunTest(const FString& Parameters)
 		HasExecutedLocalCommand(PlayDriver, SGSGameplayTags::PlayAction_UseCard));
 	TestTrue(TEXT("Local play scenario keeps invariants."), PlayDriver->GetContext()->CheckInvariants());
 
-	USGSLocalHumanDecisionAgent* FourSeatLocalAgent = nullptr;
-	USGSGameDriver* FourSeatDriver = StartFourSeatLocalGame(FourSeatLocalAgent);
-	const FSGSTableViewSnapshot FourSeatSnapshot = BuildLocalTableSnapshot(FourSeatDriver, FourSeatLocalAgent, 0);
-	TestEqual(TEXT("Default local table snapshot exposes four seats."), FourSeatSnapshot.Seats.Num(), 4);
-	TestEqual(TEXT("Default local table snapshot is viewed by seat zero."), FourSeatSnapshot.ViewerSeat, 0);
-	TestTrue(TEXT("Default local table snapshot exposes draw pile count."), FourSeatSnapshot.DrawPileCount >= 0);
-	TestTrue(TEXT("Default local table snapshot exposes local hand."), FourSeatSnapshot.HandCards.Num() > 0);
-	TestTrue(TEXT("Default local table snapshot exposes a local prompt."), FourSeatSnapshot.Prompt.bHasPrompt);
+	USGSLocalHumanDecisionAgent* EightSeatLocalAgent = nullptr;
+	USGSGameDriver* EightSeatDriver = StartEightSeatLocalGame(EightSeatLocalAgent);
+	const FSGSTableViewSnapshot EightSeatSnapshot = BuildLocalTableSnapshot(EightSeatDriver, EightSeatLocalAgent, 0);
+	TestEqual(TEXT("Default local table snapshot exposes eight seats."), EightSeatSnapshot.Seats.Num(), 8);
+	TestEqual(TEXT("Default local table snapshot is viewed by seat zero."), EightSeatSnapshot.ViewerSeat, 0);
+	TestTrue(TEXT("Default local table snapshot exposes draw pile count."), EightSeatSnapshot.DrawPileCount >= 0);
+	TestTrue(TEXT("Default local table snapshot exposes local hand."), EightSeatSnapshot.HandCards.Num() > 0);
+	TestTrue(TEXT("Default local table snapshot exposes a local prompt."), EightSeatSnapshot.Prompt.bHasPrompt);
 
-	TSharedRef<SSGSTableHudWidget> FourSeatHudWidget = SNew(SSGSTableHudWidget)
-		.SnapshotProvider([FourSeatDriver]()
-			{
-				return SGSComposeTableViewSnapshot(
-					FSGSTableSnapshotBuilder::BuildPublicSnapshot(FourSeatDriver),
-					FSGSTableSnapshotBuilder::BuildPrivateSnapshot(FourSeatDriver, nullptr, 0));
-			})
-		.ViewerSeat(0);
-	FourSeatHudWidget->SlatePrepass();
-	const FVector2D FourSeatDesiredSize = FourSeatHudWidget->GetDesiredSize();
-	TestTrue(TEXT("Four-seat Slate HUD has non-zero desired size."),
-		FourSeatDesiredSize.X > 0.0f && FourSeatDesiredSize.Y > 0.0f);
+	FSGSTableFeatureBindings EightSeatUIBindings;
+	EightSeatUIBindings.ReadSnapshot = [EightSeatDriver]()
+	{
+		return SGSComposeTableViewSnapshot(
+			FSGSTableSnapshotBuilder::BuildPublicSnapshot(EightSeatDriver),
+			FSGSTableSnapshotBuilder::BuildPrivateSnapshot(EightSeatDriver, nullptr, 0));
+	};
+	TSharedRef<FSGSTableFeatureController> EightSeatUIController = MakeShared<FSGSTableFeatureController>(
+		0,
+		MoveTemp(EightSeatUIBindings),
+		MakeShared<FSGSUIContext>());
+	EightSeatUIController->RefreshFromHost();
+	TSharedRef<SSGSTableHudWidget> EightSeatHudWidget = SNew(SSGSTableHudWidget)
+		.Controller(EightSeatUIController);
+	EightSeatHudWidget->SlatePrepass();
+	const FVector2D EightSeatDesiredSize = EightSeatHudWidget->GetDesiredSize();
+	TestTrue(TEXT("Eight-seat Slate HUD has non-zero desired size."),
+		EightSeatDesiredSize.X > 0.0f && EightSeatDesiredSize.Y > 0.0f);
 
-	const FSGSTableLayoutMetrics EightSeatDesktopLayout = FSGSTableLayoutMetrics::Make(FVector2D(1920.0f, 1080.0f), 8, 0);
-	TestEqual(TEXT("Eight-seat desktop layout exposes eight seats."), EightSeatDesktopLayout.Seats.Num(), 8);
-	TestFalse(TEXT("Eight-seat desktop opponent seats do not overlap."), HasAnyOpponentSeatOverlap(EightSeatDesktopLayout));
-	TestFalse(TEXT("Eight-seat desktop opponent seats do not overlap the hand area."), OpponentSeatsOverlapHandArea(EightSeatDesktopLayout));
+	const TArray<FVector2D> LayoutViewSizes = {
+		FVector2D(1920.0f, 1080.0f),
+		FVector2D(1600.0f, 900.0f),
+		FVector2D(1280.0f, 720.0f),
+		FVector2D(960.0f, 540.0f),
+		FVector2D(640.0f, 360.0f),
+	};
+	for (const FVector2D& ViewSize : LayoutViewSizes)
+	{
+		const FSGSTableLayoutMetrics Layout = FSGSTableLayoutMetrics::Make(ViewSize, 8, 0);
+		TestEqual(FString::Printf(TEXT("Eight-seat layout %.0fx%.0f exposes eight seats."), ViewSize.X, ViewSize.Y), Layout.Seats.Num(), 8);
+		TestTrue(FString::Printf(TEXT("Eight-seat layout %.0fx%.0f preserves the real viewport size."), ViewSize.X, ViewSize.Y), Layout.ViewSize.Equals(ViewSize, 0.1f));
+		TestFalse(FString::Printf(TEXT("Eight-seat layout %.0fx%.0f opponent seats do not overlap."), ViewSize.X, ViewSize.Y), HasAnyOpponentSeatOverlap(Layout));
+		TestFalse(FString::Printf(TEXT("Eight-seat layout %.0fx%.0f opponent seats do not overlap the hand area."), ViewSize.X, ViewSize.Y), OpponentSeatsOverlapHandArea(Layout));
+		TestFalse(FString::Printf(TEXT("Eight-seat layout %.0fx%.0f main areas do not overlap."), ViewSize.X, ViewSize.Y), MainTableAreasOverlap(Layout));
+		TestTrue(FString::Printf(TEXT("Eight-seat layout %.0fx%.0f stays inside the viewport."), ViewSize.X, ViewSize.Y), TableContentStaysInsideView(Layout));
+		TestTrue(FString::Printf(TEXT("Eight-seat layout %.0fx%.0f uses portrait hand cards."), ViewSize.X, ViewSize.Y), Layout.HandCardSize.Y > Layout.HandCardSize.X);
+		if (ViewSize.X < 1280.0f || ViewSize.Y < 720.0f)
+		{
+			TestTrue(FString::Printf(TEXT("Eight-seat layout %.0fx%.0f scales down for compact/high-DPI viewports."), ViewSize.X, ViewSize.Y), Layout.LayoutScale < 1.0f);
+		}
+	}
 
-	const FSGSTableLayoutMetrics EightSeatSmallDesktopLayout = FSGSTableLayoutMetrics::Make(FVector2D(1280.0f, 720.0f), 8, 0);
-	TestEqual(TEXT("Eight-seat small desktop layout exposes eight seats."), EightSeatSmallDesktopLayout.Seats.Num(), 8);
-	TestFalse(TEXT("Eight-seat small desktop opponent seats do not overlap."), HasAnyOpponentSeatOverlap(EightSeatSmallDesktopLayout));
-	TestFalse(TEXT("Eight-seat small desktop opponent seats do not overlap the hand area."), OpponentSeatsOverlapHandArea(EightSeatSmallDesktopLayout));
+	const FVector2D BackgroundImageSize(1334.0f, 750.0f);
+	const TArray<FVector2D> BackgroundViewSizes = {
+		FVector2D(1920.0f, 1080.0f),
+		FVector2D(2560.0f, 1080.0f),
+		FVector2D(1280.0f, 900.0f),
+	};
+	for (const FVector2D& ViewSize : BackgroundViewSizes)
+	{
+		const FSlateRect BackgroundArea = FSGSTableLayoutMetrics::MakeBackgroundCoverRect(ViewSize, BackgroundImageSize);
+		TestTrue(FString::Printf(TEXT("Background cover %.0fx%.0f covers viewport."), ViewSize.X, ViewSize.Y), BackgroundCoversView(BackgroundArea, ViewSize));
+		TestTrue(FString::Printf(TEXT("Background cover %.0fx%.0f keeps source aspect."), ViewSize.X, ViewSize.Y), BackgroundKeepsAspect(BackgroundArea, BackgroundImageSize));
+	}
 
 	USGSLocalHumanDecisionAgent* ResponseLocalAgent = nullptr;
 	USGSScriptedDecisionAgent* ResponseSeat1Agent = nullptr;
@@ -384,6 +500,85 @@ bool FSGSPlan0011M1LocalUIBridgeTest::RunTest(const FString& Parameters)
 		HasExecutedLocalCommand(PeachDriver, SGSGameplayTags::PlayAction_RespondCard));
 	TestTrue(TEXT("Local Peach scenario keeps invariants."), PeachDriver->GetContext()->CheckInvariants());
 
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FSGSPlan0011M2TableUIStateStoreTest,
+	"SGS.Plan0011M2.Table.StateStore",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FSGSPlan0011M2TableUIStateStoreTest::RunTest(const FString& Parameters)
+{
+	FSGSTableUIStateStore Store(0);
+	int32 NotificationCount = 0;
+	FSGSUILifetimeScope StoreTestLifetime(TEXT("TableStateStoreTest"));
+	Store.GetSnapshotStateValue().Subscribe(
+		StoreTestLifetime,
+		[&NotificationCount](const FSGSTableViewSnapshot&)
+		{
+			++NotificationCount;
+		},
+		false);
+	Store.GetInteractionStateValue().Subscribe(
+		StoreTestLifetime,
+		[&NotificationCount](const FSGSTableUIInteractionState&)
+		{
+			++NotificationCount;
+		},
+		false);
+
+	FSGSTableViewSnapshot InitialSnapshot;
+	InitialSnapshot.PublicRevision = 1;
+	InitialSnapshot.PrivateRevision = 1;
+	InitialSnapshot.ViewerSeat = 0;
+	InitialSnapshot.Prompt.bHasPrompt = true;
+	InitialSnapshot.Prompt.SelectableCardIds.Add(11);
+	InitialSnapshot.Prompt.SelectableTargetSeatIndices.Add(1);
+	InitialSnapshot.Prompt.SelectableTargetSeatIndices.Add(2);
+	TArray<int32> InitialTargets;
+	InitialTargets.Add(1);
+	InitialTargets.Add(2);
+	InitialSnapshot.Prompt.SetTargetSeatIndicesForCard(11, InitialTargets);
+
+	TestTrue(TEXT("Initial local snapshot is accepted."), Store.IngestSnapshot(InitialSnapshot));
+	TestTrue(TEXT("Accepted snapshot notifies its scope."), NotificationCount == 1);
+	TestEqual(TEXT("Store keeps the local-player viewer seat."), Store.GetViewerSeat(), 0);
+	TestTrue(TEXT("Store exposes the accepted snapshot."), Store.HasSnapshot() && Store.GetSnapshot().PrivateRevision == 1);
+
+	TestTrue(TEXT("Selectable card enters local interaction state."), Store.SelectCard(11));
+	TestEqual(TEXT("Selecting a card stores its stable card id."), Store.GetInteractionState().SelectedCardId, 11);
+	TestEqual(TEXT("Multiple targets do not select a target implicitly."), Store.GetInteractionState().SelectedTargetSeat, INDEX_NONE);
+	TestTrue(TEXT("Legal target enters local interaction state."), Store.SelectTarget(1));
+	TestEqual(TEXT("Store keeps the selected target seat."), Store.GetInteractionState().SelectedTargetSeat, 1);
+	TestFalse(TEXT("Illegal target is rejected by the store."), Store.SelectTarget(7));
+
+	FSGSTableViewSnapshot DuplicateSnapshot = InitialSnapshot;
+	TestFalse(TEXT("Duplicate revisions are ignored."), Store.IngestSnapshot(DuplicateSnapshot));
+	TestEqual(TEXT("Duplicate revisions do not notify subscribers."), NotificationCount, 3);
+
+	FSGSTableViewSnapshot RegressedSnapshot = InitialSnapshot;
+	RegressedSnapshot.PublicRevision = 0;
+	RegressedSnapshot.PrivateRevision = 2;
+	TestFalse(TEXT("Mixed snapshots with a regressed public revision are rejected."), Store.IngestSnapshot(RegressedSnapshot));
+	TestEqual(TEXT("Rejected revisions do not notify subscribers."), NotificationCount, 3);
+
+	FSGSTableViewSnapshot NextSnapshot = InitialSnapshot;
+	NextSnapshot.PrivateRevision = 2;
+	NextSnapshot.Prompt.SelectableCardIds.Reset();
+	NextSnapshot.Prompt.TargetSeatOptions.Reset();
+	TestTrue(TEXT("A newer private revision is accepted."), Store.IngestSnapshot(NextSnapshot));
+	TestEqual(TEXT("New snapshots clear selections that are no longer legal."), Store.GetInteractionState().SelectedCardId, INDEX_NONE);
+	TestEqual(TEXT("New snapshots clear stale target selections."), Store.GetInteractionState().SelectedTargetSeat, INDEX_NONE);
+
+	FSGSTableViewSnapshot WrongViewerSnapshot = NextSnapshot;
+	WrongViewerSnapshot.PrivateRevision = 3;
+	WrongViewerSnapshot.ViewerSeat = 1;
+	TestFalse(TEXT("A snapshot for another local player is rejected."), Store.IngestSnapshot(WrongViewerSnapshot));
+	TestEqual(TEXT("Cross-player snapshots do not notify this scope."), NotificationCount, 5);
+
+	Store.ClearSelection();
+	TestEqual(TEXT("Clearing an already empty selection is idempotent."), NotificationCount, 5);
 	return true;
 }
 

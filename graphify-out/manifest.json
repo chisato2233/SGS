@@ -85,18 +85,18 @@
     "semantic_hash": ""
   },
   "ProjectBrief.md": {
-    "mtime": 1783162936.6201227,
-    "ast_hash": "4aceaf02badcb9f59125aa241f8a7b39",
+    "mtime": 1783760151.800228,
+    "ast_hash": "e01d6f873cd3e7ff4c558ec2fdaac6d3",
     "semantic_hash": ""
   },
   "Source/Doc/Plan/0000-RawRequirements.md": {
-    "mtime": 1783162920.4779768,
-    "ast_hash": "7e9911cdbe670180f9e42c263be311c1",
+    "mtime": 1783760151.7956543,
+    "ast_hash": "61f9c8f5eff0ad4ae2048014627cd018",
     "semantic_hash": ""
   },
   "Source/Doc/Plan/0011-native-code-first-ui.md": {
-    "mtime": 1783148787.3583405,
-    "ast_hash": "c7f26168671d477361d5cad4036aacd6",
+    "mtime": 1783760151.798821,
+    "ast_hash": "bae554b1912864b64cbaa73764359620",
     "semantic_hash": ""
   },
   "Source/Doc/Plan/Archive/0012-sgs-foundation-toolkit.md": {
@@ -10695,8 +10695,8 @@
     "semantic_hash": ""
   },
   "Source/Doc/Rules/README.md": {
-    "mtime": 1783148252.9017773,
-    "ast_hash": "68177538df13cc7670290c4c826ea625",
+    "mtime": 1783753819.2898958,
+    "ast_hash": "0b59b482ace17c86a201b88f283252e8",
     "semantic_hash": ""
   },
   "Source/Doc/Rules/RuleToolkit.md": {
@@ -10705,8 +10705,8 @@
     "semantic_hash": ""
   },
   "Source/Doc/Rules/UI.md": {
-    "mtime": 1782546827.0887394,
-    "ast_hash": "56b0b674f76fe695a634baae279b3d73",
+    "mtime": 1783760151.7809832,
+    "ast_hash": "3a8fb198e09144eb7021eef67ef7bdfa",
     "semantic_hash": ""
   },
   "Source/SGS/Tests/SGSGameContextAutomation.cpp": {
@@ -10730,13 +10730,13 @@
     "semantic_hash": ""
   },
   "Source/SGS/Tests/SGSPlan0011M1Automation.cpp": {
-    "mtime": 1783171515.440946,
-    "ast_hash": "3be9b30e6c53ca33655eaa2c0755fbbc",
+    "mtime": 1783759952.479029,
+    "ast_hash": "d34ff8f2a96518c1e256aa3d670c1033",
     "semantic_hash": ""
   },
   "Source/Doc/Plan/0011-M1-minimal-code-first-table-ui.md": {
-    "mtime": 1783148787.3721302,
-    "ast_hash": "883ab3fe9a1c0f78bed863547da3083e",
+    "mtime": 1783752775.7288656,
+    "ast_hash": "8c854e89678326d3a4dc7b096c322cc4",
     "semantic_hash": ""
   },
   ".vscode/settings.json": {
@@ -10750,13 +10750,13 @@
     "semantic_hash": ""
   },
   "Source/SGS/Client/Game/SGSPlayerController.cpp": {
-    "mtime": 1782830537.1972413,
-    "ast_hash": "545e66281d337fad3a28c71e56587511",
+    "mtime": 1783759906.205647,
+    "ast_hash": "3155ad61329b380cbf95605b424b3836",
     "semantic_hash": ""
   },
   "Source/SGS/Client/Game/SGSPlayerController.h": {
-    "mtime": 1782830779.872169,
-    "ast_hash": "e689d4abc9b9847e66fc5625593b54f5",
+    "mtime": 1783759906.1917648,
+    "ast_hash": "212214f529b1d04b2e977c42cc5dce0d",
     "semantic_hash": ""
   },
   "Source/SGS/Client/UI/Bridge/SGSLocalHumanDecisionAgent.cpp": {
@@ -10770,8 +10770,8 @@
     "semantic_hash": ""
   },
   "Source/SGS/Client/UI/Theme/SGSUITheme.cpp": {
-    "mtime": 1782825319.1988907,
-    "ast_hash": "e09ce44d3dfff16f802ee282935a58d6",
+    "mtime": 1783751378.1603527,
+    "ast_hash": "fdfe327e0a24ef7ede46ac6aed345605",
     "semantic_hash": ""
   },
   "Source/SGS/Client/UI/Theme/SGSUITheme.h": {
@@ -10780,13 +10780,13 @@
     "semantic_hash": ""
   },
   "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp": {
-    "mtime": 1783171551.8305194,
-    "ast_hash": "f30788f3f37bf70711e56a1a1331dd0a",
+    "mtime": 1783759997.9511247,
+    "ast_hash": "e6292d8a2c0fb7f5fe930a894d16f334",
     "semantic_hash": ""
   },
   "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.h": {
-    "mtime": 1783171446.858963,
-    "ast_hash": "d5ac009bed43136cc7997605b5dc8d01",
+    "mtime": 1783759839.0868974,
+    "ast_hash": "42cf2b16601f40159043c265afad30dd",
     "semantic_hash": ""
   },
   "Source/SGS/Server/AI/SGSAutoPassAgent.cpp": {
@@ -10930,8 +10930,8 @@
     "semantic_hash": ""
   },
   "Source/SGS/Server/Game/SGSGameMode.h": {
-    "mtime": 1783164652.0706248,
-    "ast_hash": "a6eb1a3f9c52dbd11068ad5265ca7601",
+    "mtime": 1783222161.2383657,
+    "ast_hash": "88d2579f58a7e5b2ef99b79d49bda21d",
     "semantic_hash": ""
   },
   "Source/SGS/Server/Players/SGSSeat.h": {
@@ -11310,8 +11310,8 @@
     "semantic_hash": ""
   },
   "Source/SGS/Client/Game/SGSTablePawn.cpp": {
-    "mtime": 1783164639.5077453,
-    "ast_hash": "decb9bb83969b96848d3070a8a8e0eaf",
+    "mtime": 1783750580.6439974,
+    "ast_hash": "be9c89de0f73d37a29e0dc33efdc0b07",
     "semantic_hash": ""
   },
   "Source/SGS/Client/Game/SGSTablePawn.h": {
@@ -11325,18 +11325,118 @@
     "semantic_hash": ""
   },
   "Source/SGS/Client/UI/Layout/SGSTableLayout.cpp": {
-    "mtime": 1783171411.1197028,
-    "ast_hash": "a7290177827b72bed906bbb2f8101023",
+    "mtime": 1783751274.122951,
+    "ast_hash": "d64f2183c41e86998e6996ed94e424a2",
     "semantic_hash": ""
   },
   "Source/SGS/Client/UI/Layout/SGSTableLayout.h": {
-    "mtime": 1783171369.975271,
-    "ast_hash": "a28c789cc7702560df827f8ce8eddf05",
+    "mtime": 1783751119.777208,
+    "ast_hash": "dc26107386887e4620ffd78ebf64db30",
     "semantic_hash": ""
   },
   "Content/ImportedAssets/NoName/Background/ol_bg.jpg": {
     "mtime": 1783170238.4409375,
     "ast_hash": "1b61221b6ad4f27a6c43d2ffbbe4e000",
+    "semantic_hash": ""
+  },
+  "Source/Doc/Plan/0011-M2-react-inspired-ui-foundation-events.md": {
+    "mtime": 1783760151.797709,
+    "ast_hash": "3e21b936dcca202cc98dddd04ec4d93a",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Features/Table/Assets/SGSTableAssetCatalog.cpp": {
+    "mtime": 1783757395.5796824,
+    "ast_hash": "09f728f0a84e1ec186af7b5c39e40b4a",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Features/Table/Assets/SGSTableAssetCatalog.h": {
+    "mtime": 1783757395.5784533,
+    "ast_hash": "e50d8532931f8cff8c13c71acaf68ab5",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Features/Table/Components/SGSTableComponents.cpp": {
+    "mtime": 1783760189.1590824,
+    "ast_hash": "675b5fc7a280a8b51e3264341b3f4195",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Features/Table/Components/SGSTableComponents.h": {
+    "mtime": 1783759758.0457556,
+    "ast_hash": "3d46c232ef88c6f50ebcb09f26c4f1b6",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Features/Table/State/SGSTableUIStateStore.cpp": {
+    "mtime": 1783759601.7023947,
+    "ast_hash": "30fd4562bfd484db1dcde870722d9081",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Features/Table/State/SGSTableUIStateStore.h": {
+    "mtime": 1783759952.465989,
+    "ast_hash": "a1cd3451eeff951e50d0f97b804c816c",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Core/Context/SGSUIContext.cpp": {
+    "mtime": 1783759537.0786445,
+    "ast_hash": "1b6b459b2051e1ade1e17b9af7cf8f25",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Core/Context/SGSUIContext.h": {
+    "mtime": 1783760189.156672,
+    "ast_hash": "705fca5e43507e4d8e8cefc091962446",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Core/Lifetime/SGSUILifetime.cpp": {
+    "mtime": 1783759537.0708997,
+    "ast_hash": "c17dac614eaa2f86b7805e385de2114f",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Core/Lifetime/SGSUILifetime.h": {
+    "mtime": 1783759537.0698943,
+    "ast_hash": "06063c5c1496f9e1f03f8ac6d1149b85",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Core/Signals/SGSUISignal.h": {
+    "mtime": 1783760189.1554708,
+    "ast_hash": "f47971744a046fe399ac790eba34a061",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Core/State/SGSUIState.cpp": {
+    "mtime": 1783759537.0742884,
+    "ast_hash": "e2a9578f7e358c1d2bc1d01cbece67fc",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Core/State/SGSUIState.h": {
+    "mtime": 1783760189.1442797,
+    "ast_hash": "10f8978dd048ef059031d240ea0746a1",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Features/Table/Controller/SGSTableFeatureController.cpp": {
+    "mtime": 1783760189.1576743,
+    "ast_hash": "a8b8696c0214e954092206caa589eaed",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Features/Table/Controller/SGSTableFeatureController.h": {
+    "mtime": 1783759644.8441544,
+    "ast_hash": "a78d4c432ddcbae316a7265a090d90b6",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Features/Toast/SGSUIToastLayerWidget.cpp": {
+    "mtime": 1783759997.9638908,
+    "ast_hash": "1002913b4f1ebd659ed175d286f00657",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Features/Toast/SGSUIToastLayerWidget.h": {
+    "mtime": 1783759706.5889683,
+    "ast_hash": "05f9372fdff5d6c6c33e6d513ad246f3",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Primitives/SGSUIFocusTarget.cpp": {
+    "mtime": 1783759997.961384,
+    "ast_hash": "2a754d20a982b635431d5737b348ebcc",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Primitives/SGSUIFocusTarget.h": {
+    "mtime": 1783759706.585662,
+    "ast_hash": "1c4d2e4b39615c6ceac880af84c433ab",
     "semantic_hash": ""
   }
 }
