@@ -40,7 +40,10 @@ public:
 	const FSGSResponseRequest* GetPendingResponseRequest() const;
 
 	bool SubmitUseCard(int32 CardId, int32 TargetSeatIndex);
-	bool SubmitResponseCard(int32 CardId, int32 TargetSeatIndex = INDEX_NONE);
+	bool SubmitResponseCard(
+		int32 CardId,
+		int32 TargetSeatIndex = INDEX_NONE,
+		FName SkillName = NAME_None);
 	bool SubmitPass();
 
 	FSGSOnLocalDecisionPromptChanged& OnPromptChanged() { return PromptChangedDelegate; }

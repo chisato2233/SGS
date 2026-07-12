@@ -6,6 +6,7 @@
 #include "CoreMinimal.h"
 #include "Shared/Commands/SGSCommand.h"
 #include "Shared/Core/SGSError.h"
+#include "Shared/Decisions/SGSDecisionTypes.h"
 #include "Server/Effects/SGSEffectPipeline.h"
 #include "Server/Rules/Core/SGSRuleDescriptor.h"
 #include "Server/Rules/Core/SGSRuleInvocation.h"
@@ -20,8 +21,10 @@ struct SGS_API FSGSRuleResponseWindowSpec
 	int32 SeatIndex = INDEX_NONE;
 	FName WindowName = NAME_None;
 	FName RequiredCardName = NAME_None;
+	FName ContextName = NAME_None;
 	int32 EffectSourceSeat = INDEX_NONE;
 	int32 EffectTargetSeat = INDEX_NONE;
+	TArray<FSGSDecisionSkillOption> SkillOptions;
 };
 
 class SGS_API ISGSRuleRuntime

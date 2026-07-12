@@ -72,6 +72,27 @@ struct SGS_API FSGSCardTargetViewData
 };
 
 USTRUCT(BlueprintType)
+struct SGS_API FSGSDecisionSkillViewData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FName SkillName = NAME_None;
+
+	UPROPERTY()
+	FString DisplayName;
+
+	UPROPERTY()
+	bool bRequiresCard = false;
+
+	UPROPERTY()
+	TArray<int32> SelectableCardIds;
+
+	UPROPERTY()
+	TArray<int32> SelectableTargetSeatIndices;
+};
+
+USTRUCT(BlueprintType)
 struct SGS_API FSGSDecisionPromptViewData
 {
 	GENERATED_BODY()
@@ -89,6 +110,15 @@ struct SGS_API FSGSDecisionPromptViewData
 	FName RequiredCardName = NAME_None;
 
 	UPROPERTY()
+	FName ContextName = NAME_None;
+
+	UPROPERTY()
+	int32 EffectSourceSeat = INDEX_NONE;
+
+	UPROPERTY()
+	int32 EffectTargetSeat = INDEX_NONE;
+
+	UPROPERTY()
 	bool bAllowPass = true;
 
 	UPROPERTY()
@@ -99,6 +129,18 @@ struct SGS_API FSGSDecisionPromptViewData
 
 	UPROPERTY()
 	TArray<FSGSCardTargetViewData> TargetSeatOptions;
+
+	UPROPERTY()
+	TArray<FSGSDecisionSkillViewData> SkillOptions;
+
+	const FSGSDecisionSkillViewData* FindSkillOption(FName SkillName) const
+	{
+		return SkillOptions.FindByPredicate(
+			[SkillName](const FSGSDecisionSkillViewData& Candidate)
+			{
+				return Candidate.SkillName == SkillName;
+			});
+	}
 
 	void SetTargetSeatIndicesForCard(int32 CardId, const TArray<int32>& TargetSeatIndices)
 	{
@@ -156,8 +198,6 @@ struct SGS_API FSGSTablePublicSnapshot
 	UPROPERTY()
 	TArray<FSGSSeatViewData> Seats;
 
-	UPROPERTY()
-	FString LastCommand;
 };
 
 USTRUCT(BlueprintType)
@@ -216,8 +256,6 @@ struct SGS_API FSGSTableViewSnapshot
 	UPROPERTY()
 	FSGSDecisionPromptViewData Prompt;
 
-	UPROPERTY()
-	FString LastCommand;
 };
 
 inline FSGSTableViewSnapshot SGSComposeTableViewSnapshot(
@@ -236,8 +274,6 @@ inline FSGSTableViewSnapshot SGSComposeTableViewSnapshot(
 	Snapshot.Seats = PublicSnapshot.Seats;
 	Snapshot.HandCards = PrivateSnapshot.HandCards;
 	Snapshot.Prompt = PrivateSnapshot.Prompt;
-	Snapshot.LastCommand = PublicSnapshot.LastCommand;
-
 	for (FSGSSeatViewData& Seat : Snapshot.Seats)
 	{
 		Seat.bIsSelectableTarget = Snapshot.Prompt.SelectableTargetSeatIndices.Contains(Seat.SeatIndex);

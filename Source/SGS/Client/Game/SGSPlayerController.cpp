@@ -93,14 +93,14 @@ bool ASGSPlayerController::SubmitUseCard(int32 CardId, int32 TargetSeatIndex)
 	return true;
 }
 
-bool ASGSPlayerController::SubmitResponseCard(int32 CardId, int32 TargetSeatIndex)
+bool ASGSPlayerController::SubmitResponseCard(int32 CardId, int32 TargetSeatIndex, FName SkillName)
 {
 	if (HasAuthority())
 	{
-		return SubmitResponseCardOnServer(CardId, TargetSeatIndex);
+		return SubmitResponseCardOnServer(CardId, TargetSeatIndex, SkillName);
 	}
 
-	ServerSubmitResponseCard(CardId, TargetSeatIndex);
+	ServerSubmitResponseCard(CardId, TargetSeatIndex, SkillName);
 	return true;
 }
 
@@ -126,9 +126,12 @@ void ASGSPlayerController::ServerSubmitUseCard_Implementation(int32 CardId, int3
 	SubmitUseCardOnServer(CardId, TargetSeatIndex);
 }
 
-void ASGSPlayerController::ServerSubmitResponseCard_Implementation(int32 CardId, int32 TargetSeatIndex)
+void ASGSPlayerController::ServerSubmitResponseCard_Implementation(
+	int32 CardId,
+	int32 TargetSeatIndex,
+	FName SkillName)
 {
-	SubmitResponseCardOnServer(CardId, TargetSeatIndex);
+	SubmitResponseCardOnServer(CardId, TargetSeatIndex, SkillName);
 }
 
 void ASGSPlayerController::ServerSubmitPass_Implementation()
@@ -166,9 +169,9 @@ void ASGSPlayerController::AttachLocalHud()
 	{
 		return WeakThis.IsValid() && WeakThis->SubmitUseCard(CardId, TargetSeat);
 	};
-	Bindings.SubmitResponseCard = [WeakThis](int32 CardId, int32 TargetSeat)
+	Bindings.SubmitResponseCard = [WeakThis](int32 CardId, int32 TargetSeat, FName SkillName)
 	{
-		return WeakThis.IsValid() && WeakThis->SubmitResponseCard(CardId, TargetSeat);
+		return WeakThis.IsValid() && WeakThis->SubmitResponseCard(CardId, TargetSeat, SkillName);
 	};
 	Bindings.SubmitPass = [WeakThis]()
 	{
@@ -197,8 +200,12 @@ void ASGSPlayerController::AttachLocalHud()
 		DesiredSize.Y);
 
 	bShowMouseCursor = true;
+	bEnableClickEvents = true;
+	bEnableMouseOverEvents = true;
 	FInputModeGameAndUI InputMode;
 	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	InputMode.SetHideCursorDuringCapture(false);
+	InputMode.SetWidgetToFocus(TableHudWidget);
 	SetInputMode(InputMode);
 }
 
@@ -218,7 +225,10 @@ bool ASGSPlayerController::SubmitUseCardOnServer(int32 CardId, int32 TargetSeatI
 	return bSubmitted;
 }
 
-bool ASGSPlayerController::SubmitResponseCardOnServer(int32 CardId, int32 TargetSeatIndex)
+bool ASGSPlayerController::SubmitResponseCardOnServer(
+	int32 CardId,
+	int32 TargetSeatIndex,
+	FName SkillName)
 {
 	if (DecisionAgent == nullptr)
 	{
@@ -226,7 +236,7 @@ bool ASGSPlayerController::SubmitResponseCardOnServer(int32 CardId, int32 Target
 		return false;
 	}
 
-	const bool bSubmitted = DecisionAgent->SubmitResponseCard(CardId, TargetSeatIndex);
+	const bool bSubmitted = DecisionAgent->SubmitResponseCard(CardId, TargetSeatIndex, SkillName);
 	if (bSubmitted)
 	{
 		RefreshAfterServerDecision();

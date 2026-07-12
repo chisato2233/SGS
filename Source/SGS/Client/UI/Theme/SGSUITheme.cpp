@@ -1,10 +1,5 @@
 #include "Client/UI/Theme/SGSUITheme.h"
 
-float FSGSUITheme::RefreshIntervalSeconds()
-{
-	return 0.20f;
-}
-
 FMargin FSGSUITheme::RootPadding()
 {
 	return FMargin(10.0f);
@@ -37,12 +32,12 @@ FMargin FSGSUITheme::ButtonGapPadding()
 
 FVector2D FSGSUITheme::SeatButtonMinSize()
 {
-	return FVector2D(150.0f, 196.0f);
+	return FVector2D(168.0f, 232.0f);
 }
 
 FVector2D FSGSUITheme::CardButtonSize()
 {
-	return FVector2D(78.0f, 110.0f);
+	return FVector2D(104.0f, 132.0f);
 }
 
 FVector2D FSGSUITheme::ActionButtonMinSize()

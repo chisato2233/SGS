@@ -1,7 +1,8 @@
 #include "Client/UI/Features/Table/Components/SGSTableComponents.h"
 
+#include "Client/UI/Features/Table/Components/SGSTableDecisionPanelWidget.h"
+#include "Client/UI/Features/Table/Components/SGSTableHandWidget.h"
 #include "Client/UI/Theme/SGSUITheme.h"
-#include "Client/UI/Primitives/SGSUIFocusTarget.h"
 #include "Styling/CoreStyle.h"
 #include "Widgets/Images/SImage.h"
 #include "Widgets/Input/SButton.h"
@@ -9,7 +10,6 @@
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Layout/SConstraintCanvas.h"
 #include "Widgets/Layout/SScaleBox.h"
-#include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/SOverlay.h"
 #include "Widgets/Text/STextBlock.h"
@@ -32,86 +32,6 @@ FSlateColor ButtonTint(bool bSelected, bool bAvailable, bool bCurrent)
 	}
 	return FSGSUITheme::ControlTint(ESGSUIControlTone::Normal);
 }
-}
-
-void SSGSTableCardWidget::Construct(const FArguments& InArgs)
-{
-	const FSGSTableCardProps& Props = InArgs._Props;
-	CardId = Props.CardId;
-	OnCardClicked = InArgs._OnCardClicked;
-
-	TSharedRef<SOverlay> CardFace = SNew(SOverlay)
-		.Clipping(EWidgetClipping::ClipToBounds);
-	CardFace->AddSlot()
-	[
-		SNew(SBorder)
-			.BorderImage(FCoreStyle::Get().GetBrush(TEXT("WhiteBrush")))
-			.BorderBackgroundColor(FLinearColor(0.82f, 0.76f, 0.62f, 1.0f))
-	];
-
-	if (Props.FaceBrush != nullptr)
-	{
-		CardFace->AddSlot()
-		[
-			SNew(SImage)
-				.Image(Props.FaceBrush)
-				.ColorAndOpacity(FLinearColor::White)
-		];
-	}
-
-	CardFace->AddSlot()
-	.HAlign(HAlign_Left)
-	.VAlign(VAlign_Top)
-	.Padding(FMargin(3.0f))
-	[
-		SNew(SBorder)
-			.BorderImage(FCoreStyle::Get().GetBrush(TEXT("WhiteBrush")))
-			.BorderBackgroundColor(FLinearColor(0.97f, 0.93f, 0.82f, 0.88f))
-			.Padding(FMargin(2.0f, 0.0f))
-		[
-			SNew(STextBlock)
-				.Text(Props.CornerText)
-				.ColorAndOpacity(FLinearColor(0.08f, 0.06f, 0.045f, 1.0f))
-		]
-	];
-
-	CardFace->AddSlot()
-	.HAlign(HAlign_Fill)
-	.VAlign(VAlign_Bottom)
-	[
-		SNew(SBorder)
-			.BorderImage(FCoreStyle::Get().GetBrush(TEXT("WhiteBrush")))
-			.BorderBackgroundColor(FLinearColor(0.02f, 0.02f, 0.018f, 0.78f))
-			.Padding(FMargin(2.0f))
-		[
-			SNew(STextBlock)
-				.Text(Props.FooterText)
-				.Justification(ETextJustify::Center)
-				.ColorAndOpacity(FLinearColor::White)
-		]
-	];
-
-	ChildSlot
-	[
-		SNew(SBox)
-			.WidthOverride(Props.Size.X)
-			.HeightOverride(Props.Size.Y)
-		[
-			SNew(SButton)
-				.IsEnabled(Props.bSelectable)
-				.ButtonColorAndOpacity(ButtonTint(Props.bSelected, Props.bSelectable, false))
-				.ContentPadding(FMargin(2.0f))
-				.OnClicked(this, &SSGSTableCardWidget::HandleClicked)
-			[
-				CardFace
-			]
-		]
-	];
-}
-
-FReply SSGSTableCardWidget::HandleClicked() const
-{
-	return OnCardClicked.IsBound() ? OnCardClicked.Execute(CardId) : FReply::Unhandled();
 }
 
 void SSGSTableSeatWidget::Construct(const FArguments& InArgs)
@@ -201,193 +121,13 @@ FReply SSGSTableSeatWidget::HandleClicked() const
 	return OnSeatClicked.IsBound() ? OnSeatClicked.Execute(SeatIndex) : FReply::Unhandled();
 }
 
-void SSGSTableHandWidget::Construct(const FArguments& InArgs)
-{
-	const FSGSTableHandProps& Props = InArgs._Props;
-	const FSGSOnTableCardClicked OnCardClicked = InArgs._OnCardClicked;
-	TSharedRef<SScrollBox> HandScroll = SNew(SScrollBox)
-		.Orientation(Orient_Horizontal)
-		.ScrollBarVisibility(EVisibility::Collapsed);
-
-	if (Props.Cards.IsEmpty())
-	{
-		HandScroll->AddSlot()
-		.Padding(FMargin(8.0f * Props.LayoutScale))
-		.VAlign(VAlign_Center)
-		[
-			SNew(STextBlock)
-				.Text(FText::FromString(TEXT("Hand is empty.")))
-				.ColorAndOpacity(FLinearColor(0.82f, 0.82f, 0.78f, 1.0f))
-		];
-	}
-	else
-	{
-		const float InnerPadding = 4.0f * Props.LayoutScale;
-		const float CardLift = 6.0f * Props.LayoutScale;
-		const float UsableWidth = FMath::Max(0.0f, Props.AvailableWidth - InnerPadding * 2.0f);
-		const float MaxStride = Props.CardSize.X + 8.0f * Props.LayoutScale;
-		const float MinStride = 32.0f * Props.LayoutScale;
-		float Stride = 0.0f;
-		if (Props.Cards.Num() > 1)
-		{
-			Stride = (UsableWidth - Props.CardSize.X) / static_cast<float>(Props.Cards.Num() - 1);
-			Stride = FMath::Clamp(Stride, MinStride, MaxStride);
-		}
-
-		const float CardsWidth = Props.CardSize.X + Stride * FMath::Max(Props.Cards.Num() - 1, 0);
-		const float InnerWidth = FMath::Max(UsableWidth, CardsWidth);
-		const float InnerHeight = Props.CardSize.Y + CardLift;
-		TSharedRef<SConstraintCanvas> HandCanvas = SNew(SConstraintCanvas)
-			.Clipping(EWidgetClipping::ClipToBounds);
-		for (int32 CardIndex = 0; CardIndex < Props.Cards.Num(); ++CardIndex)
-		{
-			const FSGSTableCardProps& Card = Props.Cards[CardIndex];
-			HandCanvas->AddSlot()
-				.Anchors(FAnchors(0.0f, 0.0f))
-				.Alignment(FVector2D::ZeroVector)
-				.Offset(FMargin(
-					Stride * CardIndex,
-					Card.bSelected ? 0.0f : CardLift,
-					Props.CardSize.X,
-					Props.CardSize.Y))
-				.ZOrder(Card.bSelected ? 100 : CardIndex)
-			[
-				SNew(SSGSTableCardWidget)
-					.Props(Card)
-					.OnCardClicked(OnCardClicked)
-			];
-		}
-
-		HandScroll->AddSlot()
-		.Padding(FMargin(InnerPadding, 0.0f))
-		.VAlign(VAlign_Bottom)
-		[
-			SNew(SBox)
-				.WidthOverride(InnerWidth)
-				.HeightOverride(InnerHeight)
-			[
-				HandCanvas
-			]
-		];
-	}
-
-	ChildSlot
-	[
-		SNew(SBorder)
-			.BorderImage(FCoreStyle::Get().GetBrush(TEXT("WhiteBrush")))
-			.BorderBackgroundColor(FLinearColor(0.015f, 0.02f, 0.025f, 0.72f))
-			.Padding(FMargin(4.0f * Props.LayoutScale, 2.0f * Props.LayoutScale))
-		[
-			HandScroll
-		]
-	];
-}
-
-void SSGSTableDecisionBarWidget::Construct(const FArguments& InArgs)
-{
-	const FSGSTableDecisionBarProps& Props = InArgs._Props;
-	const FVector2D ActionButtonMinSize = FSGSUITheme::ActionButtonMinSize() * Props.LayoutScale;
-
-	ChildSlot
-	[
-		SNew(SBorder)
-			.BorderImage(FCoreStyle::Get().GetBrush(TEXT("WhiteBrush")))
-			.BorderBackgroundColor(FLinearColor(0.015f, 0.02f, 0.025f, 0.82f))
-			.Padding(FMargin(4.0f * Props.LayoutScale))
-		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot()
-			.FillWidth(1.0f)
-			.VAlign(VAlign_Center)
-			.Padding(FMargin(6.0f * Props.LayoutScale, 0.0f))
-			[
-				SNew(STextBlock)
-					.Text(Props.PromptText)
-					.ColorAndOpacity(FLinearColor(0.93f, 0.91f, 0.82f, 1.0f))
-			]
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.VAlign(VAlign_Center)
-			.Padding(FMargin(0.0f, 0.0f, 6.0f * Props.LayoutScale, 0.0f))
-			[
-				SNew(SBox)
-					.MinDesiredWidth(ActionButtonMinSize.X)
-					.MinDesiredHeight(ActionButtonMinSize.Y)
-				[
-					SNew(SSGSUIFocusTarget)
-						.UIContext(Props.UIContext)
-						.TargetId(TEXT("Table.Confirm"))
-					[
-						SNew(SButton)
-							.IsEnabled(Props.bCanConfirm)
-							.OnClicked(InArgs._OnConfirmClicked)
-						[
-							SNew(STextBlock).Text(FText::FromString(TEXT("Confirm")))
-						]
-					]
-				]
-			]
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.VAlign(VAlign_Center)
-			[
-				SNew(SBox)
-					.MinDesiredWidth(ActionButtonMinSize.X)
-					.MinDesiredHeight(ActionButtonMinSize.Y)
-				[
-					SNew(SButton)
-						.IsEnabled(Props.bCanPass)
-						.OnClicked(InArgs._OnPassClicked)
-					[
-						SNew(STextBlock).Text(FText::FromString(TEXT("Pass")))
-					]
-				]
-			]
-		]
-	];
-}
-
-void SSGSTableCenterInfoWidget::Construct(const FArguments& InArgs)
-{
-	const FSGSTableCenterInfoProps& Props = InArgs._Props;
-	TSharedRef<SVerticalBox> Center = SNew(SVerticalBox);
-	Center->AddSlot()
-	.AutoHeight()
-	[
-		SNew(STextBlock)
-			.Text(Props.HeaderText)
-			.AutoWrapText(true)
-	];
-
-	if (!Props.LastCommandText.IsEmpty())
-	{
-		Center->AddSlot()
-		.AutoHeight()
-		.Padding(FSGSUITheme::PromptGapPadding())
-		[
-			SNew(STextBlock)
-				.Text(Props.LastCommandText)
-				.AutoWrapText(true)
-		];
-	}
-
-	ChildSlot
-	[
-		SNew(SBorder)
-			.BorderImage(FCoreStyle::Get().GetBrush(TEXT("WhiteBrush")))
-			.BorderBackgroundColor(FLinearColor(0.02f, 0.025f, 0.03f, 0.35f))
-			.Padding(FSGSUITheme::RootPadding())
-		[
-			Center
-		]
-	];
-}
-
 void SSGSTableShellWidget::Construct(const FArguments& InArgs)
 {
 	Props = InArgs._Props;
 	OnCardClicked = InArgs._OnCardClicked;
+	OnHandReordered = InArgs._OnHandReordered;
 	OnSeatClicked = InArgs._OnSeatClicked;
+	OnSkillClicked = InArgs._OnSkillClicked;
 	OnConfirmClicked = InArgs._OnConfirmClicked;
 	OnPassClicked = InArgs._OnPassClicked;
 	RebuildShell();
@@ -403,7 +143,6 @@ void SSGSTableShellWidget::SetProps(FSGSTableShellProps InProps, ESGSTableViewCh
 	}
 	if (EnumHasAnyFlags(Change, ESGSTableViewChange::PublicState))
 	{
-		RebuildCenter();
 		RebuildSeats();
 		RebuildDecisionBar();
 	}
@@ -419,6 +158,10 @@ void SSGSTableShellWidget::SetProps(FSGSTableShellProps InProps, ESGSTableViewCh
 		RebuildHand();
 		RebuildDecisionBar();
 	}
+	if (EnumHasAnyFlags(Change, ESGSTableViewChange::HandPresentation))
+	{
+		RebuildHand();
+	}
 }
 
 void SSGSTableShellWidget::RebuildShell()
@@ -426,18 +169,6 @@ void SSGSTableShellWidget::RebuildShell()
 	SeatHosts.Reset();
 	TSharedRef<SConstraintCanvas> Canvas = SNew(SConstraintCanvas)
 		.Clipping(EWidgetClipping::ClipToBounds);
-
-	Canvas->AddSlot()
-		.Anchors(FAnchors(0.0f, 0.0f))
-		.Alignment(FVector2D::ZeroVector)
-		.Offset(FMargin(
-			Props.CenterArea.Left,
-			Props.CenterArea.Top,
-			FMath::Max(0.0f, Props.CenterArea.Right - Props.CenterArea.Left),
-			FMath::Max(0.0f, Props.CenterArea.Bottom - Props.CenterArea.Top)))
-	[
-		SAssignNew(CenterHost, SBox)
-	];
 
 	for (const FSGSTablePositionedSeatProps& PositionedSeat : Props.Seats)
 	{
@@ -508,18 +239,9 @@ void SSGSTableShellWidget::RebuildShell()
 		]
 	];
 
-	RebuildCenter();
 	RebuildSeats();
 	RebuildDecisionBar();
 	RebuildHand();
-}
-
-void SSGSTableShellWidget::RebuildCenter()
-{
-	if (CenterHost.IsValid())
-	{
-		CenterHost->SetContent(SNew(SSGSTableCenterInfoWidget).Props(Props.CenterInfo));
-	}
 }
 
 void SSGSTableShellWidget::RebuildSeats()
@@ -549,8 +271,9 @@ void SSGSTableShellWidget::RebuildDecisionBar()
 	if (DecisionHost.IsValid())
 	{
 		DecisionHost->SetContent(
-			SNew(SSGSTableDecisionBarWidget)
+			SNew(SSGSTableDecisionPanelWidget)
 				.Props(Props.DecisionBar)
+				.OnSkillClicked(OnSkillClicked)
 				.OnConfirmClicked(OnConfirmClicked)
 				.OnPassClicked(OnPassClicked));
 	}
@@ -558,11 +281,26 @@ void SSGSTableShellWidget::RebuildDecisionBar()
 
 void SSGSTableShellWidget::RebuildHand()
 {
-	if (HandHost.IsValid())
+	if (!HandHost.IsValid())
 	{
-		HandHost->SetContent(
-			SNew(SSGSTableHandWidget)
-				.Props(Props.Hand)
-				.OnCardClicked(OnCardClicked));
+		return;
+	}
+
+	if (!HandWidget.IsValid())
+	{
+		SAssignNew(HandWidget, SSGSTableHandWidget)
+			.Props(Props.Hand)
+			.OnCardClicked(OnCardClicked)
+			.OnHandReordered(OnHandReordered);
+		HandHost->SetContent(HandWidget.ToSharedRef());
+		MountedHandHost = HandHost;
+		return;
+	}
+
+	HandWidget->SetProps(Props.Hand);
+	if (MountedHandHost.Pin() != HandHost)
+	{
+		HandHost->SetContent(HandWidget.ToSharedRef());
+		MountedHandHost = HandHost;
 	}
 }

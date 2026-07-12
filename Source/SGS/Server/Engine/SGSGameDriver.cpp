@@ -46,8 +46,10 @@ public:
 			Spec.SeatIndex,
 			Spec.WindowName,
 			Spec.RequiredCardName,
+			Spec.ContextName,
 			Spec.EffectSourceSeat,
-			Spec.EffectTargetSeat);
+			Spec.EffectTargetSeat,
+			Spec.SkillOptions);
 		Driver.PendingCommandId = Request.CommandId;
 		Driver.CurrentSeatIndex = Spec.SeatIndex;
 		Driver.bWaitingForDecision = true;
@@ -504,8 +506,10 @@ FSGSResponseRequest USGSGameDriver::MakeResponseRequest(
 	int32 SeatIndex,
 	FName WindowName,
 	FName RequiredCardName,
+	FName ContextName,
 	int32 EffectSourceSeat,
-	int32 EffectTargetSeat)
+	int32 EffectTargetSeat,
+	TConstArrayView<FSGSDecisionSkillOption> SkillOptions)
 {
 	FSGSResponseRequest Request;
 	Request.CommandId = AllocateCommandId();
@@ -514,8 +518,10 @@ FSGSResponseRequest USGSGameDriver::MakeResponseRequest(
 	Request.Phase = CurrentPhase;
 	Request.WindowName = WindowName;
 	Request.RequiredCardName = RequiredCardName;
+	Request.ContextName = ContextName;
 	Request.EffectSourceSeat = EffectSourceSeat;
 	Request.EffectTargetSeat = EffectTargetSeat;
+	Request.SkillOptions.Append(SkillOptions.GetData(), SkillOptions.Num());
 
 	FSGSCardQuery Query;
 	Query.Zone = SGSGameplayTags::CardZone_Hand.GetTag();
@@ -656,6 +662,7 @@ bool USGSGameDriver::OpenNextDyingPeachResponseWindow(FSGSResolutionFrame& Dying
 			ResponderSeat,
 			FName(TEXT("Dying.Peach")),
 			FName(TEXT("Peach")),
+			FName(TEXT("Dying")),
 			DyingFrame.SourceSeat,
 			DyingFrame.TargetSeat);
 		PendingCommandId = Request.CommandId;

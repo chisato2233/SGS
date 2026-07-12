@@ -90,6 +90,22 @@ void FSGSCommandRouter::RecordLifecycle(const FSGSCommand &Command,
   if (Entry.Detail.IsEmpty()) {
     Entry.Detail = FormatPayloadForLog(Command);
   }
+
+  const FString ErrorSuffix = Entry.Error.IsValid()
+                                  ? FString::Printf(
+                                        TEXT(" Error=%s"),
+                                        *Entry.Error.ToLogString())
+                                  : FString();
+  const FString LifecycleMessage = FString::Printf(
+      TEXT("%s %s Detail=%s%s"), *Entry.Lifecycle.ToString(),
+      *Entry.Command.ToLogString(), *Entry.Detail, *ErrorSuffix);
+  if (!Entry.bSucceeded) {
+    UE_LOG(LogSGSTurn, Warning, TEXT("%s"), *LifecycleMessage);
+  } else if (Entry.Lifecycle == SGSCommandLifecycle::Executed()) {
+    UE_LOG(LogSGSTurn, Log, TEXT("%s"), *LifecycleMessage);
+  } else {
+    UE_LOG(LogSGSTurn, Verbose, TEXT("%s"), *LifecycleMessage);
+  }
   LogEntries.Add(MoveTemp(Entry));
 }
 

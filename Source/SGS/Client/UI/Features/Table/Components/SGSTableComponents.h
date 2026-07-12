@@ -7,9 +7,13 @@
 struct FSlateBrush;
 class FSGSUIContext;
 class SBox;
+class SSGSTableDecisionPanelWidget;
+class SSGSTableHandWidget;
 
 DECLARE_DELEGATE_RetVal_OneParam(FReply, FSGSOnTableCardClicked, int32);
 DECLARE_DELEGATE_RetVal_OneParam(FReply, FSGSOnTableSeatClicked, int32);
+DECLARE_DELEGATE_RetVal_OneParam(FReply, FSGSOnTableSkillClicked, FName);
+DECLARE_DELEGATE_RetVal_OneParam(bool, FSGSOnTableHandReordered, const TArray<int32>&);
 
 struct SGS_API FSGSTableCardProps
 {
@@ -20,6 +24,7 @@ struct SGS_API FSGSTableCardProps
 	const FSlateBrush* FaceBrush = nullptr;
 	bool bSelectable = false;
 	bool bSelected = false;
+	bool bDimmed = false;
 };
 
 struct SGS_API FSGSTableSeatProps
@@ -46,17 +51,25 @@ struct SGS_API FSGSTableHandProps
 
 struct SGS_API FSGSTableDecisionBarProps
 {
+	FText TitleText;
 	FText PromptText;
+	FText ContextText;
+	FText ConfirmText;
+	FText PassText;
 	TSharedPtr<FSGSUIContext> UIContext;
+	struct FSkillOption
+	{
+		FName SkillName = NAME_None;
+		FText Label;
+		bool bSelected = false;
+		bool bEnabled = true;
+	};
+	TArray<FSkillOption> SkillOptions;
 	float LayoutScale = 1.0f;
+	bool bHasPrompt = false;
+	bool bIsResponse = false;
 	bool bCanConfirm = false;
 	bool bCanPass = false;
-};
-
-struct SGS_API FSGSTableCenterInfoProps
-{
-	FText HeaderText;
-	FText LastCommandText;
 };
 
 struct SGS_API FSGSTablePositionedSeatProps
@@ -68,11 +81,9 @@ struct SGS_API FSGSTablePositionedSeatProps
 struct SGS_API FSGSTableShellProps
 {
 	const FSlateBrush* BackgroundBrush = nullptr;
-	FSlateRect CenterArea = FSlateRect(0.0f, 0.0f, 0.0f, 0.0f);
 	FSlateRect ControlArea = FSlateRect(0.0f, 0.0f, 0.0f, 0.0f);
 	FSlateRect HandArea = FSlateRect(0.0f, 0.0f, 0.0f, 0.0f);
 	TArray<FSGSTablePositionedSeatProps> Seats;
-	FSGSTableCenterInfoProps CenterInfo;
 	FSGSTableDecisionBarProps DecisionBar;
 	FSGSTableHandProps Hand;
 };
@@ -84,26 +95,10 @@ enum class ESGSTableViewChange : uint8
 	PublicState = 1 << 1,
 	PrivateState = 1 << 2,
 	Interaction = 1 << 3,
-	All = Layout | PublicState | PrivateState | Interaction
+	HandPresentation = 1 << 4,
+	All = Layout | PublicState | PrivateState | Interaction | HandPresentation
 };
 ENUM_CLASS_FLAGS(ESGSTableViewChange);
-
-class SGS_API SSGSTableCardWidget : public SCompoundWidget
-{
-public:
-	SLATE_BEGIN_ARGS(SSGSTableCardWidget) {}
-		SLATE_ARGUMENT(FSGSTableCardProps, Props)
-		SLATE_EVENT(FSGSOnTableCardClicked, OnCardClicked)
-	SLATE_END_ARGS()
-
-	void Construct(const FArguments& InArgs);
-
-private:
-	FReply HandleClicked() const;
-
-	int32 CardId = INDEX_NONE;
-	FSGSOnTableCardClicked OnCardClicked;
-};
 
 class SGS_API SSGSTableSeatWidget : public SCompoundWidget
 {
@@ -122,39 +117,6 @@ private:
 	FSGSOnTableSeatClicked OnSeatClicked;
 };
 
-class SGS_API SSGSTableHandWidget : public SCompoundWidget
-{
-public:
-	SLATE_BEGIN_ARGS(SSGSTableHandWidget) {}
-		SLATE_ARGUMENT(FSGSTableHandProps, Props)
-		SLATE_EVENT(FSGSOnTableCardClicked, OnCardClicked)
-	SLATE_END_ARGS()
-
-	void Construct(const FArguments& InArgs);
-};
-
-class SGS_API SSGSTableDecisionBarWidget : public SCompoundWidget
-{
-public:
-	SLATE_BEGIN_ARGS(SSGSTableDecisionBarWidget) {}
-		SLATE_ARGUMENT(FSGSTableDecisionBarProps, Props)
-		SLATE_EVENT(FOnClicked, OnConfirmClicked)
-		SLATE_EVENT(FOnClicked, OnPassClicked)
-	SLATE_END_ARGS()
-
-	void Construct(const FArguments& InArgs);
-};
-
-class SGS_API SSGSTableCenterInfoWidget : public SCompoundWidget
-{
-public:
-	SLATE_BEGIN_ARGS(SSGSTableCenterInfoWidget) {}
-		SLATE_ARGUMENT(FSGSTableCenterInfoProps, Props)
-	SLATE_END_ARGS()
-
-	void Construct(const FArguments& InArgs);
-};
-
 // Table 的纯组合壳。它只解释矩形、props 和回调，不读取快照、Store、
 // PlayerController 或资源路径。
 class SGS_API SSGSTableShellWidget : public SCompoundWidget
@@ -163,7 +125,9 @@ public:
 	SLATE_BEGIN_ARGS(SSGSTableShellWidget) {}
 		SLATE_ARGUMENT(FSGSTableShellProps, Props)
 		SLATE_EVENT(FSGSOnTableCardClicked, OnCardClicked)
+		SLATE_EVENT(FSGSOnTableHandReordered, OnHandReordered)
 		SLATE_EVENT(FSGSOnTableSeatClicked, OnSeatClicked)
+		SLATE_EVENT(FSGSOnTableSkillClicked, OnSkillClicked)
 		SLATE_EVENT(FOnClicked, OnConfirmClicked)
 		SLATE_EVENT(FOnClicked, OnPassClicked)
 	SLATE_END_ARGS()
@@ -173,18 +137,20 @@ public:
 
 private:
 	void RebuildShell();
-	void RebuildCenter();
 	void RebuildSeats();
 	void RebuildDecisionBar();
 	void RebuildHand();
 
 	FSGSTableShellProps Props;
 	FSGSOnTableCardClicked OnCardClicked;
+	FSGSOnTableHandReordered OnHandReordered;
 	FSGSOnTableSeatClicked OnSeatClicked;
+	FSGSOnTableSkillClicked OnSkillClicked;
 	FOnClicked OnConfirmClicked;
 	FOnClicked OnPassClicked;
-	TSharedPtr<SBox> CenterHost;
 	TMap<int32, TSharedPtr<SBox>> SeatHosts;
 	TSharedPtr<SBox> DecisionHost;
 	TSharedPtr<SBox> HandHost;
+	TSharedPtr<SSGSTableHandWidget> HandWidget;
+	TWeakPtr<SBox> MountedHandHost;
 };

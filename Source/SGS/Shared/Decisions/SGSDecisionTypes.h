@@ -13,6 +13,17 @@ struct FSGSCardActionOption
 	TArray<int32> TargetSeatIndices;
 };
 
+// 规则层已经判定可用于当前响应窗口的技能入口。UI 只选择其中一个选项，
+// 不在客户端重新计算技能合法性。
+struct FSGSDecisionSkillOption
+{
+	FName SkillName = NAME_None;
+	FName DisplayName = NAME_None;
+	bool bRequiresCard = false;
+	TArray<int32> SelectableCardIds;
+	TArray<int32> TargetSeatIndices;
+};
+
 // 服务器向某座位发起的「出牌阶段动作」请求。
 struct FSGSPlayPhaseRequest
 {
@@ -47,10 +58,12 @@ struct FSGSResponseRequest
 	FSGSPhase Phase = SGSGameplayTags::Phase_None.GetTag();
 	FName WindowName = NAME_None;
 	FName RequiredCardName = NAME_None;
+	FName ContextName = NAME_None;
 	int32 EffectSourceSeat = INDEX_NONE;
 	int32 EffectTargetSeat = INDEX_NONE;
 	bool bAllowPass = true;
 	TArray<int32> ResponseCardIds;
+	TArray<FSGSDecisionSkillOption> SkillOptions;
 };
 
 struct FSGSResponseDecision

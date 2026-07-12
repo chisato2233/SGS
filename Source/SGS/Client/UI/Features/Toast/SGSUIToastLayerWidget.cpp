@@ -37,6 +37,9 @@ SSGSUIToastLayerWidget::~SSGSUIToastLayerWidget()
 
 void SSGSUIToastLayerWidget::Construct(const FArguments& InArgs)
 {
+	// Toast 只负责绘制。作为更高 ZOrder 的全视口层时必须跳过命中测试，
+	// 否则它会遮住下方 Table feature 的所有鼠标路径。
+	SetVisibility(EVisibility::HitTestInvisible);
 	ChildSlot
 	.HAlign(HAlign_Center)
 	.VAlign(VAlign_Top)

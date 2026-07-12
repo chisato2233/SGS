@@ -9,7 +9,7 @@ struct SGS_API FSGSTableFeatureBindings
 {
 	TFunction<FSGSTableViewSnapshot()> ReadSnapshot;
 	TFunction<bool(int32 CardId, int32 TargetSeat)> SubmitUseCard;
-	TFunction<bool(int32 CardId, int32 TargetSeat)> SubmitResponseCard;
+	TFunction<bool(int32 CardId, int32 TargetSeat, FName SkillName)> SubmitResponseCard;
 	TFunction<bool()> SubmitPass;
 };
 
@@ -26,24 +26,39 @@ public:
 	bool RefreshFromHost();
 	bool SelectCard(int32 CardId);
 	bool SelectTarget(int32 SeatIndex);
+	bool SelectSkill(FName SkillName);
+	bool ReorderHand(TConstArrayView<int32> OrderedCardIds);
 	bool Confirm();
 	bool Pass();
 
 	const FSGSTableViewSnapshot& GetSnapshot() const { return State.GetSnapshot(); }
 	const FSGSTableUIInteractionState& GetInteraction() const { return State.GetInteractionState(); }
+	const FSGSTableHandPresentationState& GetHandPresentation() const
+	{
+		return State.GetHandPresentation();
+	}
 	const TSGSUIObservable<int32>& GetPublicRevisionState() const { return State.GetPublicRevisionState(); }
 	const TSGSUIObservable<int32>& GetPrivateRevisionState() const { return State.GetPrivateRevisionState(); }
 	const TSGSUIObservable<FSGSTableUIInteractionState>& GetInteractionState() const
 	{
 		return State.GetInteractionStateValue();
 	}
+	const TSGSUIObservable<FSGSTableHandPresentationState>& GetHandPresentationState() const
+	{
+		return State.GetHandPresentationState();
+	}
 
 	TSharedRef<FSGSUIContext> GetUIContext() const { return UIContext; }
+	bool IsCardSelectable(int32 CardId) const { return State.IsCardSelectable(CardId); }
+	bool IsTargetSelectable(int32 SeatIndex) const { return State.IsTargetSelectable(SeatIndex); }
 	bool IsConfirmEnabled() const;
+	FString GetPromptTitle() const;
 	FString GetPromptText() const;
+	FString GetPromptContextText() const;
+	FString GetConfirmLabel() const;
+	FString GetPassLabel() const;
 
 private:
-	TArray<int32> GetTargetsForCard(int32 CardId) const;
 	void PublishToast(const FText& Message, bool bSuccess);
 	void FocusConfirmIfReady();
 

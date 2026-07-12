@@ -10,6 +10,6 @@ public class SGSEditorTarget : TargetRules
 		Type = TargetType.Editor;
 		DefaultBuildSettings = BuildSettingsVersion.V6;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_7;
-		ExtraModuleNames.Add("SGS");
+		ExtraModuleNames.AddRange(new string[] { "SGS", "SGSEditor" });
 	}
 }

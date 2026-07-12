@@ -4,10 +4,10 @@
 |---|---|
 | 状态 | `Ready` |
 | 创建日期 | 2026-06-19 |
-| 最近更新 | 2026-07-11 |
+| 最近更新 | 2026-07-12 |
 | 关联需求 | `0000-RawRequirements.md` 中的第 5 条 |
 | 关联代码 | `Source/SGS/Client/UI/`、`Source/SGS/Shared/UI/`、`Source/SGS/SGS.Build.cs` |
-| 子计划 | `0011-M1-minimal-code-first-table-ui.md`、`0011-M2-react-inspired-ui-foundation-events.md` |
+| 子计划 | `0011-M1-minimal-code-first-table-ui.md`、`0011-M2-react-inspired-ui-foundation-events.md`、`0011-M3-high-performance-hand-interaction.md`、`0011-M4-unified-response-ui.md` |
 
 ---
 
@@ -73,6 +73,10 @@ SGSUI 不是通用 UI 引擎，只包含 SGS 需要的薄层：
 
 详见 `0011-M2-react-inspired-ui-foundation-events.md`。M2 建立与牌桌业务无关的 Slate 组件 Core，借鉴 React 的 props、callback、state ownership、context 与 composition；首要验收是拆分 M1 的 God Widget，并通过依赖护栏防止 Core 反向认识 Table / Game / Server。通用 State 与 typed signal 只按真实组件需求提炼，不引入 React runtime、虚拟 DOM、全局万能 Store 或浏览器式 Event Bus。
 
+### M3：高性能手牌交互与弹性动画
+
+详见 `0011-M3-high-performance-hand-interaction.md`。M3 在 Table Feature 内实现稳定 keyed 手牌组件树、本地展示顺序、Slate 原生拖拽和单 Active Timer 弹性动画；牌序只属于 LocalPlayer 表现状态，不进入服务器权威事实。Motion 暂不提升为通用 Foundation，待出现第二个真实动画消费者后再提炼。
+
 ### 后续 UI 任务池
 
 - [ ] 在 UI 阶段开始时，按需为 `SGS.Build.cs` 追加 `UMG` / `Slate` / `SlateCore`。
@@ -100,3 +104,4 @@ SGSUI 不是通用 UI 引擎，只包含 SGS 需要的薄层：
 - 2026-07-11：新增 M2 详细执行计划。UI 长期路线进一步明确为“React 思想、Slate 实现”：Snapshot / Store / Selector / Props 单向下行，typed Action 经 adapter 上行，scoped UI Event Hub 只发布表现事实；以当前 M1 牌桌为真实迁移纵切，避免继续扩张单体 HUD Widget。
 - 2026-07-11：按用户审查意见纠偏 M2。长期框架 Core 必须与牌桌 / 玩家 / 网络业务无关，组件职责与 Anti-God-Widget 成为第一优先级；Store、Dispatcher 与事件能力不再先行扩张，typed signal 仅服务真实横切 UI 通知。已有 Table Store 作为 feature 临时适配器保留，后续迁出 Foundation Core。
 - 2026-07-11：M2.3-M2.6 生产代码完成：泛型 state/binding、typed signal/lifetime、每 LocalPlayer Context、Table Feature Controller、精准区域更新及真实 Toast/Focus 消费者已经接入。PlayerController 收缩为 Host/adapter，Core/Primitives 不认识 Table/Game/Server。Motion 等出现两个真实消费者后再提炼；CommonUI 与菜单栈必须按明确输入/导航需求另立计划。自动化与多 LocalPlayer 运行验收由独立测试模型继续。
+- 2026-07-11：新增 M3 并开始实施真实手牌交互纵切。采用 Feature 内本地牌序、按 CardId 复用的稳定组件树、Slate 原生拖拽和单 Active Timer 弹簧动画；第一阶段保持“点击选择 + Confirm”，不扩张到拖牌出牌或通用 Motion 框架。

@@ -86,7 +86,14 @@ private:
 	FSGSTimingPoint MakeCurrentTimingPoint(FName Step);
 	void BuildInitialDeck(const TArray<FSGSDeckCardSpec>& InitialDeck, bool bShuffle);
 	FSGSPlayPhaseRequest MakePlayPhaseRequest();
-	FSGSResponseRequest MakeResponseRequest(int32 SeatIndex, FName WindowName, FName RequiredCardName, int32 EffectSourceSeat, int32 EffectTargetSeat);
+	FSGSResponseRequest MakeResponseRequest(
+		int32 SeatIndex,
+		FName WindowName,
+		FName RequiredCardName,
+		FName ContextName,
+		int32 EffectSourceSeat,
+		int32 EffectTargetSeat,
+		TConstArrayView<FSGSDecisionSkillOption> SkillOptions = {});
 	void DeferResponseRequest(const FSGSResponseRequest& Request, const TScriptInterface<ISGSDecisionAgent>& Agent);
 	void DispatchDeferredResponseRequest();
 	FSGSStatus FinishCurrentResolution(FName Reason = FName(TEXT("SGS.Resolution.Complete")));

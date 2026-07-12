@@ -141,9 +141,10 @@ FSGSTableLayoutMetrics FSGSTableLayoutMetrics::Make(FVector2D InViewSize, int32 
 			Metrics.ViewSize.X / ReferenceViewWidth,
 			Metrics.ViewSize.Y / ReferenceViewHeight),
 		0.50f,
-		1.0f);
+		1.25f);
 	Metrics.SeatSize = FSGSUITheme::SeatButtonMinSize();
-	Metrics.MainSeatSize = FSGSUITheme::SeatButtonMinSize();
+	// 本地武将是底部视觉锚点，在保持同一纵横比的前提下略大于对手。
+	Metrics.MainSeatSize = FSGSUITheme::SeatButtonMinSize() * 1.10f;
 	Metrics.HandCardSize = FSGSUITheme::CardButtonSize();
 	Metrics.SafeMargin *= Metrics.LayoutScale;
 	Metrics.SeatSize *= Metrics.LayoutScale;
@@ -160,7 +161,7 @@ FSGSTableLayoutMetrics FSGSTableLayoutMetrics::Make(FVector2D InViewSize, int32 
 	const float MainSeatTop = Metrics.ArenaArea.Bottom - 40.0f * Metrics.LayoutScale - Metrics.MainSeatSize.Y;
 	const float HandLeft = Metrics.ArenaArea.Left + Metrics.MainSeatSize.X;
 	const float HandRight = FMath::Max(HandLeft, Metrics.ArenaArea.Right);
-	const float HandRailHeight = 120.0f * Metrics.LayoutScale;
+	const float HandRailHeight = Metrics.HandCardSize.Y + 14.0f * Metrics.LayoutScale;
 	const float HandBottom = Metrics.ArenaArea.Bottom - 38.0f * Metrics.LayoutScale;
 	const float HandTop = HandBottom - HandRailHeight;
 	Metrics.HandArea = FSlateRect(
@@ -168,8 +169,9 @@ FSGSTableLayoutMetrics FSGSTableLayoutMetrics::Make(FVector2D InViewSize, int32 
 		HandTop,
 		HandRight,
 		HandBottom);
-	const float ControlBottom = Metrics.ArenaArea.Bottom - 160.0f * Metrics.LayoutScale;
-	const float ControlHeight = 40.0f * Metrics.LayoutScale;
+	const float ControlBottom = HandTop - 8.0f * Metrics.LayoutScale;
+	// 统一决策面板需要一行上下文提示和一行技能/确认操作。
+	const float ControlHeight = 76.0f * Metrics.LayoutScale;
 	Metrics.ControlArea = FSlateRect(
 		HandLeft,
 		ControlBottom - ControlHeight,

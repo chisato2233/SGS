@@ -5,6 +5,28 @@
 namespace
 {
 const FName ConfirmFocusTarget(TEXT("Table.Confirm"));
+
+FString DisplayDecisionName(FName Name)
+{
+	if (Name == TEXT("Slash")) return TEXT("杀");
+	if (Name == TEXT("Dodge")) return TEXT("闪");
+	if (Name == TEXT("Peach")) return TEXT("桃");
+	if (Name == TEXT("Nullification") || Name == TEXT("Wuxie")) return TEXT("无懈可击");
+	if (Name == TEXT("ArrowBarrage") || Name == TEXT("Wanjian")) return TEXT("万箭齐发");
+	if (Name == TEXT("BarbarianInvasion") || Name == TEXT("Nanman")) return TEXT("南蛮入侵");
+	if (Name == TEXT("Dying")) return TEXT("濒死求桃");
+	return Name.IsNone() ? FString() : Name.ToString();
+}
+
+FString SeatDisplayName(const FSGSTableViewSnapshot& Snapshot, int32 SeatIndex)
+{
+	const FSGSSeatViewData* Seat = Snapshot.Seats.FindByPredicate(
+		[SeatIndex](const FSGSSeatViewData& Candidate)
+		{
+			return Candidate.SeatIndex == SeatIndex;
+		});
+	return Seat != nullptr ? Seat->DisplayName : FString::Printf(TEXT("座位 %d"), SeatIndex);
+}
 }
 
 FSGSTableFeatureController::FSGSTableFeatureController(
@@ -46,6 +68,21 @@ bool FSGSTableFeatureController::SelectTarget(int32 SeatIndex)
 	return true;
 }
 
+bool FSGSTableFeatureController::SelectSkill(FName SkillName)
+{
+	if (!State.SelectSkill(SkillName))
+	{
+		return false;
+	}
+	FocusConfirmIfReady();
+	return true;
+}
+
+bool FSGSTableFeatureController::ReorderHand(TConstArrayView<int32> OrderedCardIds)
+{
+	return State.ReorderHand(OrderedCardIds);
+}
+
 bool FSGSTableFeatureController::Confirm()
 {
 	if (!IsConfirmEnabled())
@@ -58,7 +95,10 @@ bool FSGSTableFeatureController::Confirm()
 	const FSGSTableUIInteractionState& Interaction = State.GetInteractionState();
 	const bool bSubmitted = Snapshot.Prompt.bIsResponse
 		? Bindings.SubmitResponseCard
-			&& Bindings.SubmitResponseCard(Interaction.SelectedCardId, Interaction.SelectedTargetSeat)
+			&& Bindings.SubmitResponseCard(
+				Interaction.SelectedCardId,
+				Interaction.SelectedTargetSeat,
+				Interaction.SelectedSkillName)
 		: Bindings.SubmitUseCard
 			&& Bindings.SubmitUseCard(Interaction.SelectedCardId, Interaction.SelectedTargetSeat);
 	if (!bSubmitted)
@@ -92,18 +132,17 @@ bool FSGSTableFeatureController::Pass()
 
 bool FSGSTableFeatureController::IsConfirmEnabled() const
 {
-	const FSGSTableViewSnapshot& Snapshot = State.GetSnapshot();
-	const FSGSTableUIInteractionState& Interaction = State.GetInteractionState();
-	if (!Snapshot.Prompt.bHasPrompt
-		|| !Snapshot.Prompt.SelectableCardIds.Contains(Interaction.SelectedCardId))
-	{
-		return false;
-	}
+	return State.IsSelectionComplete();
+}
 
-	const TArray<int32> Targets = GetTargetsForCard(Interaction.SelectedCardId);
-	return Targets.Num() == 0
-		|| Targets.Num() == 1
-		|| Targets.Contains(Interaction.SelectedTargetSeat);
+FString FSGSTableFeatureController::GetPromptTitle() const
+{
+	const FSGSTableViewSnapshot& Snapshot = State.GetSnapshot();
+	if (!Snapshot.Prompt.bHasPrompt)
+	{
+		return FString();
+	}
+	return Snapshot.Prompt.bIsResponse ? TEXT("响应请求") : TEXT("出牌阶段");
 }
 
 FString FSGSTableFeatureController::GetPromptText() const
@@ -111,25 +150,63 @@ FString FSGSTableFeatureController::GetPromptText() const
 	const FSGSTableViewSnapshot& Snapshot = State.GetSnapshot();
 	if (!Snapshot.Prompt.bHasPrompt)
 	{
-		return TEXT("No local decision pending.");
+		return FString();
 	}
 	if (Snapshot.Prompt.bIsResponse)
 	{
-		return FString::Printf(
-			TEXT("Response window: %s | Need: %s | Select a card, then Confirm or Pass."),
-			*Snapshot.Prompt.WindowName.ToString(),
-			*Snapshot.Prompt.RequiredCardName.ToString());
+		const FString RequiredName = DisplayDecisionName(Snapshot.Prompt.RequiredCardName);
+		const FString ContextName = DisplayDecisionName(Snapshot.Prompt.ContextName);
+		const bool bUseVerb = Snapshot.Prompt.RequiredCardName == TEXT("Nullification")
+			|| Snapshot.Prompt.RequiredCardName == TEXT("Wuxie")
+			|| Snapshot.Prompt.ContextName == TEXT("Dying");
+		if (!ContextName.IsEmpty())
+		{
+			return bUseVerb
+				? FString::Printf(TEXT("请使用【%s】响应【%s】"), *RequiredName, *ContextName)
+				: FString::Printf(TEXT("请打出【%s】响应【%s】"), *RequiredName, *ContextName);
+		}
+		return bUseVerb
+			? FString::Printf(TEXT("请使用【%s】"), *RequiredName)
+			: FString::Printf(TEXT("请打出【%s】"), *RequiredName);
 	}
-	return TEXT("Play phase: select a legal card, choose a highlighted target if needed, then Confirm or Pass.");
+	return TEXT("请选择一张可用牌和合法目标");
 }
 
-TArray<int32> FSGSTableFeatureController::GetTargetsForCard(int32 CardId) const
+FString FSGSTableFeatureController::GetPromptContextText() const
 {
-	if (const TArray<int32>* Targets = State.GetSnapshot().Prompt.FindTargetSeatIndicesForCard(CardId))
+	const FSGSTableViewSnapshot& Snapshot = State.GetSnapshot();
+	if (!Snapshot.Prompt.bHasPrompt || !Snapshot.Prompt.bIsResponse)
 	{
-		return *Targets;
+		return FString();
 	}
-	return TArray<int32>();
+	TArray<FString> Parts;
+	if (Snapshot.Prompt.EffectSourceSeat != INDEX_NONE)
+	{
+		Parts.Add(FString::Printf(
+			TEXT("来源：%s"),
+			*SeatDisplayName(Snapshot, Snapshot.Prompt.EffectSourceSeat)));
+	}
+	if (Snapshot.Prompt.EffectTargetSeat != INDEX_NONE)
+	{
+		Parts.Add(FString::Printf(
+			TEXT("目标：%s"),
+			*SeatDisplayName(Snapshot, Snapshot.Prompt.EffectTargetSeat)));
+	}
+	return FString::Join(Parts, TEXT("　"));
+}
+
+FString FSGSTableFeatureController::GetConfirmLabel() const
+{
+	if (!State.GetInteractionState().SelectedSkillName.IsNone())
+	{
+		return TEXT("发动技能");
+	}
+	return State.GetSnapshot().Prompt.bIsResponse ? TEXT("确认响应") : TEXT("使用");
+}
+
+FString FSGSTableFeatureController::GetPassLabel() const
+{
+	return State.GetSnapshot().Prompt.bIsResponse ? TEXT("不响应") : TEXT("结束出牌");
 }
 
 void FSGSTableFeatureController::PublishToast(const FText& Message, bool bSuccess)

@@ -20,23 +20,12 @@ FString TagLeaf(const FGameplayTag& Tag)
 		: Full;
 }
 
-FText MakeHeaderText(const FSGSTableViewSnapshot& Snapshot)
-{
-	return FText::FromString(FString::Printf(
-		TEXT("SGS Local Table | Viewer %d | Actor %d | Phase %s | Draw %d | Discard %d%s"),
-		Snapshot.ViewerSeat,
-		Snapshot.CurrentSeatIndex,
-		*TagLeaf(Snapshot.CurrentPhase),
-		Snapshot.DrawPileCount,
-		Snapshot.DiscardPileCount,
-		Snapshot.bGameOver ? TEXT(" | Game Over") : TEXT("")));
-}
-
 FSGSTableSeatProps MakeSeatProps(
 	const FSGSSeatViewData& Seat,
 	FVector2D Size,
 	int32 ViewerSeat,
 	int32 SelectedTargetSeat,
+	bool bSelectable,
 	FSGSTableAssetCatalog& Assets)
 {
 	FSGSTableSeatProps Props;
@@ -54,7 +43,7 @@ FSGSTableSeatProps MakeSeatProps(
 	Props.Size = Size;
 	Props.PortraitBrush = Assets.GetSeatPortraitBrush(Seat.SeatIndex);
 	Props.bAlive = Seat.bIsAlive;
-	Props.bSelectable = Seat.bIsSelectableTarget;
+	Props.bSelectable = bSelectable;
 	Props.bSelected = Seat.SeatIndex == SelectedTargetSeat;
 	Props.bCurrent = Seat.bIsCurrent;
 	Props.bViewer = Seat.SeatIndex == ViewerSeat;
@@ -65,6 +54,8 @@ FSGSTableCardProps MakeCardProps(
 	const FSGSCardViewData& Card,
 	FVector2D Size,
 	int32 SelectedCardId,
+	bool bSelectable,
+	bool bDimmed,
 	FSGSTableAssetCatalog& Assets)
 {
 	FSGSTableCardProps Props;
@@ -76,8 +67,9 @@ FSGSTableCardProps MakeCardProps(
 		Card.CardId));
 	Props.Size = Size;
 	Props.FaceBrush = Assets.GetCardFaceBrush(Card.CardName);
-	Props.bSelectable = Card.bSelectable;
+	Props.bSelectable = bSelectable;
 	Props.bSelected = Card.CardId == SelectedCardId;
+	Props.bDimmed = bDimmed;
 	return Props;
 }
 
@@ -95,11 +87,8 @@ FSGSTableShellProps MakeShellProps(
 
 	FSGSTableShellProps Props;
 	Props.BackgroundBrush = Assets.GetBackgroundBrush();
-	Props.CenterArea = Layout.CenterArea;
 	Props.ControlArea = Layout.ControlArea;
 	Props.HandArea = Layout.HandArea;
-	Props.CenterInfo.HeaderText = MakeHeaderText(Snapshot);
-	Props.CenterInfo.LastCommandText = FText::FromString(Snapshot.LastCommand);
 	Props.Seats.Reserve(Snapshot.Seats.Num());
 	for (const FSGSSeatViewData& Seat : Snapshot.Seats)
 	{
@@ -115,25 +104,72 @@ FSGSTableShellProps MakeShellProps(
 			SeatLayout->Size,
 			Snapshot.ViewerSeat,
 			Interaction.SelectedTargetSeat,
+			Controller.IsTargetSelectable(Seat.SeatIndex),
 			Assets);
 	}
 
+	Props.DecisionBar.bHasPrompt = Snapshot.Prompt.bHasPrompt;
+	Props.DecisionBar.bIsResponse = Snapshot.Prompt.bIsResponse;
+	Props.DecisionBar.TitleText = FText::FromString(Controller.GetPromptTitle());
 	Props.DecisionBar.PromptText = FText::FromString(Controller.GetPromptText());
+	Props.DecisionBar.ContextText = FText::FromString(Controller.GetPromptContextText());
+	Props.DecisionBar.ConfirmText = FText::FromString(Controller.GetConfirmLabel());
+	Props.DecisionBar.PassText = FText::FromString(Controller.GetPassLabel());
 	Props.DecisionBar.UIContext = Controller.GetUIContext();
 	Props.DecisionBar.LayoutScale = Layout.LayoutScale;
 	Props.DecisionBar.bCanConfirm = Controller.IsConfirmEnabled();
 	Props.DecisionBar.bCanPass = Snapshot.Prompt.bHasPrompt && Snapshot.Prompt.bAllowPass;
+	Props.DecisionBar.SkillOptions.Reserve(Snapshot.Prompt.SkillOptions.Num());
+	for (const FSGSDecisionSkillViewData& Skill : Snapshot.Prompt.SkillOptions)
+	{
+		FSGSTableDecisionBarProps::FSkillOption& SkillProps =
+			Props.DecisionBar.SkillOptions.AddDefaulted_GetRef();
+		SkillProps.SkillName = Skill.SkillName;
+		SkillProps.Label = FText::FromString(
+			Skill.DisplayName.IsEmpty() ? Skill.SkillName.ToString() : Skill.DisplayName);
+		SkillProps.bSelected = Interaction.SelectedSkillName == Skill.SkillName;
+	}
 	Props.Hand.CardSize = Layout.HandCardSize;
 	Props.Hand.LayoutScale = Layout.LayoutScale;
 	Props.Hand.AvailableWidth = FMath::Max(0.0f, Layout.HandArea.Right - Layout.HandArea.Left);
 	Props.Hand.Cards.Reserve(Snapshot.HandCards.Num());
+	TMap<int32, const FSGSCardViewData*> CardsById;
+	CardsById.Reserve(Snapshot.HandCards.Num());
 	for (const FSGSCardViewData& Card : Snapshot.HandCards)
 	{
-		Props.Hand.Cards.Add(MakeCardProps(
-			Card,
-			Layout.HandCardSize,
-			Interaction.SelectedCardId,
-			Assets));
+		CardsById.Add(Card.CardId, &Card);
+	}
+
+	TSet<int32> AddedCardIds;
+	AddedCardIds.Reserve(Snapshot.HandCards.Num());
+	for (const int32 CardId : Controller.GetHandPresentation().OrderedCardIds)
+	{
+		if (const FSGSCardViewData* const* Card = CardsById.Find(CardId))
+		{
+			Props.Hand.Cards.Add(MakeCardProps(
+				**Card,
+				Layout.HandCardSize,
+				Interaction.SelectedCardId,
+				Controller.IsCardSelectable(CardId),
+				Snapshot.Prompt.bHasPrompt && !Controller.IsCardSelectable(CardId),
+				Assets));
+			AddedCardIds.Add(CardId);
+		}
+	}
+
+	// 首帧或异常输入下仍保持完整可见；Store 会在下一次有效快照中归一化顺序。
+	for (const FSGSCardViewData& Card : Snapshot.HandCards)
+	{
+		if (!AddedCardIds.Contains(Card.CardId))
+		{
+			Props.Hand.Cards.Add(MakeCardProps(
+				Card,
+				Layout.HandCardSize,
+				Interaction.SelectedCardId,
+				Controller.IsCardSelectable(Card.CardId),
+				Snapshot.Prompt.bHasPrompt && !Controller.IsCardSelectable(Card.CardId),
+				Assets));
+		}
 	}
 	return Props;
 }
@@ -191,6 +227,16 @@ void SSGSTableHudWidget::Construct(const FArguments& InArgs)
 			}
 		},
 		false);
+	Controller->GetHandPresentationState().Subscribe(
+		Lifetime,
+		[WeakOwner](const FSGSTableHandPresentationState& Presentation)
+		{
+			if (const TSharedPtr<SSGSTableHudWidget> Pinned = WeakOwner.Pin())
+			{
+				Pinned->HandleHandPresentation(Presentation);
+			}
+		},
+		false);
 }
 
 void SSGSTableHudWidget::Tick(const FGeometry& AllottedGeometry, double InCurrentTime, float InDeltaTime)
@@ -238,7 +284,9 @@ TSharedRef<SWidget> SSGSTableHudWidget::BuildContent()
 	return SAssignNew(ShellWidget, SSGSTableShellWidget)
 		.Props(MakeShellProps(*Controller, *AssetCatalog, CurrentViewSize))
 		.OnCardClicked(this, &SSGSTableHudWidget::OnCardClicked)
+		.OnHandReordered(this, &SSGSTableHudWidget::OnHandReordered)
 		.OnSeatClicked(this, &SSGSTableHudWidget::OnSeatClicked)
+		.OnSkillClicked(this, &SSGSTableHudWidget::OnSkillClicked)
 		.OnConfirmClicked(this, &SSGSTableHudWidget::OnConfirmClicked)
 		.OnPassClicked(this, &SSGSTableHudWidget::OnPassClicked);
 }
@@ -266,15 +314,31 @@ void SSGSTableHudWidget::HandleInteraction(const FSGSTableUIInteractionState& In
 	UpdateShell(ESGSTableViewChange::Interaction);
 }
 
+void SSGSTableHudWidget::HandleHandPresentation(const FSGSTableHandPresentationState& Presentation)
+{
+	UpdateShell(ESGSTableViewChange::HandPresentation);
+}
+
 FReply SSGSTableHudWidget::OnCardClicked(int32 CardId)
 {
 	Controller->SelectCard(CardId);
 	return FReply::Handled();
 }
 
+bool SSGSTableHudWidget::OnHandReordered(const TArray<int32>& OrderedCardIds)
+{
+	return Controller->ReorderHand(OrderedCardIds);
+}
+
 FReply SSGSTableHudWidget::OnSeatClicked(int32 SeatIndex)
 {
 	Controller->SelectTarget(SeatIndex);
+	return FReply::Handled();
+}
+
+FReply SSGSTableHudWidget::OnSkillClicked(FName SkillName)
+{
+	Controller->SelectSkill(SkillName);
 	return FReply::Handled();
 }
 

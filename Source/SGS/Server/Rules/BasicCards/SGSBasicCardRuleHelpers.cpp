@@ -49,6 +49,7 @@ bool OpenNextDyingPeachResponseWindow(FSGSRuleExecutionContext& Context, FSGSRes
 		WindowSpec.SeatIndex = ResponderSeat;
 		WindowSpec.WindowName = SGSBasicCardRuleHelpers::DyingPeachWindowName();
 		WindowSpec.RequiredCardName = FName(TEXT("Peach"));
+		WindowSpec.ContextName = FName(TEXT("Dying"));
 		WindowSpec.EffectSourceSeat = DyingFrame.SourceSeat;
 		WindowSpec.EffectTargetSeat = DyingFrame.TargetSeat;
 		if (Context.Runtime->OpenResponseWindow(WindowSpec))

@@ -99,7 +99,10 @@ bool USGSLocalHumanDecisionAgent::SubmitUseCard(int32 CardId, int32 TargetSeatIn
 	return true;
 }
 
-bool USGSLocalHumanDecisionAgent::SubmitResponseCard(int32 CardId, int32 TargetSeatIndex)
+bool USGSLocalHumanDecisionAgent::SubmitResponseCard(
+	int32 CardId,
+	int32 TargetSeatIndex,
+	FName SkillName)
 {
 	if (!HasPendingResponseRequest())
 	{
@@ -107,18 +110,57 @@ bool USGSLocalHumanDecisionAgent::SubmitResponseCard(int32 CardId, int32 TargetS
 		return false;
 	}
 
-	if (!PendingResponseRequest.ResponseCardIds.Contains(CardId))
+	const FSGSDecisionSkillOption* SkillOption = SkillName.IsNone()
+		? nullptr
+		: PendingResponseRequest.SkillOptions.FindByPredicate(
+			[SkillName](const FSGSDecisionSkillOption& Candidate)
+			{
+				return Candidate.SkillName == SkillName;
+			});
+	if (!SkillName.IsNone() && SkillOption == nullptr)
+	{
+		UE_LOG(LogSGSUI, Warning, TEXT("SubmitResponseCard rejected: skill %s is not legal for the pending response."), *SkillName.ToString());
+		return false;
+	}
+	if (SkillOption == nullptr && !PendingResponseRequest.ResponseCardIds.Contains(CardId))
 	{
 		UE_LOG(LogSGSUI, Warning, TEXT("SubmitResponseCard rejected: card %d is not legal for the pending response."), CardId);
 		return false;
 	}
+	if (SkillOption != nullptr
+		&& SkillOption->bRequiresCard
+		&& !SkillOption->SelectableCardIds.Contains(CardId))
+	{
+		UE_LOG(LogSGSUI, Warning, TEXT("SubmitResponseCard rejected: card %d is not a legal cost for skill %s."), CardId, *SkillName.ToString());
+		return false;
+	}
+	if (SkillOption != nullptr && !SkillOption->bRequiresCard)
+	{
+		CardId = INDEX_NONE;
+	}
 
 	TArray<int32> Targets;
-	if (PendingResponseRequest.EffectTargetSeat != INDEX_NONE)
+	TArray<int32> LegalTargets;
+	if (SkillOption != nullptr)
 	{
-		const int32 FinalTarget = TargetSeatIndex != INDEX_NONE
-			? TargetSeatIndex
-			: PendingResponseRequest.EffectTargetSeat;
+		LegalTargets = SkillOption->TargetSeatIndices;
+	}
+	if (LegalTargets.IsEmpty() && PendingResponseRequest.EffectTargetSeat != INDEX_NONE)
+	{
+		LegalTargets.Add(PendingResponseRequest.EffectTargetSeat);
+	}
+	if (!LegalTargets.IsEmpty())
+	{
+		int32 FinalTarget = TargetSeatIndex;
+		if (FinalTarget == INDEX_NONE && LegalTargets.Num() == 1)
+		{
+			FinalTarget = LegalTargets[0];
+		}
+		if (!LegalTargets.Contains(FinalTarget))
+		{
+			UE_LOG(LogSGSUI, Warning, TEXT("SubmitResponseCard rejected: target %d is not legal for the pending response."), FinalTarget);
+			return false;
+		}
 		Targets.Add(FinalTarget);
 	}
 
@@ -128,11 +170,15 @@ bool USGSLocalHumanDecisionAgent::SubmitResponseCard(int32 CardId, int32 TargetS
 
 	FSGSResponseDecision Decision;
 	Decision.Command = FSGSCommandFactory::Make(
-		FSGSCommandBuildRequest::FromDecisionRequest(Request, FName(TEXT("LocalUI")), Request.RequiredCardName),
-		FSGSRespondCardCommandPayload(CardId, MoveTemp(Targets), Request.WindowName));
+		FSGSCommandBuildRequest::FromDecisionRequest(
+			Request,
+			FName(TEXT("LocalUI")),
+			SkillName.IsNone() ? Request.RequiredCardName : SkillName),
+		FSGSRespondCardCommandPayload(CardId, MoveTemp(Targets), Request.WindowName, SkillName));
 
-	UE_LOG(LogSGSUI, Log, TEXT("LocalUI submitted RespondCard command: CardId=%d Window=%s."),
+	UE_LOG(LogSGSUI, Log, TEXT("LocalUI submitted response command: CardId=%d Skill=%s Window=%s."),
 		CardId,
+		*SkillName.ToString(),
 		*Request.WindowName.ToString());
 	Delegate.ExecuteIfBound(Decision);
 	return true;

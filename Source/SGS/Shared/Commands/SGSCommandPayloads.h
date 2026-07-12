@@ -74,21 +74,31 @@ struct SGS_API FSGSRespondCardCommandPayload
 	UPROPERTY()
 	FName WindowName = NAME_None;
 
+	// 非空时表示由服务器列出的响应技能产生该动作；物理牌响应保持 None。
+	UPROPERTY()
+	FName SkillName = NAME_None;
+
 	FSGSRespondCardCommandPayload() = default;
 
-	FSGSRespondCardCommandPayload(int32 InCardId, TArray<int32> InTargetSeatIndices, FName InWindowName)
+	FSGSRespondCardCommandPayload(
+		int32 InCardId,
+		TArray<int32> InTargetSeatIndices,
+		FName InWindowName,
+		FName InSkillName = NAME_None)
 		: CardId(InCardId)
 		, TargetSeatIndices(MoveTemp(InTargetSeatIndices))
 		, WindowName(InWindowName)
+		, SkillName(InSkillName)
 	{
 	}
 
 	FString ToPayloadLogString() const
 	{
 		return FString::Printf(
-			TEXT("CardId=%d Targets=[%s] Window=%s"),
+			TEXT("CardId=%d Targets=[%s] Window=%s Skill=%s"),
 			CardId,
 			*SGSCommandPayloadLog::JoinIntArray(TargetSeatIndices),
-			*WindowName.ToString());
+			*WindowName.ToString(),
+			*SkillName.ToString());
 	}
 };

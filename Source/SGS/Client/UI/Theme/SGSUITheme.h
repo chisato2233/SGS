@@ -14,7 +14,6 @@ enum class ESGSUIControlTone : uint8
 class SGS_API FSGSUITheme
 {
 public:
-	static float RefreshIntervalSeconds();
 	static FMargin RootPadding();
 	static FMargin SectionPadding();
 	static FMargin ItemPadding();

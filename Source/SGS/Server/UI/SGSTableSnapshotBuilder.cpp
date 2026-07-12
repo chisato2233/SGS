@@ -2,7 +2,6 @@
 
 #include "Shared/Cards/SGSCard.h"
 #include "Client/UI/Bridge/SGSLocalHumanDecisionAgent.h"
-#include "Server/Commands/SGSCommandRouter.h"
 #include "Server/Engine/SGSGameContext.h"
 #include "Server/Engine/SGSGameDriver.h"
 #include "Server/Players/SGSSeat.h"
@@ -62,6 +61,9 @@ void ApplyPromptSnapshot(FSGSPlayerPrivateSnapshot& Snapshot, const USGSLocalHum
 		Snapshot.Prompt.bIsResponse = true;
 		Snapshot.Prompt.WindowName = ResponseRequest->WindowName;
 		Snapshot.Prompt.RequiredCardName = ResponseRequest->RequiredCardName;
+		Snapshot.Prompt.ContextName = ResponseRequest->ContextName;
+		Snapshot.Prompt.EffectSourceSeat = ResponseRequest->EffectSourceSeat;
+		Snapshot.Prompt.EffectTargetSeat = ResponseRequest->EffectTargetSeat;
 		Snapshot.Prompt.bAllowPass = ResponseRequest->bAllowPass;
 		AddUniqueInts(Snapshot.Prompt.SelectableCardIds, ResponseRequest->ResponseCardIds);
 
@@ -75,6 +77,32 @@ void ApplyPromptSnapshot(FSGSPlayerPrivateSnapshot& Snapshot, const USGSLocalHum
 		for (int32 CardId : ResponseRequest->ResponseCardIds)
 		{
 			Snapshot.Prompt.SetTargetSeatIndicesForCard(CardId, ResponseTargets);
+		}
+
+		for (const FSGSDecisionSkillOption& SkillOption : ResponseRequest->SkillOptions)
+		{
+			if (SkillOption.SkillName.IsNone())
+			{
+				continue;
+			}
+
+			FSGSDecisionSkillViewData SkillView;
+			SkillView.SkillName = SkillOption.SkillName;
+			SkillView.DisplayName = SkillOption.DisplayName.IsNone()
+				? SkillOption.SkillName.ToString()
+				: SkillOption.DisplayName.ToString();
+			SkillView.bRequiresCard = SkillOption.bRequiresCard;
+			SkillView.SelectableCardIds = SkillOption.SelectableCardIds;
+			SkillView.SelectableTargetSeatIndices = SkillOption.TargetSeatIndices;
+			if (SkillView.SelectableTargetSeatIndices.IsEmpty()
+				&& ResponseRequest->EffectTargetSeat != INDEX_NONE)
+			{
+				SkillView.SelectableTargetSeatIndices.Add(ResponseRequest->EffectTargetSeat);
+			}
+			AddUniqueInts(
+				Snapshot.Prompt.SelectableTargetSeatIndices,
+				SkillView.SelectableTargetSeatIndices);
+			Snapshot.Prompt.SkillOptions.Add(MoveTemp(SkillView));
 		}
 	}
 }
@@ -93,20 +121,6 @@ FSGSTablePublicSnapshot FSGSTableSnapshotBuilder::BuildPublicSnapshot(const USGS
 	Snapshot.CurrentSeatIndex = Driver->GetCurrentSeatIndex();
 	Snapshot.CurrentPhase = Driver->GetCurrentPhase();
 	Snapshot.bGameOver = Driver->IsGameOver();
-
-	const TArray<FSGSCommandLogEntry>& CommandLog = Driver->GetCommandLog();
-	if (CommandLog.Num() > 0)
-	{
-		const FSGSCommandLogEntry& LastEntry = CommandLog.Last();
-		const FString DetailSuffix = LastEntry.Detail.IsEmpty()
-			? FString()
-			: FString::Printf(TEXT(" Detail=%s"), *LastEntry.Detail);
-		Snapshot.LastCommand = FString::Printf(
-			TEXT("%s %s%s"),
-			*LastEntry.Lifecycle.ToString(),
-			*LastEntry.Command.ToLogString(),
-			*DetailSuffix);
-	}
 
 	if (Context == nullptr)
 	{

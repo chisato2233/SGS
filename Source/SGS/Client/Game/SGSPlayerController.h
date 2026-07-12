@@ -32,7 +32,7 @@ public:
 	FSGSTableViewSnapshot BuildTableViewSnapshot() const;
 
 	bool SubmitUseCard(int32 CardId, int32 TargetSeatIndex);
-	bool SubmitResponseCard(int32 CardId, int32 TargetSeatIndex);
+	bool SubmitResponseCard(int32 CardId, int32 TargetSeatIndex, FName SkillName = NAME_None);
 	bool SubmitPass();
 
 protected:
@@ -46,7 +46,7 @@ private:
 	void ServerSubmitUseCard(int32 CardId, int32 TargetSeatIndex);
 
 	UFUNCTION(Server, Reliable)
-	void ServerSubmitResponseCard(int32 CardId, int32 TargetSeatIndex);
+	void ServerSubmitResponseCard(int32 CardId, int32 TargetSeatIndex, FName SkillName);
 
 	UFUNCTION(Server, Reliable)
 	void ServerSubmitPass();
@@ -61,7 +61,7 @@ private:
 	void HandlePublicSnapshotChanged();
 	void RefreshTableFeature();
 	bool SubmitUseCardOnServer(int32 CardId, int32 TargetSeatIndex);
-	bool SubmitResponseCardOnServer(int32 CardId, int32 TargetSeatIndex);
+	bool SubmitResponseCardOnServer(int32 CardId, int32 TargetSeatIndex, FName SkillName);
 	bool SubmitPassOnServer();
 	void RefreshAfterServerDecision();
 

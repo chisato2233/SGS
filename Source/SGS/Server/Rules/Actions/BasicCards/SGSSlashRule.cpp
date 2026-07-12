@@ -109,6 +109,7 @@ FSGSStatus FSGSSlashRule::ExecutePayload(FSGSRuleExecutionContext& Context, cons
 	WindowSpec.SeatIndex = TargetSeat;
 	WindowSpec.WindowName = SGSBasicCardRuleHelpers::SlashDodgeWindowName();
 	WindowSpec.RequiredCardName = FName(TEXT("Dodge"));
+	WindowSpec.ContextName = FName(TEXT("Slash"));
 	WindowSpec.EffectSourceSeat = SourceSeat;
 	WindowSpec.EffectTargetSeat = TargetSeat;
 	if (Context.Runtime->OpenResponseWindow(WindowSpec))
