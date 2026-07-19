@@ -13,6 +13,7 @@
 #include "Server/Rules/Resolution/SGSResolutionStack.h"
 #include "Server/Timing/SGSActiveEffectTimeline.h"
 #include "Shared/Decisions/SGSDecisionAgent.h"
+#include "Shared/Game/SGSGameResult.h"
 #include "SGSGameDriver.generated.h"
 
 class USGSGameContext;
@@ -28,6 +29,7 @@ struct SGS_API FSGSGameStartConfig
 	int32 StartingHandSize = 4;
 	int32 MaxTurns = 8;
 	TMap<int32, int32> InitialHealthBySeat;
+	bool bIdentityMode = false;
 };
 
 // 服务器权威的对局驱动器：推进回合/阶段、在出牌阶段向决策代理请求动作。
@@ -58,6 +60,7 @@ public:
 	int32 GetTurnsPlayed() const { return TurnsPlayed; }
 	const TArray<FSGSCommandLogEntry>& GetCommandLog() const { return CommandRouter.GetLogEntries(); }
 	const FSGSReplayLog& GetReplayLog() const { return ReplayLog; }
+	const FSGSGameResult& GetGameResult() const { return GameResult; }
 
 private:
 	// 蹦床循环：连续推进所有「同步完成」的阶段，遇到挂起（等待决策）或对局结束即停。
@@ -71,6 +74,11 @@ private:
 
 	void BeginTurn();
 	void EndGame();
+	void HandleSeatEliminated(int32 SeatIndex, int32 SourceSeat, FName Reason);
+	void EvaluateIdentityVictory();
+	void DiscardAllCards(int32 SeatIndex);
+	void ExecuteDiscardPhase();
+	void ExpireStatusEffects(int32 SeatIndex, FGameplayTag StatusTag);
 	void Broadcast(FSGSGameEvent Event);
 
 	// 出牌阶段动作的应答回调（可能同步或跨帧触发）。
@@ -93,7 +101,8 @@ private:
 		FName ContextName,
 		int32 EffectSourceSeat,
 		int32 EffectTargetSeat,
-		TConstArrayView<FSGSDecisionSkillOption> SkillOptions = {});
+		TConstArrayView<FSGSDecisionSkillOption> SkillOptions = {},
+		TConstArrayView<FName> AcceptedCardNames = {});
 	void DeferResponseRequest(const FSGSResponseRequest& Request, const TScriptInterface<ISGSDecisionAgent>& Agent);
 	void DispatchDeferredResponseRequest();
 	FSGSStatus FinishCurrentResolution(FName Reason = FName(TEXT("SGS.Resolution.Complete")));
@@ -124,6 +133,8 @@ private:
 	bool bHasDeferredResponseRequest = false;
 	int32 CurrentMaxTurns = 8;
 	int32 CurrentStartingHandSize = 4;
+	bool bIdentityMode = false;
+	FSGSGameResult GameResult;
 
 	bool bGameOver = false;
 	bool bWaitingForDecision = false;

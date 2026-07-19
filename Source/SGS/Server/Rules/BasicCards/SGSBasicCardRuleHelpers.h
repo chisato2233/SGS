@@ -30,13 +30,21 @@ namespace SGSBasicCardRuleHelpers
 	USGSCard* FindPayloadCard(const FSGSRuleExecutionContext& Context, int32 CardId);
 	int32 GetCommandSeat(const FSGSRuleExecutionContext& Context);
 	FSGSCommandId GetCommandId(const FSGSRuleExecutionContext& Context);
+	bool HasStatus(const FSGSRuleExecutionContext& Context, int32 SeatIndex, FGameplayTag StatusTag);
+	void AddStatus(
+		FSGSRuleExecutionContext& Context,
+		int32 SeatIndex,
+		FName EffectName,
+		FGameplayTag StatusTag,
+		FSGSDurationSpec Duration);
+	bool ConsumeStatus(FSGSRuleExecutionContext& Context, int32 SeatIndex, FGameplayTag StatusTag);
 	FSGSStatus DiscardHandCard(FSGSRuleExecutionContext& Context, USGSCard* Card, int32 SeatIndex);
 	FSGSStatus DiscardProcessingCard(FSGSRuleExecutionContext& Context);
 	FSGSStatus CompleteCurrentFrame(FSGSRuleExecutionContext& Context, FName Reason);
 	int32 GetCurrentEffectSourceSeat(const FSGSRuleExecutionContext& Context);
 	int32 GetCurrentEffectTargetSeat(const FSGSRuleExecutionContext& Context);
 	int32 GetPeachHealTarget(const FSGSRuleExecutionContext& Context, const FSGSUseCardRulePayload& Payload);
-	FSGSStatus ExecutePeachHeal(FSGSRuleExecutionContext& Context, int32 PeachCardId, int32 HealTargetSeat);
+	FSGSStatus ExecuteHealCard(FSGSRuleExecutionContext& Context, int32 CardId, FName CardName, int32 HealTargetSeat);
 	FSGSStatus ContinueDyingPeachOrEliminate(FSGSRuleExecutionContext& Context);
 	FSGSStatus StartDyingPeachResolution(FSGSRuleExecutionContext& Context, int32 DyingSeatIndex);
 	FSGSStatus ResolveSlashHit(FSGSRuleExecutionContext& Context);

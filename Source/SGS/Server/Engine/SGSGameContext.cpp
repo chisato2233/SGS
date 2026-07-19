@@ -4,22 +4,52 @@
 #include "Server/Players/SGSSeat.h"
 #include "Shared/Core/SGSLogChannels.h"
 
-void USGSGameContext::Initialize(const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents, int32 RandomSeed)
+void USGSGameContext::Initialize(
+	const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents,
+	int32 RandomSeed,
+	bool bIdentityMode)
 {
 	RandomAudit.Initialize(RandomSeed);
 	NextCardId = 0;
 	AllCards.Reset();
 	RegisterCardIndexes();
 
+	TArray<TScriptInterface<ISGSDecisionAgent>> SeatAgents = InAgents;
+	TArray<FGameplayTag> Identities;
+	if (bIdentityMode)
+	{
+		check(SeatAgents.Num() == 8);
+		Identities = {
+			SGSGameplayTags::Identity_Lord.GetTag(),
+			SGSGameplayTags::Identity_Loyalist.GetTag(),
+			SGSGameplayTags::Identity_Loyalist.GetTag(),
+			SGSGameplayTags::Identity_Rebel.GetTag(),
+			SGSGameplayTags::Identity_Rebel.GetTag(),
+			SGSGameplayTags::Identity_Rebel.GetTag(),
+			SGSGameplayTags::Identity_Rebel.GetTag(),
+			SGSGameplayTags::Identity_Renegade.GetTag(),
+		};
+		for (int32 Index = SeatAgents.Num() - 1; Index > 0; --Index)
+		{
+			SeatAgents.Swap(Index, RandomAudit.RandRange(
+				TEXT("SGS.Random.SeatAssignment"), 0, Index, TEXT("IdentityMode")));
+			Identities.Swap(Index, RandomAudit.RandRange(
+				TEXT("SGS.Random.IdentityAssignment"), 0, Index, TEXT("IdentityMode")));
+		}
+	}
+
 	Seats.Reset();
-	for (int32 Index = 0; Index < InAgents.Num(); ++Index)
+	for (int32 Index = 0; Index < SeatAgents.Num(); ++Index)
 	{
 		USGSSeat* Seat = NewObject<USGSSeat>(this);
 		Seat->SeatIndex = Index;
 		Seat->DisplayName = FString::Printf(TEXT("Seat%d"), Index);
-		Seat->DecisionAgent = InAgents[Index];
-		Seat->MaxHealth = DefaultMaxHealth;
-		Seat->Health = DefaultMaxHealth;
+		Seat->DecisionAgent = SeatAgents[Index];
+		Seat->Identity = Identities.IsValidIndex(Index) ? Identities[Index] : FGameplayTag();
+		Seat->MaxHealth = Seat->Identity.MatchesTagExact(SGSGameplayTags::Identity_Lord.GetTag())
+			? DefaultMaxHealth + 1
+			: DefaultMaxHealth;
+		Seat->Health = Seat->MaxHealth;
 		Seat->bIsAlive = true;
 		Seats.Add(Seat);
 	}
@@ -456,7 +486,7 @@ void USGSGameContext::Heal(int32 SeatIndex, int32 Amount)
 	UE_LOG(LogSGSCombat, Log, TEXT("Seat %d healed %d (HP now %d)."), SeatIndex, Amount, Seat->Health);
 }
 
-void USGSGameContext::EliminateSeat(int32 SeatIndex, FName Reason)
+void USGSGameContext::EliminateSeat(int32 SeatIndex, int32 SourceSeat, FName Reason)
 {
 	USGSSeat* Seat = GetSeat(SeatIndex);
 	if (Seat == nullptr || !Seat->bIsAlive)
@@ -469,7 +499,7 @@ void USGSGameContext::EliminateSeat(int32 SeatIndex, FName Reason)
 	RebuildSeatIndexes();
 	UE_LOG(LogSGSCombat, Log, TEXT("Seat %d is eliminated. Reason=%s"), SeatIndex, *Reason.ToString());
 	HealthChangedDelegate.Broadcast(SeatIndex, Seat->Health);
-	SeatEliminatedDelegate.Broadcast(SeatIndex, Reason);
+	SeatEliminatedDelegate.Broadcast(SeatIndex, SourceSeat, Reason);
 }
 
 int32 USGSGameContext::GetDistance(int32 FromSeat, int32 ToSeat) const

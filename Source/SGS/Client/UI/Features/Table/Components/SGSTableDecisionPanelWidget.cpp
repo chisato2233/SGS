@@ -15,7 +15,8 @@ void SSGSTableDecisionPanelWidget::Construct(const FArguments& InArgs)
 	const FVector2D ActionButtonSize = FSGSUITheme::ActionButtonMinSize() * Props.LayoutScale;
 	const float Gap = 5.0f * Props.LayoutScale;
 
-	TSharedRef<SHorizontalBox> ActionRow = SNew(SHorizontalBox);
+	TSharedRef<SHorizontalBox> ActionRow = SNew(SHorizontalBox)
+		.Visibility(Props.bShowActions ? EVisibility::Visible : EVisibility::Collapsed);
 	if (!Props.SkillOptions.IsEmpty())
 	{
 		ActionRow->AddSlot()

@@ -68,6 +68,7 @@ struct SGS_API FSGSTableDecisionBarProps
 	float LayoutScale = 1.0f;
 	bool bHasPrompt = false;
 	bool bIsResponse = false;
+	bool bShowActions = true;
 	bool bCanConfirm = false;
 	bool bCanPass = false;
 };

@@ -18,4 +18,5 @@ struct SGS_API FSGSDeckCardSpec
 namespace SGSDeckDefinitions
 {
 	SGS_API TArray<FSGSDeckCardSpec> MakePlan0005SmokeDeck(int32 SeatCount);
+	SGS_API TArray<FSGSDeckCardSpec> MakeMinimalIdentityDeck();
 }

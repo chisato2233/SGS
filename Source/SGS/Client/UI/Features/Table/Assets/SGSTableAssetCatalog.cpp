@@ -74,6 +74,10 @@ const FSlateBrush* FSGSTableAssetCatalog::GetCardFaceBrush(FName CardName)
 	{
 		FileStem = TEXT("peach");
 	}
+	else if (CardName == FName(TEXT("Analeptic")))
+	{
+		FileStem = TEXT("analeptic");
+	}
 	else
 	{
 		return nullptr;

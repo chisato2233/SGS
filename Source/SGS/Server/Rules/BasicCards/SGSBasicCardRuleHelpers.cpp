@@ -4,6 +4,7 @@
 #include "Server/Effects/SGSStandardEffectSteps.h"
 #include "Server/Engine/SGSGameContext.h"
 #include "Server/Players/SGSSeat.h"
+#include "Server/Rules/Actions/BasicCards/SGSSlashRule.h"
 #include "Server/Rules/Responses/BasicCards/SGSDyingPeachRules.h"
 
 namespace
@@ -11,7 +12,10 @@ namespace
 FSGSStatus EliminateDyingSeatAndFinish(FSGSRuleExecutionContext& Context, int32 DyingSeatIndex)
 {
 	if (FSGSStatus Status = Context.Runtime->RunEffectStep(
-		SGSStandardEffectSteps::MakeEliminateSeatStep(DyingSeatIndex, FName(TEXT("NoPeach"))),
+		SGSStandardEffectSteps::MakeEliminateSeatStep(
+			DyingSeatIndex,
+			SGSBasicCardRuleHelpers::GetCurrentEffectSourceSeat(Context),
+			FName(TEXT("NoPeach"))),
 		SGSBasicCardRuleHelpers::GetCommandId(Context));
 		Status.HasError())
 	{
@@ -49,6 +53,11 @@ bool OpenNextDyingPeachResponseWindow(FSGSRuleExecutionContext& Context, FSGSRes
 		WindowSpec.SeatIndex = ResponderSeat;
 		WindowSpec.WindowName = SGSBasicCardRuleHelpers::DyingPeachWindowName();
 		WindowSpec.RequiredCardName = FName(TEXT("Peach"));
+		WindowSpec.AcceptedCardNames.Add(FName(TEXT("Peach")));
+		if (ResponderSeat == DyingState->DyingSeat)
+		{
+			WindowSpec.AcceptedCardNames.Add(FName(TEXT("Analeptic")));
+		}
 		WindowSpec.ContextName = FName(TEXT("Dying"));
 		WindowSpec.EffectSourceSeat = DyingFrame.SourceSeat;
 		WindowSpec.EffectTargetSeat = DyingFrame.TargetSeat;
@@ -135,6 +144,53 @@ FSGSCommandId SGSBasicCardRuleHelpers::GetCommandId(const FSGSRuleExecutionConte
 	return Context.Command != nullptr ? Context.Command->CommandId : FSGSCommandId();
 }
 
+bool SGSBasicCardRuleHelpers::HasStatus(const FSGSRuleExecutionContext& Context, int32 SeatIndex, FGameplayTag StatusTag)
+{
+	for (const FSGSStableHandle Handle : Context.ActiveEffects->QueryByTag(StatusTag))
+	{
+		const FSGSActiveEffect* Effect = Context.ActiveEffects->Find(Handle);
+		if (Effect != nullptr && Effect->OwnerSeat == SeatIndex)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void SGSBasicCardRuleHelpers::AddStatus(
+	FSGSRuleExecutionContext& Context,
+	int32 SeatIndex,
+	FName EffectName,
+	FGameplayTag StatusTag,
+	FSGSDurationSpec Duration)
+{
+	FSGSActiveEffect Effect;
+	Effect.EffectName = EffectName;
+	Effect.PrimaryTag = StatusTag;
+	Effect.SourceCommandId = GetCommandId(Context);
+	Effect.OwnerSeat = SeatIndex;
+	Effect.TargetSeat = SeatIndex;
+	Effect.Duration = MoveTemp(Duration);
+	Effect.CreatedAt = Context.TimingPoint;
+	Context.ActiveEffects->Add(MoveTemp(Effect));
+}
+
+bool SGSBasicCardRuleHelpers::ConsumeStatus(FSGSRuleExecutionContext& Context, int32 SeatIndex, FGameplayTag StatusTag)
+{
+	for (const FSGSStableHandle Handle : Context.ActiveEffects->QueryByTag(StatusTag))
+	{
+		const FSGSActiveEffect* Effect = Context.ActiveEffects->Find(Handle);
+		if (Effect != nullptr && Effect->OwnerSeat == SeatIndex)
+		{
+			Context.ActiveEffects->Expire(Handle, Context.TimingPoint, SGSActiveEffectExpireReasons::Manual());
+			return true;
+		}
+	}
+
+	return false;
+}
+
 FSGSStatus SGSBasicCardRuleHelpers::DiscardHandCard(FSGSRuleExecutionContext& Context, USGSCard* Card, int32 SeatIndex)
 {
 	if (Card == nullptr)
@@ -199,17 +255,21 @@ int32 SGSBasicCardRuleHelpers::GetPeachHealTarget(const FSGSRuleExecutionContext
 	return GetCommandSeat(Context);
 }
 
-FSGSStatus SGSBasicCardRuleHelpers::ExecutePeachHeal(FSGSRuleExecutionContext& Context, int32 PeachCardId, int32 HealTargetSeat)
+FSGSStatus SGSBasicCardRuleHelpers::ExecuteHealCard(
+	FSGSRuleExecutionContext& Context,
+	int32 CardId,
+	FName CardName,
+	int32 HealTargetSeat)
 {
-	USGSCard* PeachCard = FindPayloadCard(Context, PeachCardId);
-	if (PeachCard == nullptr || PeachCard->CardName != TEXT("Peach") || Context.GameContext->GetSeat(HealTargetSeat) == nullptr)
+	USGSCard* Card = FindPayloadCard(Context, CardId);
+	if (Card == nullptr || Card->CardName != CardName || Context.GameContext->GetSeat(HealTargetSeat) == nullptr)
 	{
 		return MakeRuleError(
-			FName(TEXT("SGS.Rule.InvalidPeach")),
-			TEXT("Peach rule requires a Peach card and a valid heal target."));
+			FName(TEXT("SGS.Rule.InvalidHealCard")),
+			TEXT("Heal rule requires the expected card and a valid target."));
 	}
 
-	if (FSGSStatus Status = DiscardHandCard(Context, PeachCard, GetCommandSeat(Context)); Status.HasError())
+	if (FSGSStatus Status = DiscardHandCard(Context, Card, GetCommandSeat(Context)); Status.HasError())
 	{
 		return Status;
 	}
@@ -302,10 +362,21 @@ FSGSStatus SGSBasicCardRuleHelpers::ResolveSlashHit(FSGSRuleExecutionContext& Co
 		return Status;
 	}
 
-	const int32 SourceSeat = GetCurrentEffectSourceSeat(Context);
-	const int32 TargetSeat = GetCurrentEffectTargetSeat(Context);
+	const FSGSResolutionFrame* SlashFrame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
+	const FSGSSlashResolutionState* SlashState = SlashFrame != nullptr
+		? SlashFrame->GetState<FSGSSlashResolutionState>()
+		: nullptr;
+	if (SlashState == nullptr)
+	{
+		return MakeRuleError(
+			FName(TEXT("SGS.Rule.MissingSlashResolution")),
+			TEXT("Slash hit requires the current Slash resolution state."));
+	}
+
+	const int32 SourceSeat = SlashState->SourceSeat;
+	const int32 TargetSeat = SlashState->TargetSeat;
 	if (FSGSStatus Status = Context.Runtime->RunEffectStep(
-		SGSStandardEffectSteps::MakeDamageStep(SourceSeat, TargetSeat, 1),
+		SGSStandardEffectSteps::MakeDamageStep(SourceSeat, TargetSeat, SlashState->DamageAmount),
 		GetCommandId(Context));
 		Status.HasError())
 	{

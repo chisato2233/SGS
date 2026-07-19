@@ -52,7 +52,12 @@ FSGSStatus FSGSPeachRule::ExecutePayload(FSGSRuleExecutionContext& Context, cons
 	Frame.TargetSeat = HealTargetSeat;
 	Context.Runtime->PushResolutionFrame(MoveTemp(Frame));
 
-	if (FSGSStatus Status = SGSBasicCardRuleHelpers::ExecutePeachHeal(Context, Payload.CardId, HealTargetSeat); Status.HasError())
+	if (FSGSStatus Status = SGSBasicCardRuleHelpers::ExecuteHealCard(
+		Context,
+		Payload.CardId,
+		FName(TEXT("Peach")),
+		HealTargetSeat);
+		Status.HasError())
 	{
 		Context.Runtime->AbortAllFrames(FName(TEXT("SGS.Resolution.PeachFailed")));
 		return Status;

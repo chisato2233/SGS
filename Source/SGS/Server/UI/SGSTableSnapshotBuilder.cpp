@@ -61,6 +61,7 @@ void ApplyPromptSnapshot(FSGSPlayerPrivateSnapshot& Snapshot, const USGSLocalHum
 		Snapshot.Prompt.bIsResponse = true;
 		Snapshot.Prompt.WindowName = ResponseRequest->WindowName;
 		Snapshot.Prompt.RequiredCardName = ResponseRequest->RequiredCardName;
+		Snapshot.Prompt.AcceptedCardNames = ResponseRequest->AcceptedCardNames;
 		Snapshot.Prompt.ContextName = ResponseRequest->ContextName;
 		Snapshot.Prompt.EffectSourceSeat = ResponseRequest->EffectSourceSeat;
 		Snapshot.Prompt.EffectTargetSeat = ResponseRequest->EffectTargetSeat;
@@ -121,6 +122,7 @@ FSGSTablePublicSnapshot FSGSTableSnapshotBuilder::BuildPublicSnapshot(const USGS
 	Snapshot.CurrentSeatIndex = Driver->GetCurrentSeatIndex();
 	Snapshot.CurrentPhase = Driver->GetCurrentPhase();
 	Snapshot.bGameOver = Driver->IsGameOver();
+	Snapshot.GameResult = Driver->GetGameResult();
 
 	if (Context == nullptr)
 	{
@@ -147,6 +149,12 @@ FSGSTablePublicSnapshot FSGSTableSnapshotBuilder::BuildPublicSnapshot(const USGS
 		SeatView.MaxHealth = Seat->MaxHealth;
 		SeatView.bIsAlive = Seat->bIsAlive;
 		SeatView.bIsCurrent = SeatIndex == Snapshot.CurrentSeatIndex;
+		if (Seat->Identity == SGSGameplayTags::Identity_Lord.GetTag()
+			|| !Seat->bIsAlive
+			|| Snapshot.bGameOver)
+		{
+			SeatView.Identity = Seat->Identity;
+		}
 		SeatView.HandCount = Context->GetCardsInZone(SGSGameplayTags::CardZone_Hand.GetTag(), SeatIndex).Num();
 		Snapshot.Seats.Add(MoveTemp(SeatView));
 	}
@@ -173,6 +181,11 @@ FSGSPlayerPrivateSnapshot FSGSTableSnapshotBuilder::BuildPrivateSnapshot(
 	{
 		ApplyPromptSnapshot(Snapshot, DecisionAgent);
 		return Snapshot;
+	}
+
+	if (const USGSSeat* Viewer = Context->GetSeat(ViewerSeat))
+	{
+		Snapshot.ViewerIdentity = Viewer->Identity;
 	}
 
 	for (USGSCard* Card : Context->GetCardsInZone(SGSGameplayTags::CardZone_Hand.GetTag(), ViewerSeat))

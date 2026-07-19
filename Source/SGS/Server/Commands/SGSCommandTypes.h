@@ -21,6 +21,7 @@ struct SGS_API FSGSCommandExecutionContext
 	FSGSPhase ExpectedPhase = SGSGameplayTags::Phase_None.GetTag();
 	FName ExpectedWindowName = NAME_None;
 	FName RequiredCardName = NAME_None;
+	TArray<FName> AcceptedCardNames;
 	int32 EffectSourceSeatIndex = INDEX_NONE;
 	int32 EffectTargetSeatIndex = INDEX_NONE;
 };

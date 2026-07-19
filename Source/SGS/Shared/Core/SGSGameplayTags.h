@@ -41,6 +41,17 @@ namespace SGSGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Faction_Wu);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Faction_Qun);
 
+	// Standard identity mode roles.
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Identity_Lord);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Identity_Loyalist);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Identity_Rebel);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Identity_Renegade);
+
+	// Minimal basic-card runtime states.
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_SlashUsed);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_AnalepticUsed);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_AnalepticBoost);
+
 	// Equipment slots.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(EquipSlot_None);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(EquipSlot_Weapon);

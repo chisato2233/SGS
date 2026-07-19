@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Shared/Core/SGSTypes.h"
+#include "Shared/Game/SGSGameResult.h"
 
 #include "SGSTableViewTypes.generated.h"
 
@@ -57,6 +58,9 @@ struct SGS_API FSGSSeatViewData
 
 	UPROPERTY()
 	bool bIsSelectableTarget = false;
+
+	UPROPERTY()
+	FGameplayTag Identity;
 };
 
 USTRUCT(BlueprintType)
@@ -108,6 +112,9 @@ struct SGS_API FSGSDecisionPromptViewData
 
 	UPROPERTY()
 	FName RequiredCardName = NAME_None;
+
+	UPROPERTY()
+	TArray<FName> AcceptedCardNames;
 
 	UPROPERTY()
 	FName ContextName = NAME_None;
@@ -196,6 +203,9 @@ struct SGS_API FSGSTablePublicSnapshot
 	bool bGameOver = false;
 
 	UPROPERTY()
+	FSGSGameResult GameResult;
+
+	UPROPERTY()
 	TArray<FSGSSeatViewData> Seats;
 
 };
@@ -210,6 +220,9 @@ struct SGS_API FSGSPlayerPrivateSnapshot
 
 	UPROPERTY()
 	int32 ViewerSeat = INDEX_NONE;
+
+	UPROPERTY()
+	FGameplayTag ViewerIdentity;
 
 	UPROPERTY()
 	TArray<FSGSCardViewData> HandCards;
@@ -248,6 +261,9 @@ struct SGS_API FSGSTableViewSnapshot
 	bool bGameOver = false;
 
 	UPROPERTY()
+	FSGSGameResult GameResult;
+
+	UPROPERTY()
 	TArray<FSGSSeatViewData> Seats;
 
 	UPROPERTY()
@@ -271,11 +287,16 @@ inline FSGSTableViewSnapshot SGSComposeTableViewSnapshot(
 	Snapshot.DrawPileCount = PublicSnapshot.DrawPileCount;
 	Snapshot.DiscardPileCount = PublicSnapshot.DiscardPileCount;
 	Snapshot.bGameOver = PublicSnapshot.bGameOver;
+	Snapshot.GameResult = PublicSnapshot.GameResult;
 	Snapshot.Seats = PublicSnapshot.Seats;
 	Snapshot.HandCards = PrivateSnapshot.HandCards;
 	Snapshot.Prompt = PrivateSnapshot.Prompt;
 	for (FSGSSeatViewData& Seat : Snapshot.Seats)
 	{
+		if (Seat.SeatIndex == Snapshot.ViewerSeat && PrivateSnapshot.ViewerIdentity.IsValid())
+		{
+			Seat.Identity = PrivateSnapshot.ViewerIdentity;
+		}
 		Seat.bIsSelectableTarget = Snapshot.Prompt.SelectableTargetSeatIndices.Contains(Seat.SeatIndex);
 	}
 

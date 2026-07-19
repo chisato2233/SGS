@@ -5,6 +5,7 @@
 #include "Shared/Commands/SGSCommandPayloads.h"
 #include "Server/Engine/SGSGameContext.h"
 #include "Server/Players/SGSSeat.h"
+#include "Server/AI/SGSBasicAIAgent.h"
 #include "Shared/Core/SGSLogChannels.h"
 #include "Server/Effects/SGSStandardEffectSteps.h"
 #include "Server/Rules/Responses/BasicCards/SGSDyingPeachRules.h"
@@ -34,6 +35,7 @@ public:
 		if (FSGSStatus Status = Driver.ResolutionStack.OpenResponseWindowOnCurrent(
 			Spec.WindowName,
 			Spec.RequiredCardName,
+			Spec.AcceptedCardNames,
 			Spec.EffectSourceSeat,
 			Spec.EffectTargetSeat);
 			Status.HasError())
@@ -49,7 +51,8 @@ public:
 			Spec.ContextName,
 			Spec.EffectSourceSeat,
 			Spec.EffectTargetSeat,
-			Spec.SkillOptions);
+			Spec.SkillOptions,
+			Spec.AcceptedCardNames);
 		Driver.PendingCommandId = Request.CommandId;
 		Driver.CurrentSeatIndex = Spec.SeatIndex;
 		Driver.bWaitingForDecision = true;
@@ -109,7 +112,7 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents, const FSGSGameStartConfig& Config)
 {
 	Context = NewObject<USGSGameContext>(this);
-	Context->Initialize(InAgents, Config.RandomSeed);
+	Context->Initialize(InAgents, Config.RandomSeed, Config.bIdentityMode);
 
 	if (Context->NumSeats() == 0)
 	{
@@ -120,6 +123,8 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 
 	bGameOver = false;
 	bWaitingForDecision = false;
+	bIdentityMode = Config.bIdentityMode;
+	GameResult = FSGSGameResult();
 	TurnsPlayed = 0;
 	CurrentSeatIndex = 0;
 	PendingRequestId = 0;
@@ -129,7 +134,7 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 	DeferredResponseRequest = FSGSResponseRequest();
 	DeferredResponseAgent = TScriptInterface<ISGSDecisionAgent>();
 	bHasDeferredResponseRequest = false;
-	CurrentMaxTurns = FMath::Max(Config.MaxTurns, 1);
+	CurrentMaxTurns = bIdentityMode ? 0 : FMath::Max(Config.MaxTurns, 1);
 	CurrentStartingHandSize = FMath::Max(Config.StartingHandSize, 0);
 	CommandRouter.Reset();
 	RuleRegistry.Reset();
@@ -137,6 +142,15 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 	EffectPipeline.Reset();
 	ActiveEffectTimeline.Reset();
 	ReplayLog.Reset();
+	Context->OnSeatEliminated().AddUObject(this, &USGSGameDriver::HandleSeatEliminated);
+	for (int32 SeatIndex = 0; SeatIndex < Context->NumSeats(); ++SeatIndex)
+	{
+		USGSSeat* Seat = Context->GetSeat(SeatIndex);
+		if (USGSBasicAIAgent* Agent = Cast<USGSBasicAIAgent>(Seat->DecisionAgent.GetObject()))
+		{
+			Agent->BindToSeat(Context, SeatIndex);
+		}
+	}
 
 	for (const TPair<int32, int32>& HealthOverride : Config.InitialHealthBySeat)
 	{
@@ -162,6 +176,17 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 		SyncReplayLog();
 	}
 	CurrentSeatIndex = 0;
+	if (bIdentityMode)
+	{
+		for (int32 SeatIndex = 0; SeatIndex < Context->NumSeats(); ++SeatIndex)
+		{
+			if (Context->GetSeat(SeatIndex)->Identity.MatchesTagExact(SGSGameplayTags::Identity_Lord.GetTag()))
+			{
+				CurrentSeatIndex = SeatIndex;
+				break;
+			}
+		}
+	}
 
 	Broadcast(SGSGameplayTags::GameEvent_GameStarted.GetTag());
 	BeginTurn();
@@ -239,8 +264,14 @@ void USGSGameDriver::EnterCurrentPhase()
 		return;
 	}
 
-	// 其余阶段（回合开始/判定/弃牌/回合结束）在本期无结算内容，立即结束并推进。
-	// 判定/弃牌限制等将在后续 Plan 接入。
+	if (SGSMatchesExactTag(CurrentPhase, SGSGameplayTags::Phase_Discard))
+	{
+		ExecuteDiscardPhase();
+		AdvanceAfterPhase();
+		return;
+	}
+
+	// 回合开始、判定和回合结束在最小 Demo 中无额外结算。
 	AdvanceAfterPhase();
 }
 
@@ -384,6 +415,7 @@ FSGSCommandExecutionContext USGSGameDriver::MakeCommandExecutionContext() const
 	{
 		ExecutionContext.ExpectedWindowName = Frame->WindowName;
 		ExecutionContext.RequiredCardName = Frame->RequiredCardName;
+		ExecutionContext.AcceptedCardNames = Frame->AcceptedCardNames;
 		ExecutionContext.EffectSourceSeatIndex = Frame->SourceSeat;
 		ExecutionContext.EffectTargetSeatIndex = Frame->TargetSeat;
 	}
@@ -466,6 +498,20 @@ FSGSPlayPhaseRequest USGSGameDriver::MakePlayPhaseRequest()
 	SlashTargetQuery.SourceSeat = CurrentSeatIndex;
 	SlashTargetQuery.MaxDistance = 1;
 	const FSGSSeatQueryResult SlashTargets = Context->QuerySeats(SlashTargetQuery);
+	auto HasStatus = [this](FGameplayTag StatusTag)
+	{
+		for (const FSGSStableHandle Handle : ActiveEffectTimeline.QueryByTag(StatusTag))
+		{
+			const FSGSActiveEffect* Effect = ActiveEffectTimeline.Find(Handle);
+			if (Effect != nullptr && Effect->OwnerSeat == CurrentSeatIndex)
+			{
+				return true;
+			}
+		}
+		return false;
+	};
+	const bool bSlashUsed = HasStatus(SGSGameplayTags::Status_SlashUsed.GetTag());
+	const bool bAnalepticUsed = HasStatus(SGSGameplayTags::Status_AnalepticUsed.GetTag());
 
 	for (const FSGSCardTarget& CardTarget : HandCards.Targets)
 	{
@@ -477,7 +523,7 @@ FSGSPlayPhaseRequest USGSGameDriver::MakePlayPhaseRequest()
 		FSGSCardActionOption Option;
 		Option.CardId = CardTarget.CardId;
 		Option.CardName = CardTarget.Card->CardName;
-		if (Option.CardName == TEXT("Slash"))
+		if (Option.CardName == TEXT("Slash") && !bSlashUsed)
 		{
 			for (const FSGSSeatTarget& SeatTarget : SlashTargets.Targets)
 			{
@@ -492,8 +538,9 @@ FSGSPlayPhaseRequest USGSGameDriver::MakePlayPhaseRequest()
 				Option.TargetSeatIndices.Add(CurrentSeatIndex);
 			}
 		}
-
-		if (Option.CardName == TEXT("Slash") || Option.CardName == TEXT("Peach"))
+		if ((Option.CardName == TEXT("Slash") && !bSlashUsed)
+			|| (Option.CardName == TEXT("Peach") && !Option.TargetSeatIndices.IsEmpty())
+			|| (Option.CardName == TEXT("Analeptic") && !bAnalepticUsed))
 		{
 			Request.Options.Add(MoveTemp(Option));
 		}
@@ -509,7 +556,8 @@ FSGSResponseRequest USGSGameDriver::MakeResponseRequest(
 	FName ContextName,
 	int32 EffectSourceSeat,
 	int32 EffectTargetSeat,
-	TConstArrayView<FSGSDecisionSkillOption> SkillOptions)
+	TConstArrayView<FSGSDecisionSkillOption> SkillOptions,
+	TConstArrayView<FName> AcceptedCardNames)
 {
 	FSGSResponseRequest Request;
 	Request.CommandId = AllocateCommandId();
@@ -518,6 +566,11 @@ FSGSResponseRequest USGSGameDriver::MakeResponseRequest(
 	Request.Phase = CurrentPhase;
 	Request.WindowName = WindowName;
 	Request.RequiredCardName = RequiredCardName;
+	Request.AcceptedCardNames.Append(AcceptedCardNames.GetData(), AcceptedCardNames.Num());
+	if (Request.AcceptedCardNames.IsEmpty() && !RequiredCardName.IsNone())
+	{
+		Request.AcceptedCardNames.Add(RequiredCardName);
+	}
 	Request.ContextName = ContextName;
 	Request.EffectSourceSeat = EffectSourceSeat;
 	Request.EffectTargetSeat = EffectTargetSeat;
@@ -527,11 +580,13 @@ FSGSResponseRequest USGSGameDriver::MakeResponseRequest(
 	Query.Zone = SGSGameplayTags::CardZone_Hand.GetTag();
 	Query.SeatIndex = SeatIndex;
 	Query.ViewerSeatIndex = SeatIndex;
-	Query.RequiredCardName = RequiredCardName;
 	const FSGSCardQueryResult Cards = Context->QueryCards(Query);
 	for (const FSGSCardTarget& Target : Cards.Targets)
 	{
-		Request.ResponseCardIds.Add(Target.CardId);
+		if (Target.Card != nullptr && Request.AcceptedCardNames.Contains(Target.Card->CardName))
+		{
+			Request.ResponseCardIds.Add(Target.CardId);
+		}
 	}
 
 	return Request;
@@ -602,7 +657,7 @@ FSGSStatus USGSGameDriver::FinishCurrentResolution(FName Reason)
 	}
 
 	CurrentSeatIndex = ActionSeat;
-	if (!bGameOver)
+	if (!bGameOver && !SGSMatchesExactTag(CurrentPhase, SGSGameplayTags::Phase_Play))
 	{
 		AdvanceAfterPhase();
 	}
@@ -658,13 +713,27 @@ bool USGSGameDriver::OpenNextDyingPeachResponseWindow(FSGSResolutionFrame& Dying
 			continue;
 		}
 
+		TArray<FName> AcceptedCardNames = { FName(TEXT("Peach")) };
+		if (ResponderSeat == DyingState->DyingSeat)
+		{
+			AcceptedCardNames.Add(FName(TEXT("Analeptic")));
+		}
+		ResolutionStack.OpenResponseWindowOnCurrent(
+			FName(TEXT("Dying.Peach")),
+			FName(TEXT("Peach")),
+			AcceptedCardNames,
+			DyingFrame.SourceSeat,
+			DyingFrame.TargetSeat);
+
 		FSGSResponseRequest Request = MakeResponseRequest(
 			ResponderSeat,
 			FName(TEXT("Dying.Peach")),
 			FName(TEXT("Peach")),
 			FName(TEXT("Dying")),
 			DyingFrame.SourceSeat,
-			DyingFrame.TargetSeat);
+			DyingFrame.TargetSeat,
+			{},
+			AcceptedCardNames);
 		PendingCommandId = Request.CommandId;
 		CurrentSeatIndex = ResponderSeat;
 		bWaitingForDecision = true;
@@ -698,7 +767,10 @@ FSGSStatus USGSGameDriver::ContinueDyingPeachFrame(FSGSResolutionFrame& DyingFra
 
 	const FSGSCommandId CommandId = PendingCommandId.IsValid() ? PendingCommandId : DyingFrame.SourceCommandId;
 	if (FSGSStatus Status = RunEffectStep(
-		SGSStandardEffectSteps::MakeEliminateSeatStep(DyingState->DyingSeat, FName(TEXT("NoPeach"))),
+		SGSStandardEffectSteps::MakeEliminateSeatStep(
+			DyingState->DyingSeat,
+			DyingFrame.SourceSeat,
+			FName(TEXT("NoPeach"))),
 		CommandId);
 		Status.HasError())
 	{
@@ -822,13 +894,19 @@ void USGSGameDriver::SyncReplayLog()
 void USGSGameDriver::AdvanceAfterPhase()
 {
 	Broadcast(SGSGameplayTags::GameEvent_PhaseEnded.GetTag());
+	if (SGSMatchesExactTag(CurrentPhase, SGSGameplayTags::Phase_Play))
+	{
+		ExpireStatusEffects(CurrentSeatIndex, SGSGameplayTags::Status_SlashUsed.GetTag());
+	}
 
 	if (SGSMatchesExactTag(CurrentPhase, SGSGameplayTags::Phase_RoundEnd))
 	{
+		ExpireStatusEffects(CurrentSeatIndex, SGSGameplayTags::Status_AnalepticUsed.GetTag());
+		ExpireStatusEffects(CurrentSeatIndex, SGSGameplayTags::Status_AnalepticBoost.GetTag());
 		Broadcast(SGSGameplayTags::GameEvent_TurnEnded.GetTag());
 		++TurnsPlayed;
 
-		if (TurnsPlayed >= CurrentMaxTurns)
+		if (CurrentMaxTurns > 0 && TurnsPlayed >= CurrentMaxTurns)
 		{
 			EndGame();
 			return;
@@ -856,9 +934,167 @@ void USGSGameDriver::AdvanceAfterPhase()
 	CurrentPhase = NextPhase(CurrentPhase);
 }
 
+void USGSGameDriver::DiscardAllCards(int32 SeatIndex)
+{
+	TArray<USGSCard*> Hand = Context->GetCardsInZone(SGSGameplayTags::CardZone_Hand.GetTag(), SeatIndex);
+	Context->DiscardFromHand(SeatIndex, Hand);
+
+	USGSSeat* Seat = Context->GetSeat(SeatIndex);
+	TArray<USGSCard*> Equipment;
+	for (const TPair<FGameplayTag, TObjectPtr<USGSCard>>& Slot : Seat->Equipment)
+	{
+		Equipment.Add(Slot.Value.Get());
+	}
+	Context->MoveCards(
+		Equipment,
+		SGSGameplayTags::CardZone_Equipment.GetTag(),
+		SeatIndex,
+		SGSGameplayTags::CardZone_DiscardPile.GetTag(),
+		INDEX_NONE);
+	Seat->Equipment.Reset();
+}
+
+void USGSGameDriver::HandleSeatEliminated(int32 SeatIndex, int32 SourceSeat, FName)
+{
+	DiscardAllCards(SeatIndex);
+
+	USGSSeat* EliminatedSeat = Context->GetSeat(SeatIndex);
+	USGSSeat* KillerSeat = Context->GetSeat(SourceSeat);
+	if (KillerSeat != nullptr && KillerSeat->bIsAlive)
+	{
+		if (EliminatedSeat->Identity.MatchesTagExact(SGSGameplayTags::Identity_Rebel.GetTag()))
+		{
+			Context->DrawCards(SourceSeat, 3);
+		}
+		else if (KillerSeat->Identity.MatchesTagExact(SGSGameplayTags::Identity_Lord.GetTag())
+			&& EliminatedSeat->Identity.MatchesTagExact(SGSGameplayTags::Identity_Loyalist.GetTag()))
+		{
+			DiscardAllCards(SourceSeat);
+		}
+	}
+
+	EvaluateIdentityVictory();
+}
+
+void USGSGameDriver::EvaluateIdentityVictory()
+{
+	if (!bIdentityMode || bGameOver)
+	{
+		return;
+	}
+
+	USGSSeat* Lord = nullptr;
+	int32 AliveNonLordCount = 0;
+	int32 AliveRenegadeSeat = INDEX_NONE;
+	bool bEnemyOfLordAlive = false;
+	for (int32 SeatIndex = 0; SeatIndex < Context->NumSeats(); ++SeatIndex)
+	{
+		USGSSeat* Seat = Context->GetSeat(SeatIndex);
+		if (Seat->Identity.MatchesTagExact(SGSGameplayTags::Identity_Lord.GetTag()))
+		{
+			Lord = Seat;
+			continue;
+		}
+		if (!Seat->bIsAlive)
+		{
+			continue;
+		}
+
+		++AliveNonLordCount;
+		if (Seat->Identity.MatchesTagExact(SGSGameplayTags::Identity_Renegade.GetTag()))
+		{
+			AliveRenegadeSeat = SeatIndex;
+		}
+		if (Seat->Identity.MatchesTagExact(SGSGameplayTags::Identity_Rebel.GetTag())
+			|| Seat->Identity.MatchesTagExact(SGSGameplayTags::Identity_Renegade.GetTag()))
+		{
+			bEnemyOfLordAlive = true;
+		}
+	}
+
+	check(Lord != nullptr);
+	if (Lord->bIsAlive && bEnemyOfLordAlive)
+	{
+		return;
+	}
+
+	if (Lord->bIsAlive)
+	{
+		GameResult.EndReason = FName(TEXT("SGS.GameEnd.LordSideVictory"));
+		GameResult.WinningIdentities = {
+			SGSGameplayTags::Identity_Lord.GetTag(),
+			SGSGameplayTags::Identity_Loyalist.GetTag(),
+		};
+	}
+	else if (AliveNonLordCount == 1 && AliveRenegadeSeat != INDEX_NONE)
+	{
+		GameResult.EndReason = FName(TEXT("SGS.GameEnd.RenegadeVictory"));
+		GameResult.WinningIdentities = { SGSGameplayTags::Identity_Renegade.GetTag() };
+	}
+	else
+	{
+		GameResult.EndReason = FName(TEXT("SGS.GameEnd.RebelVictory"));
+		GameResult.WinningIdentities = { SGSGameplayTags::Identity_Rebel.GetTag() };
+	}
+
+	for (int32 SeatIndex = 0; SeatIndex < Context->NumSeats(); ++SeatIndex)
+	{
+		const FGameplayTag Identity = Context->GetSeat(SeatIndex)->Identity;
+		if (GameResult.WinningIdentities.ContainsByPredicate([Identity](const FGameplayTag& Winner)
+		{
+			return Identity.MatchesTagExact(Winner);
+		}))
+		{
+			GameResult.WinningSeatIndices.Add(SeatIndex);
+		}
+	}
+	EndGame();
+}
+
+void USGSGameDriver::ExecuteDiscardPhase()
+{
+	const USGSSeat* Seat = Context->GetSeat(CurrentSeatIndex);
+	TArray<USGSCard*> Hand = Context->GetCardsInZone(SGSGameplayTags::CardZone_Hand.GetTag(), CurrentSeatIndex);
+	const int32 ExcessCount = Hand.Num() - FMath::Max(Seat->Health, 0);
+	if (ExcessCount <= 0)
+	{
+		return;
+	}
+
+	TArray<USGSCard*> Discarded;
+	Discarded.Append(Hand.GetData() + Hand.Num() - ExcessCount, ExcessCount);
+	RunEffectStep(SGSStandardEffectSteps::MakeMoveCardsStep(
+		MoveTemp(Discarded),
+		SGSGameplayTags::CardZone_Hand.GetTag(),
+		CurrentSeatIndex,
+		SGSGameplayTags::CardZone_DiscardPile.GetTag(),
+		INDEX_NONE));
+}
+
+void USGSGameDriver::ExpireStatusEffects(int32 SeatIndex, FGameplayTag StatusTag)
+{
+	const TArray<FSGSStableHandle> Handles = ActiveEffectTimeline.QueryByTag(StatusTag);
+	for (const FSGSStableHandle Handle : Handles)
+	{
+		const FSGSActiveEffect* Effect = ActiveEffectTimeline.Find(Handle);
+		if (Effect != nullptr && Effect->OwnerSeat == SeatIndex)
+		{
+			ActiveEffectTimeline.Expire(
+				Handle,
+				MakeCurrentTimingPoint(SGSTimingSteps::End()),
+				SGSActiveEffectExpireReasons::DurationEnded());
+		}
+	}
+}
+
 void USGSGameDriver::EndGame()
 {
+	if (!GameResult.IsFinished())
+	{
+		GameResult.EndReason = FName(TEXT("SGS.GameEnd.TurnLimit"));
+	}
 	bGameOver = true;
+	bWaitingForDecision = false;
 	UE_LOG(LogSGSTurn, Log, TEXT("Game over after %d turns."), TurnsPlayed);
 	Broadcast(SGSGameplayTags::GameEvent_GameEnded.GetTag());
 }

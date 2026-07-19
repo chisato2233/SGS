@@ -27,6 +27,9 @@ struct SGS_API FSGSRespondCardRulePayload
 	FName RequiredCardName = NAME_None;
 
 	UPROPERTY()
+	TArray<FName> AcceptedCardNames;
+
+	UPROPERTY()
 	int32 EffectSourceSeat = INDEX_NONE;
 
 	UPROPERTY()

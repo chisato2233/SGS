@@ -58,7 +58,10 @@ FSGSStatus FSGSRespondCardCommandType::ValidateTyped(
 			TEXT("RespondCard requires exactly one card currently in the responding seat's hand.")));
 	}
 
-	if (!Context.RequiredCardName.IsNone() && State->CardName != Context.RequiredCardName)
+	const bool bCardNameAccepted = Context.AcceptedCardNames.IsEmpty()
+		? Context.RequiredCardName.IsNone() || State->CardName == Context.RequiredCardName
+		: Context.AcceptedCardNames.Contains(State->CardName);
+	if (!bCardNameAccepted)
 	{
 		return MakeError(FSGSError::Make(
 			FName(TEXT("SGS.Command.CardNameMismatch")),
@@ -87,6 +90,7 @@ TSGSResult<FSGSRuleInvocation> FSGSRespondCardCommandType::BuildRuleInvocationTy
 	RulePayload.TargetSeatIndices = Payload.TargetSeatIndices;
 	RulePayload.WindowName = Payload.WindowName;
 	RulePayload.RequiredCardName = Context.RequiredCardName;
+	RulePayload.AcceptedCardNames = Context.AcceptedCardNames;
 	RulePayload.EffectSourceSeat = Context.EffectSourceSeatIndex;
 	RulePayload.EffectTargetSeat = Context.EffectTargetSeatIndex;
 

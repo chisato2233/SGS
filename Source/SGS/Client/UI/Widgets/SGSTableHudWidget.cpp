@@ -20,6 +20,27 @@ FString TagLeaf(const FGameplayTag& Tag)
 		: Full;
 }
 
+FString IdentityDisplayName(const FGameplayTag& Identity)
+{
+	if (Identity == SGSGameplayTags::Identity_Lord.GetTag())
+	{
+		return TEXT("主公");
+	}
+	if (Identity == SGSGameplayTags::Identity_Loyalist.GetTag())
+	{
+		return TEXT("忠臣");
+	}
+	if (Identity == SGSGameplayTags::Identity_Rebel.GetTag())
+	{
+		return TEXT("反贼");
+	}
+	if (Identity == SGSGameplayTags::Identity_Renegade.GetTag())
+	{
+		return TEXT("内奸");
+	}
+	return FString();
+}
+
 FSGSTableSeatProps MakeSeatProps(
 	const FSGSSeatViewData& Seat,
 	FVector2D Size,
@@ -30,9 +51,14 @@ FSGSTableSeatProps MakeSeatProps(
 {
 	FSGSTableSeatProps Props;
 	Props.SeatIndex = Seat.SeatIndex;
+	const FString IdentityName = IdentityDisplayName(Seat.Identity);
+	const FString IdentityPrefix = IdentityName.IsEmpty()
+		? FString()
+		: FString::Printf(TEXT("[%s] "), *IdentityName);
 	Props.NameText = FText::FromString(FString::Printf(
-		TEXT("%s%s"),
+		TEXT("%s%s%s"),
 		Seat.bIsCurrent ? TEXT("[TURN] ") : TEXT(""),
+		*IdentityPrefix,
 		*Seat.DisplayName));
 	Props.StatusText = FText::FromString(FString::Printf(
 		TEXT("HP %d/%d  |  Hand %d%s"),
@@ -61,9 +87,12 @@ FSGSTableCardProps MakeCardProps(
 	FSGSTableCardProps Props;
 	Props.CardId = Card.CardId;
 	Props.CornerText = FText::FromString(FString::Printf(TEXT("%d %s"), Card.Number, *TagLeaf(Card.Suit)));
+	const FString CardName = Card.CardName == FName(TEXT("Analeptic"))
+		? TEXT("酒")
+		: Card.CardName.ToString();
 	Props.FooterText = FText::FromString(FString::Printf(
 		TEXT("%s  #%d"),
-		*Card.CardName.ToString(),
+		*CardName,
 		Card.CardId));
 	Props.Size = Size;
 	Props.FaceBrush = Assets.GetCardFaceBrush(Card.CardName);
@@ -80,6 +109,7 @@ FSGSTableShellProps MakeShellProps(
 {
 	const FSGSTableViewSnapshot& Snapshot = Controller.GetSnapshot();
 	const FSGSTableUIInteractionState& Interaction = Controller.GetInteraction();
+	const bool bGameFinished = Snapshot.GameResult.IsFinished();
 	const FSGSTableLayoutMetrics Layout = FSGSTableLayoutMetrics::Make(
 		ViewSize,
 		Snapshot.Seats.Num(),
@@ -104,30 +134,52 @@ FSGSTableShellProps MakeShellProps(
 			SeatLayout->Size,
 			Snapshot.ViewerSeat,
 			Interaction.SelectedTargetSeat,
-			Controller.IsTargetSelectable(Seat.SeatIndex),
+			!bGameFinished && Controller.IsTargetSelectable(Seat.SeatIndex),
 			Assets);
 	}
 
-	Props.DecisionBar.bHasPrompt = Snapshot.Prompt.bHasPrompt;
-	Props.DecisionBar.bIsResponse = Snapshot.Prompt.bIsResponse;
-	Props.DecisionBar.TitleText = FText::FromString(Controller.GetPromptTitle());
-	Props.DecisionBar.PromptText = FText::FromString(Controller.GetPromptText());
-	Props.DecisionBar.ContextText = FText::FromString(Controller.GetPromptContextText());
+	Props.DecisionBar.bHasPrompt = bGameFinished || Snapshot.Prompt.bHasPrompt;
+	Props.DecisionBar.bIsResponse = !bGameFinished && Snapshot.Prompt.bIsResponse;
+	Props.DecisionBar.bShowActions = !bGameFinished;
+	if (bGameFinished)
+	{
+		TArray<FString> WinningIdentityNames;
+		for (const FGameplayTag& Identity : Snapshot.GameResult.WinningIdentities)
+		{
+			WinningIdentityNames.AddUnique(IdentityDisplayName(Identity));
+		}
+		Props.DecisionBar.TitleText = FText::FromString(
+			Snapshot.GameResult.WinningSeatIndices.Contains(Snapshot.ViewerSeat)
+				? TEXT("胜利")
+				: TEXT("失败"));
+		Props.DecisionBar.PromptText = FText::FromString(FString::Printf(
+			TEXT("获胜阵营：%s"),
+			*FString::Join(WinningIdentityNames, TEXT("、"))));
+	}
+	else
+	{
+		Props.DecisionBar.TitleText = FText::FromString(Controller.GetPromptTitle());
+		Props.DecisionBar.PromptText = FText::FromString(Controller.GetPromptText());
+		Props.DecisionBar.ContextText = FText::FromString(Controller.GetPromptContextText());
+	}
 	Props.DecisionBar.ConfirmText = FText::FromString(Controller.GetConfirmLabel());
 	Props.DecisionBar.PassText = FText::FromString(Controller.GetPassLabel());
 	Props.DecisionBar.UIContext = Controller.GetUIContext();
 	Props.DecisionBar.LayoutScale = Layout.LayoutScale;
-	Props.DecisionBar.bCanConfirm = Controller.IsConfirmEnabled();
-	Props.DecisionBar.bCanPass = Snapshot.Prompt.bHasPrompt && Snapshot.Prompt.bAllowPass;
-	Props.DecisionBar.SkillOptions.Reserve(Snapshot.Prompt.SkillOptions.Num());
-	for (const FSGSDecisionSkillViewData& Skill : Snapshot.Prompt.SkillOptions)
+	Props.DecisionBar.bCanConfirm = !bGameFinished && Controller.IsConfirmEnabled();
+	Props.DecisionBar.bCanPass = !bGameFinished && Snapshot.Prompt.bHasPrompt && Snapshot.Prompt.bAllowPass;
+	if (!bGameFinished)
 	{
-		FSGSTableDecisionBarProps::FSkillOption& SkillProps =
-			Props.DecisionBar.SkillOptions.AddDefaulted_GetRef();
-		SkillProps.SkillName = Skill.SkillName;
-		SkillProps.Label = FText::FromString(
-			Skill.DisplayName.IsEmpty() ? Skill.SkillName.ToString() : Skill.DisplayName);
-		SkillProps.bSelected = Interaction.SelectedSkillName == Skill.SkillName;
+		Props.DecisionBar.SkillOptions.Reserve(Snapshot.Prompt.SkillOptions.Num());
+		for (const FSGSDecisionSkillViewData& Skill : Snapshot.Prompt.SkillOptions)
+		{
+			FSGSTableDecisionBarProps::FSkillOption& SkillProps =
+				Props.DecisionBar.SkillOptions.AddDefaulted_GetRef();
+			SkillProps.SkillName = Skill.SkillName;
+			SkillProps.Label = FText::FromString(
+				Skill.DisplayName.IsEmpty() ? Skill.SkillName.ToString() : Skill.DisplayName);
+			SkillProps.bSelected = Interaction.SelectedSkillName == Skill.SkillName;
+		}
 	}
 	Props.Hand.CardSize = Layout.HandCardSize;
 	Props.Hand.LayoutScale = Layout.LayoutScale;
@@ -150,7 +202,7 @@ FSGSTableShellProps MakeShellProps(
 				**Card,
 				Layout.HandCardSize,
 				Interaction.SelectedCardId,
-				Controller.IsCardSelectable(CardId),
+				!bGameFinished && Controller.IsCardSelectable(CardId),
 				Snapshot.Prompt.bHasPrompt && !Controller.IsCardSelectable(CardId),
 				Assets));
 			AddedCardIds.Add(CardId);
@@ -166,7 +218,7 @@ FSGSTableShellProps MakeShellProps(
 				Card,
 				Layout.HandCardSize,
 				Interaction.SelectedCardId,
-				Controller.IsCardSelectable(Card.CardId),
+				!bGameFinished && Controller.IsCardSelectable(Card.CardId),
 				Snapshot.Prompt.bHasPrompt && !Controller.IsCardSelectable(Card.CardId),
 				Assets));
 		}

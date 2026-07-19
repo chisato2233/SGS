@@ -30,3 +30,13 @@ TArray<FSGSDeckCardSpec> SGSDeckDefinitions::MakePlan0005SmokeDeck(int32 SeatCou
 
 	return Deck;
 }
+
+TArray<FSGSDeckCardSpec> SGSDeckDefinitions::MakeMinimalIdentityDeck()
+{
+	return {
+		MakeBasicCard(TEXT("Slash"), SGSGameplayTags::Suit_Spade.GetTag(), 7, 32),
+		MakeBasicCard(TEXT("Dodge"), SGSGameplayTags::Suit_Heart.GetTag(), 2, 16),
+		MakeBasicCard(TEXT("Peach"), SGSGameplayTags::Suit_Diamond.GetTag(), 3, 8),
+		MakeBasicCard(TEXT("Analeptic"), SGSGameplayTags::Suit_Club.GetTag(), 9, 8)
+	};
+}

@@ -16,6 +16,7 @@ bool FSGSSlashResolutionState::CheckInvariants() const
 	bOk &= ensureMsgf(SlashCardId != INDEX_NONE, TEXT("SlashResolutionState requires a Slash card id."));
 	bOk &= ensureMsgf(SourceSeat != INDEX_NONE, TEXT("SlashResolutionState requires a source seat."));
 	bOk &= ensureMsgf(TargetSeat != INDEX_NONE, TEXT("SlashResolutionState requires a target seat."));
+	bOk &= ensureMsgf(DamageAmount > 0, TEXT("SlashResolutionState requires positive damage."));
 	return bOk;
 }
 
@@ -53,6 +54,13 @@ FSGSStatus FSGSSlashRule::ValidatePayload(FSGSRuleExecutionContext& Context, con
 
 	const int32 SourceSeat = SGSBasicCardRuleHelpers::GetCommandSeat(Context);
 	const int32 TargetSeat = Payload.TargetSeatIndices[0];
+	if (SGSBasicCardRuleHelpers::HasStatus(Context, SourceSeat, SGSGameplayTags::Status_SlashUsed.GetTag()))
+	{
+		return SGSBasicCardRuleHelpers::MakeRuleError(
+			FName(TEXT("SGS.Rule.SlashAlreadyUsed")),
+			TEXT("Slash can only be used once per play phase."));
+	}
+
 	USGSCard* SlashCard = SGSBasicCardRuleHelpers::FindPayloadCard(Context, Payload.CardId);
 	if (SlashCard == nullptr || SlashCard->CardName != TEXT("Slash") || Context.GameContext->GetSeat(TargetSeat) == nullptr || TargetSeat == SourceSeat)
 	{
@@ -93,6 +101,16 @@ FSGSStatus FSGSSlashRule::ExecutePayload(FSGSRuleExecutionContext& Context, cons
 	SlashState.SlashCardId = SlashCard->CardId;
 	SlashState.SourceSeat = SourceSeat;
 	SlashState.TargetSeat = TargetSeat;
+	SlashState.DamageAmount = SGSBasicCardRuleHelpers::ConsumeStatus(
+		Context,
+		SourceSeat,
+		SGSGameplayTags::Status_AnalepticBoost.GetTag()) ? 2 : 1;
+	SGSBasicCardRuleHelpers::AddStatus(
+		Context,
+		SourceSeat,
+		FName(TEXT("SGS.ActiveEffect.SlashUsed")),
+		SGSGameplayTags::Status_SlashUsed.GetTag(),
+		FSGSDurationSpec::ThisPhase(SourceSeat, Context.TimingPoint));
 
 	FSGSResolutionFrame Frame;
 	Frame.SourceRuleName = GetRuleName();
@@ -109,6 +127,7 @@ FSGSStatus FSGSSlashRule::ExecutePayload(FSGSRuleExecutionContext& Context, cons
 	WindowSpec.SeatIndex = TargetSeat;
 	WindowSpec.WindowName = SGSBasicCardRuleHelpers::SlashDodgeWindowName();
 	WindowSpec.RequiredCardName = FName(TEXT("Dodge"));
+	WindowSpec.AcceptedCardNames.Add(FName(TEXT("Dodge")));
 	WindowSpec.ContextName = FName(TEXT("Slash"));
 	WindowSpec.EffectSourceSeat = SourceSeat;
 	WindowSpec.EffectTargetSeat = TargetSeat;

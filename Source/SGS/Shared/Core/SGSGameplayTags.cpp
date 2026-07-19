@@ -31,6 +31,15 @@ namespace SGSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Faction_Wu, "SGS.Faction.Wu", "Wu faction.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Faction_Qun, "SGS.Faction.Qun", "Qun faction.");
 
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Identity_Lord, "SGS.Identity.Lord", "Lord identity.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Identity_Loyalist, "SGS.Identity.Loyalist", "Loyalist identity.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Identity_Rebel, "SGS.Identity.Rebel", "Rebel identity.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Identity_Renegade, "SGS.Identity.Renegade", "Renegade identity.");
+
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Status_SlashUsed, "SGS.Status.SlashUsed", "Slash was used in this play phase.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Status_AnalepticUsed, "SGS.Status.AnalepticUsed", "Analeptic was used this turn.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Status_AnalepticBoost, "SGS.Status.AnalepticBoost", "The next Slash deals one additional damage.");
+
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(EquipSlot_None, "SGS.EquipSlot.None", "No equipment slot.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(EquipSlot_Weapon, "SGS.EquipSlot.Weapon", "Weapon equipment slot.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(EquipSlot_Armor, "SGS.EquipSlot.Armor", "Armor equipment slot.");

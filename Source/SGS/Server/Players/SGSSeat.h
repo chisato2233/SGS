@@ -28,6 +28,9 @@ public:
 	UPROPERTY(meta = (Categories = "SGS.Faction"))
 	FGameplayTag Faction;
 
+	UPROPERTY(meta = (Categories = "SGS.Identity"))
+	FGameplayTag Identity;
+
 	// ---- 生命 ----
 	// bIsAlive 由对局逻辑在体力归零并完成濒死结算后置否（濒死/求桃见 Plan 0005）。
 	UPROPERTY()

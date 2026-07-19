@@ -22,6 +22,7 @@ struct SGS_API FSGSResolutionFrame
 	int32 TargetSeat = INDEX_NONE;
 	FName WindowName = NAME_None;
 	FName RequiredCardName = NAME_None;
+	TArray<FName> AcceptedCardNames;
 	int32 ProcessingCardId = INDEX_NONE;
 	int32 StackSequence = INDEX_NONE;
 	FName OnChildCompletedContinuation = NAME_None;
@@ -68,7 +69,12 @@ public:
 	FSGSResolutionFrame* GetParentFrame(FSGSStableHandle FrameHandle);
 	const FSGSResolutionFrame* GetParentFrame(FSGSStableHandle FrameHandle) const;
 
-	FSGSStatus OpenResponseWindowOnCurrent(FName WindowName, FName RequiredCardName, int32 EffectSourceSeat, int32 EffectTargetSeat);
+	FSGSStatus OpenResponseWindowOnCurrent(
+		FName WindowName,
+		FName RequiredCardName,
+		TConstArrayView<FName> AcceptedCardNames,
+		int32 EffectSourceSeat,
+		int32 EffectTargetSeat);
 	FSGSStatus ClearResponseWindowOnCurrent();
 
 	template <typename TState>

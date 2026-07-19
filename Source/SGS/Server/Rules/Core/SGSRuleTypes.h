@@ -21,6 +21,7 @@ struct SGS_API FSGSRuleResponseWindowSpec
 	int32 SeatIndex = INDEX_NONE;
 	FName WindowName = NAME_None;
 	FName RequiredCardName = NAME_None;
+	TArray<FName> AcceptedCardNames;
 	FName ContextName = NAME_None;
 	int32 EffectSourceSeat = INDEX_NONE;
 	int32 EffectTargetSeat = INDEX_NONE;
