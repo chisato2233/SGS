@@ -5,14 +5,14 @@
       "name": "SGS: Unreal Editor (Development)",
       "type": "cppvsdbg",
       "request": "launch",
-      "program": "D:\\User\\Programs\\UE\\UE_5.7\\Engine\\Binaries\\Win64\\UnrealEditor.exe",
+      "program": "${config:sgs.unrealEngineRoot}\\Engine\\Binaries\\Win64\\UnrealEditor.exe",
       "args": [
         "${workspaceFolder}\\SGS.uproject",
         "-log"
       ],
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "SGS: Build Editor (Development)",
-      "visualizerFile": "D:\\User\\Programs\\UE\\UE_5.7\\Engine\\Extras\\VisualStudioDebugging\\Unreal.natvis",
+      "visualizerFile": "${config:sgs.unrealEngineRoot}\\Engine\\Extras\\VisualStudioDebugging\\Unreal.natvis",
       "showDisplayString": true,
       "console": "integratedTerminal"
     },
@@ -20,14 +20,14 @@
       "name": "SGS: Unreal Editor (DebugGame)",
       "type": "cppvsdbg",
       "request": "launch",
-      "program": "D:\\User\\Programs\\UE\\UE_5.7\\Engine\\Binaries\\Win64\\UnrealEditor-Win64-DebugGame.exe",
+      "program": "${config:sgs.unrealEngineRoot}\\Engine\\Binaries\\Win64\\UnrealEditor-Win64-DebugGame.exe",
       "args": [
         "${workspaceFolder}\\SGS.uproject",
         "-log"
       ],
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "SGS: Build Editor (DebugGame)",
-      "visualizerFile": "D:\\User\\Programs\\UE\\UE_5.7\\Engine\\Extras\\VisualStudioDebugging\\Unreal.natvis",
+      "visualizerFile": "${config:sgs.unrealEngineRoot}\\Engine\\Extras\\VisualStudioDebugging\\Unreal.natvis",
       "showDisplayString": true,
       "console": "integratedTerminal"
     },

@@ -89,9 +89,7 @@ function Resolve-EngineRoot {
         "C:\Program Files\Epic Games\UE_$Association",
         "D:\Program Files\Epic Games\UE_$Association",
         "E:\Program Files\Epic Games\UE_$Association",
-        "D:\Epic Games\UE_$Association",
-        "D:\User\Programs\UE\UE_$Association",
-        "C:\User\Programs\UE\UE_$Association"
+        "D:\Epic Games\UE_$Association"
     )
 
     foreach ($Root in $CommonRoots) {
