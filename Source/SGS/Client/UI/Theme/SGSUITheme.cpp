@@ -88,12 +88,13 @@ float FSGSUITheme::SeatCurrentGlowInnerOpacity()
 
 float FSGSUITheme::SeatHealthPipSize()
 {
-	return 10.0f;
+	// NoName 十周年 UI：13px 体力珠 / 120px 玩家面板宽度。
+	return 18.2f;
 }
 
 float FSGSUITheme::SeatHealthPipGap()
 {
-	return 2.0f;
+	return 1.4f;
 }
 
 float FSGSUITheme::SeatHealthRightInset()
@@ -106,22 +107,12 @@ float FSGSUITheme::SeatHealthBottomInset()
 	return 28.0f;
 }
 
-FLinearColor FSGSUITheme::SeatHealthHighColor()
+float FSGSUITheme::SeatPortraitLeftInsetRatio()
 {
-	return FLinearColor(0.26f, 0.74f, 0.31f, 1.0f);
+	return 24.0f / 120.0f;
 }
 
-FLinearColor FSGSUITheme::SeatHealthMidColor()
+float FSGSUITheme::SeatPortraitEdgeInsetRatio()
 {
-	return FLinearColor(0.92f, 0.68f, 0.12f, 1.0f);
-}
-
-FLinearColor FSGSUITheme::SeatHealthLowColor()
-{
-	return FLinearColor(0.82f, 0.14f, 0.12f, 1.0f);
-}
-
-FLinearColor FSGSUITheme::SeatHealthLostColor()
-{
-	return FLinearColor(0.12f, 0.12f, 0.12f, 0.72f);
+	return 2.0f / 180.0f;
 }

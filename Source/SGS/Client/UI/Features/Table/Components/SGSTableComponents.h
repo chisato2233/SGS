@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Client/UI/Features/Table/Components/SGSTableSeatWidget.h"
+#include "Client/UI/Features/Table/Components/SGSTableCardMotionWidget.h"
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
 
@@ -64,11 +65,24 @@ struct SGS_API FSGSTablePositionedSeatProps
 	FSGSTableSeatProps Seat;
 };
 
+struct SGS_API FSGSTablePileProps
+{
+	FSlateRect Area = FSlateRect(0.0f, 0.0f, 0.0f, 0.0f);
+	const FSlateBrush* CardBrush = nullptr;
+	FText Label;
+	int32 Count = 0;
+	bool bShowCard = false;
+};
+
 struct SGS_API FSGSTableShellProps
 {
 	const FSlateBrush* BackgroundBrush = nullptr;
 	FSlateRect ControlArea = FSlateRect(0.0f, 0.0f, 0.0f, 0.0f);
 	FSlateRect HandArea = FSlateRect(0.0f, 0.0f, 0.0f, 0.0f);
+	FSGSTablePileProps DrawPile;
+	FSGSTablePileProps PlayArea;
+	FSGSTablePileProps DiscardPile;
+	FSGSTableMotionProps Motion;
 	TArray<FSGSTablePositionedSeatProps> Seats;
 	FSGSTableDecisionBarProps DecisionBar;
 	FSGSTableHandProps Hand;
@@ -82,7 +96,8 @@ enum class ESGSTableViewChange : uint8
 	PrivateState = 1 << 2,
 	Interaction = 1 << 3,
 	HandPresentation = 1 << 4,
-	All = Layout | PublicState | PrivateState | Interaction | HandPresentation
+	Motion = 1 << 5,
+	All = Layout | PublicState | PrivateState | Interaction | HandPresentation | Motion
 };
 ENUM_CLASS_FLAGS(ESGSTableViewChange);
 
@@ -99,6 +114,7 @@ public:
 		SLATE_EVENT(FSGSOnTableSkillClicked, OnSkillClicked)
 		SLATE_EVENT(FOnClicked, OnConfirmClicked)
 		SLATE_EVENT(FOnClicked, OnPassClicked)
+		SLATE_EVENT(FSGSOnTableMotionCueFinished, OnMotionCueFinished)
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs);
@@ -109,6 +125,7 @@ private:
 	void RebuildSeats();
 	void RebuildDecisionBar();
 	void RebuildHand();
+	void RebuildPiles();
 
 	FSGSTableShellProps Props;
 	FSGSOnTableCardClicked OnCardClicked;
@@ -117,10 +134,15 @@ private:
 	FSGSOnTableSkillClicked OnSkillClicked;
 	FOnClicked OnConfirmClicked;
 	FOnClicked OnPassClicked;
+	FSGSOnTableMotionCueFinished OnMotionCueFinished;
 	TMap<int32, TSharedPtr<SBox>> SeatHosts;
 	TMap<int32, TSharedPtr<SSGSTableSeatWidget>> SeatWidgets;
 	TSharedPtr<SBox> DecisionHost;
 	TSharedPtr<SBox> HandHost;
+	TSharedPtr<SBox> DrawPileHost;
+	TSharedPtr<SBox> PlayAreaHost;
+	TSharedPtr<SBox> DiscardPileHost;
+	TSharedPtr<SSGSTableCardMotionWidget> MotionWidget;
 	TSharedPtr<SSGSTableHandWidget> HandWidget;
 	TWeakPtr<SBox> MountedHandHost;
 };

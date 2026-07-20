@@ -17,6 +17,11 @@ struct SGS_API FSGSTableSeatProps
 	FText NameText;
 	FVector2D Size = FVector2D::ZeroVector;
 	const FSlateBrush* PortraitBrush = nullptr;
+	const FSlateBrush* FrameBrush = nullptr;
+	const FSlateBrush* HealthHighBrush = nullptr;
+	const FSlateBrush* HealthMidBrush = nullptr;
+	const FSlateBrush* HealthLowBrush = nullptr;
+	const FSlateBrush* HealthLostBrush = nullptr;
 	int32 Health = 0;
 	int32 MaxHealth = 0;
 	int32 HandCount = 0;
@@ -46,11 +51,13 @@ private:
 	FReply HandleClicked() const;
 	void RebuildHealthDisplay();
 	void UpdateHealthDisplay();
-	FLinearColor GetActiveHealthColor() const;
+	const FSlateBrush* GetActiveHealthBrush() const;
+	FMargin GetPortraitPadding() const;
 	FText GetFooterText() const;
 
 	FSGSTableSeatProps Props;
 	FSGSOnTableSeatClicked OnSeatClicked;
+	TSharedPtr<SBox> SizeBox;
 	TSharedPtr<SBox> HealthHost;
 	TSharedPtr<STextBlock> HealthTextBlock;
 	TArray<TSharedPtr<SImage>> HealthPips;

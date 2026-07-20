@@ -111,8 +111,15 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 
 void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents, const FSGSGameStartConfig& Config)
 {
+	++MotionEpoch;
+	ReplayLog.Reset(MotionEpoch);
 	Context = NewObject<USGSGameContext>(this);
-	Context->Initialize(InAgents, Config.RandomSeed, Config.bIdentityMode, Config.GeneralIdsBySeat);
+	Context->Initialize(
+		InAgents,
+		Config.RandomSeed,
+		Config.bIdentityMode,
+		Config.GeneralIdsBySeat,
+		Config.FactionsBySeat);
 
 	if (Context->NumSeats() == 0)
 	{
@@ -144,14 +151,13 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 	ResolutionStack.Reset();
 	EffectPipeline.Reset();
 	ActiveEffectTimeline.Reset();
-	ReplayLog.Reset();
 	Context->OnSeatEliminated().AddUObject(this, &USGSGameDriver::HandleSeatEliminated);
 	for (int32 SeatIndex = 0; SeatIndex < Context->NumSeats(); ++SeatIndex)
 	{
 		USGSSeat* Seat = Context->GetSeat(SeatIndex);
 		if (USGSBasicAIAgent* Agent = Cast<USGSBasicAIAgent>(Seat->DecisionAgent.GetObject()))
 		{
-			Agent->BindToSeat(Context, SeatIndex, &AIEvaluatorRegistry);
+			Agent->BindToSeat(Context, SeatIndex, &AIEvaluatorRegistry, Config.BasicAIThinkDelaySeconds);
 		}
 	}
 
@@ -170,7 +176,9 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 	{
 		CurrentSeatIndex = SeatIndex;
 		EffectPipeline.Reset();
-		EffectPipeline.Enqueue(SGSStandardEffectSteps::MakeDrawCardsStep(SeatIndex, CurrentStartingHandSize));
+		FSGSCardMoveEventMetadata Metadata;
+		Metadata.Reason = SGSCardMoveReasons::InitialDeal();
+		EffectPipeline.Enqueue(SGSStandardEffectSteps::MakeDrawCardsStep(SeatIndex, CurrentStartingHandSize, MoveTemp(Metadata)));
 		FSGSEffectContext EffectContext = MakeEffectContext();
 		if (FSGSStatus Status = EffectPipeline.Run(EffectContext); Status.HasError())
 		{
@@ -893,6 +901,7 @@ void USGSGameDriver::SyncReplayLog()
 	{
 		ReplayLog.SetRandomLog(Context->GetRandomAudit().GetEntries());
 	}
+	ViewStateInvalidatedDelegate.Broadcast();
 }
 
 void USGSGameDriver::AdvanceAfterPhase()
@@ -941,21 +950,45 @@ void USGSGameDriver::AdvanceAfterPhase()
 void USGSGameDriver::DiscardAllCards(int32 SeatIndex)
 {
 	TArray<USGSCard*> Hand = Context->GetCardsInZone(SGSGameplayTags::CardZone_Hand.GetTag(), SeatIndex);
-	Context->DiscardFromHand(SeatIndex, Hand);
-
 	USGSSeat* Seat = Context->GetSeat(SeatIndex);
 	TArray<USGSCard*> Equipment;
 	for (const TPair<FGameplayTag, TObjectPtr<USGSCard>>& Slot : Seat->Equipment)
 	{
 		Equipment.Add(Slot.Value.Get());
 	}
-	Context->MoveCards(
-		Equipment,
-		SGSGameplayTags::CardZone_Equipment.GetTag(),
-		SeatIndex,
-		SGSGameplayTags::CardZone_DiscardPile.GetTag(),
-		INDEX_NONE);
+
+	// EliminateSeat 的回调可能发生在主 EffectPipeline 正在运行时；使用独立管线记录
+	// 后续清牌，避免重置正在执行的队列，同时仍保持所有权威移动可审计。
+	FSGSEffectPipeline CleanupPipeline;
+	FSGSCardMoveEventMetadata Metadata;
+	Metadata.Reason = SGSCardMoveReasons::Discard();
+	if (!Hand.IsEmpty())
+	{
+		CleanupPipeline.Enqueue(SGSStandardEffectSteps::MakeMoveCardsStep(
+			MoveTemp(Hand),
+			SGSGameplayTags::CardZone_Hand.GetTag(),
+			SeatIndex,
+			SGSGameplayTags::CardZone_DiscardPile.GetTag(),
+			INDEX_NONE,
+			Metadata));
+	}
+	if (!Equipment.IsEmpty())
+	{
+		CleanupPipeline.Enqueue(SGSStandardEffectSteps::MakeMoveCardsStep(
+			MoveTemp(Equipment),
+			SGSGameplayTags::CardZone_Equipment.GetTag(),
+			SeatIndex,
+			SGSGameplayTags::CardZone_DiscardPile.GetTag(),
+			INDEX_NONE,
+			Metadata));
+	}
+	FSGSEffectContext EffectContext = MakeEffectContext();
+	if (FSGSStatus Status = CleanupPipeline.Run(EffectContext); Status.HasError())
+	{
+		UE_LOG(LogSGSTurn, Error, TEXT("Discard-all effect pipeline failed: %s"), *Status.GetError().ToLogString());
+	}
 	Seat->Equipment.Reset();
+	SyncReplayLog();
 }
 
 void USGSGameDriver::HandleSeatEliminated(int32 SeatIndex, int32 SourceSeat, FName)
@@ -968,7 +1001,16 @@ void USGSGameDriver::HandleSeatEliminated(int32 SeatIndex, int32 SourceSeat, FNa
 	{
 		if (EliminatedSeat->Identity.MatchesTagExact(SGSGameplayTags::Identity_Rebel.GetTag()))
 		{
-			Context->DrawCards(SourceSeat, 3);
+			FSGSEffectPipeline RewardPipeline;
+			FSGSCardMoveEventMetadata Metadata;
+			Metadata.Reason = SGSCardMoveReasons::RewardDraw();
+			RewardPipeline.Enqueue(SGSStandardEffectSteps::MakeDrawCardsStep(SourceSeat, 3, MoveTemp(Metadata)));
+			FSGSEffectContext EffectContext = MakeEffectContext();
+			if (FSGSStatus Status = RewardPipeline.Run(EffectContext); Status.HasError())
+			{
+				UE_LOG(LogSGSTurn, Error, TEXT("Elimination reward draw failed: %s"), *Status.GetError().ToLogString());
+			}
+			SyncReplayLog();
 		}
 		else if (KillerSeat->Identity.MatchesTagExact(SGSGameplayTags::Identity_Lord.GetTag())
 			&& EliminatedSeat->Identity.MatchesTagExact(SGSGameplayTags::Identity_Loyalist.GetTag()))
@@ -1072,7 +1114,8 @@ void USGSGameDriver::ExecuteDiscardPhase()
 		SGSGameplayTags::CardZone_Hand.GetTag(),
 		CurrentSeatIndex,
 		SGSGameplayTags::CardZone_DiscardPile.GetTag(),
-		INDEX_NONE));
+		INDEX_NONE,
+		{ SGSCardMoveReasons::Discard(), {} }));
 }
 
 void USGSGameDriver::ExpireStatusEffects(int32 SeatIndex, FGameplayTag StatusTag)

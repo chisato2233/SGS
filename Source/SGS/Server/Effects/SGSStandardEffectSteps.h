@@ -10,6 +10,23 @@
 
 class USGSCard;
 
+namespace SGSCardMoveReasons
+{
+	SGS_API FName InitialDeal();
+	SGS_API FName Draw();
+	SGS_API FName RewardDraw();
+	SGS_API FName Use();
+	SGS_API FName Respond();
+	SGS_API FName Discard();
+	SGS_API FName Cleanup();
+}
+
+struct SGS_API FSGSCardMoveEventMetadata
+{
+	FName Reason = NAME_None;
+	TArray<int32> RelatedTargetSeatIndices;
+};
+
 namespace SGSStandardEffectSteps
 {
 	SGS_API FSGSEffectStep MakeMoveCardsStep(
@@ -17,9 +34,13 @@ namespace SGSStandardEffectSteps
 		FSGSCardZone FromZone,
 		int32 FromSeat,
 		FSGSCardZone ToZone,
-		int32 ToSeat);
+		int32 ToSeat,
+		FSGSCardMoveEventMetadata Metadata = {});
 
-	SGS_API FSGSEffectStep MakeDrawCardsStep(int32 SeatIndex, int32 Count);
+	SGS_API FSGSEffectStep MakeDrawCardsStep(
+		int32 SeatIndex,
+		int32 Count,
+		FSGSCardMoveEventMetadata Metadata = {});
 	SGS_API FSGSEffectStep MakeDamageStep(int32 SourceSeat, int32 TargetSeat, int32 Amount);
 	SGS_API FSGSEffectStep MakeHealStep(int32 SeatIndex, int32 Amount);
 	SGS_API FSGSEffectStep MakeEliminateSeatStep(int32 SeatIndex, int32 SourceSeat, FName Reason);

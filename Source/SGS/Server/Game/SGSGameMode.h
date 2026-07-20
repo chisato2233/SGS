@@ -24,6 +24,7 @@ protected:
 
 private:
 	void SpawnDevelopmentTableScene();
+	void ScheduleViewSnapshotRefresh();
 
 	UPROPERTY()
 	TObjectPtr<USGSGameDriver> GameDriver;
@@ -33,4 +34,7 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<ASGSPlayerController> LocalHumanPlayerController;
+
+	FTimerHandle ViewSnapshotRefreshTimer;
+	bool bViewSnapshotRefreshScheduled = false;
 };

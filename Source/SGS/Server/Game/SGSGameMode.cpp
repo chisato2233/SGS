@@ -2,6 +2,7 @@
 
 #include "Server/AI/SGSBasicAIAgent.h"
 #include "Shared/Core/SGSLogChannels.h"
+#include "Shared/Core/SGSGameplayTags.h"
 #include "Client/Game/SGSPlayerController.h"
 #include "Client/Game/SGSTablePawn.h"
 #include "Components/StaticMeshComponent.h"
@@ -16,6 +17,7 @@
 #include "Shared/Game/SGSGameState.h"
 #include "Shared/Game/SGSPlayerState.h"
 #include "Misc/App.h"
+#include "TimerManager.h"
 #include "Client/UI/Bridge/SGSLocalHumanDecisionAgent.h"
 
 ASGSGameMode::ASGSGameMode()
@@ -63,15 +65,44 @@ void ASGSGameMode::SpawnDevelopmentTableScene()
 
 void ASGSGameMode::RefreshViewSnapshots()
 {
-	if (ASGSGameState* SGSGameState = GetGameState<ASGSGameState>())
+	bViewSnapshotRefreshScheduled = false;
+	if (UWorld* World = GetWorld())
 	{
-		SGSGameState->PublishPublicSnapshot(FSGSTableSnapshotBuilder::BuildPublicSnapshot(GameDriver));
+		World->GetTimerManager().ClearTimer(ViewSnapshotRefreshTimer);
 	}
 
+	// 先更新 owner-only 覆盖，再发布公共快照；本地监听者组合新公共事件时即可
+	// 直接得到牌面，不会先以牌背启动同序号动画。
 	if (LocalHumanPlayerController != nullptr)
 	{
 		LocalHumanPlayerController->RefreshPrivateSnapshotFromServer();
 	}
+
+	if (ASGSGameState* SGSGameState = GetGameState<ASGSGameState>())
+	{
+		SGSGameState->PublishPublicSnapshot(FSGSTableSnapshotBuilder::BuildPublicSnapshot(GameDriver));
+	}
+}
+
+void ASGSGameMode::ScheduleViewSnapshotRefresh()
+{
+	if (bViewSnapshotRefreshScheduled)
+	{
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	if (World == nullptr)
+	{
+		return;
+	}
+
+	bViewSnapshotRefreshScheduled = true;
+	ViewSnapshotRefreshTimer = World->GetTimerManager().SetTimerForNextTick(
+		FTimerDelegate::CreateWeakLambda(this, [this]()
+		{
+			RefreshViewSnapshots();
+		}));
 }
 
 void ASGSGameMode::BeginPlay()
@@ -117,6 +148,7 @@ void ASGSGameMode::BeginPlay()
 	}
 
 	GameDriver = NewObject<USGSGameDriver>(this);
+	GameDriver->OnViewStateInvalidated().AddUObject(this, &ASGSGameMode::ScheduleViewSnapshotRefresh);
 	FSGSGameStartConfig Config;
 	Config.RandomSeed = static_cast<int32>(FPlatformTime::Cycles64());
 	Config.InitialDeck = SGSDeckDefinitions::MakeMinimalIdentityDeck();
@@ -129,6 +161,16 @@ void ASGSGameMode::BeginPlay()
 		TEXT("zhaoyun"),
 		TEXT("simayi"),
 		TEXT("diaochan"),
+	};
+	Config.FactionsBySeat = {
+		SGSGameplayTags::Faction_Wei.GetTag(),
+		SGSGameplayTags::Faction_Shu.GetTag(),
+		SGSGameplayTags::Faction_Wu.GetTag(),
+		SGSGameplayTags::Faction_Shu.GetTag(),
+		SGSGameplayTags::Faction_Shu.GetTag(),
+		SGSGameplayTags::Faction_Shu.GetTag(),
+		SGSGameplayTags::Faction_Wei.GetTag(),
+		SGSGameplayTags::Faction_Qun.GetTag(),
 	};
 	Config.bIdentityMode = true;
 	GameDriver->StartGame(Agents, Config);

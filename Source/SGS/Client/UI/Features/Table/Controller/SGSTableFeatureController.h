@@ -21,13 +21,16 @@ public:
 	FSGSTableFeatureController(
 		int32 InViewerSeat,
 		FSGSTableFeatureBindings InBindings,
-		TSharedRef<FSGSUIContext> InUIContext);
+		TSharedRef<FSGSUIContext> InUIContext,
+		int32 InInitialMotionSequence = INDEX_NONE);
 
 	bool RefreshFromHost();
 	bool SelectCard(int32 CardId);
 	bool SelectTarget(int32 SeatIndex);
 	bool SelectSkill(FName SkillName);
 	bool ReorderHand(TConstArrayView<int32> OrderedCardIds);
+	void AcknowledgeMotionCue(int32 Sequence) { State.AcknowledgeMotionCue(Sequence); }
+	void ClearMotionQueueToLatest() { State.ClearMotionQueueToLatest(); }
 	bool Confirm();
 	bool Pass();
 
@@ -46,6 +49,14 @@ public:
 	const TSGSUIObservable<FSGSTableHandPresentationState>& GetHandPresentationState() const
 	{
 		return State.GetHandPresentationState();
+	}
+	const FSGSTableMotionPresentationState& GetMotionPresentation() const
+	{
+		return State.GetMotionPresentation();
+	}
+	const TSGSUIObservable<FSGSTableMotionPresentationState>& GetMotionPresentationState() const
+	{
+		return State.GetMotionPresentationState();
 	}
 
 	TSharedRef<FSGSUIContext> GetUIContext() const { return UIContext; }

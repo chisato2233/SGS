@@ -35,7 +35,7 @@ void SSGSTableSeatWidget::Construct(const FArguments& InArgs)
 
 	ChildSlot
 	[
-		SNew(SBox)
+		SAssignNew(SizeBox, SBox)
 			.WidthOverride(Props.Size.X)
 			.HeightOverride(Props.Size.Y)
 		[
@@ -76,6 +76,20 @@ void SSGSTableSeatWidget::Construct(const FArguments& InArgs)
 								.BorderBackgroundColor(FLinearColor(0.035f, 0.045f, 0.055f, 1.0f))
 						]
 						+ SOverlay::Slot()
+						[
+							SNew(SImage)
+								.Image_Lambda([this]() { return Props.FrameBrush; })
+								.ColorAndOpacity_Lambda([this]()
+								{
+									return Props.bAlive
+										? FLinearColor::White
+										: FLinearColor(0.36f, 0.36f, 0.36f, 0.9f);
+								})
+								.Visibility(EVisibility::HitTestInvisible)
+						]
+						+ SOverlay::Slot()
+						.Padding(TAttribute<FMargin>::CreateLambda(
+							[this]() { return GetPortraitPadding(); }))
 						[
 							SNew(SScaleBox)
 								.Stretch(EStretch::ScaleToFill)
@@ -148,6 +162,11 @@ void SSGSTableSeatWidget::SetProps(FSGSTableSeatProps InProps)
 		RenderedMaxHealth != InProps.MaxHealth
 		|| !FMath::IsNearlyEqual(RenderedLayoutScale, InProps.LayoutScale);
 	Props = MoveTemp(InProps);
+	if (SizeBox.IsValid())
+	{
+		SizeBox->SetWidthOverride(Props.Size.X);
+		SizeBox->SetHeightOverride(Props.Size.Y);
+	}
 	if (bHealthLayoutChanged)
 	{
 		RebuildHealthDisplay();
@@ -209,7 +228,7 @@ void SSGSTableSeatWidget::RebuildHealthDisplay()
 				.HeightOverride(PipSize)
 			[
 				SAssignNew(Pip, SImage)
-					.Image(FCoreStyle::Get().GetBrush(TEXT("WhiteBrush")))
+					.Image(Props.HealthLostBrush)
 			]
 		];
 		HealthPips.Add(Pip);
@@ -229,27 +248,41 @@ void SSGSTableSeatWidget::UpdateHealthDisplay()
 		return;
 	}
 
-	const FLinearColor ActiveColor = GetActiveHealthColor();
+	const FSlateBrush* ActiveBrush = GetActiveHealthBrush();
 	for (int32 Index = 0; Index < HealthPips.Num(); ++Index)
 	{
 		const bool bFilled = Props.bAlive && Props.MaxHealth - Index <= Props.Health;
-		HealthPips[Index]->SetColorAndOpacity(
-			bFilled ? ActiveColor : FSGSUITheme::SeatHealthLostColor());
+		HealthPips[Index]->SetImage(bFilled ? ActiveBrush : Props.HealthLostBrush);
+		HealthPips[Index]->SetColorAndOpacity(FLinearColor::White);
 	}
 }
 
-FLinearColor SSGSTableSeatWidget::GetActiveHealthColor() const
+const FSlateBrush* SSGSTableSeatWidget::GetActiveHealthBrush() const
 {
 	if (Props.Health == Props.MaxHealth
 		|| Props.Health > FMath::RoundToInt(static_cast<float>(Props.MaxHealth) * 0.5f))
 	{
-		return FSGSUITheme::SeatHealthHighColor();
+		return Props.HealthHighBrush;
 	}
 	if (Props.Health > FMath::FloorToInt(static_cast<float>(Props.MaxHealth) / 3.0f))
 	{
-		return FSGSUITheme::SeatHealthMidColor();
+		return Props.HealthMidBrush;
 	}
-	return FSGSUITheme::SeatHealthLowColor();
+	return Props.HealthLowBrush;
+}
+
+FMargin SSGSTableSeatWidget::GetPortraitPadding() const
+{
+	if (Props.FrameBrush == nullptr)
+	{
+		return FMargin(0.0f);
+	}
+	const float EdgeInset = Props.Size.Y * FSGSUITheme::SeatPortraitEdgeInsetRatio();
+	return FMargin(
+		Props.Size.X * FSGSUITheme::SeatPortraitLeftInsetRatio(),
+		EdgeInset,
+		EdgeInset,
+		EdgeInset);
 }
 
 FText SSGSTableSeatWidget::GetFooterText() const

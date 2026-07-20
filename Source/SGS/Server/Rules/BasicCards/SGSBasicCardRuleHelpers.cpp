@@ -200,12 +200,34 @@ FSGSStatus SGSBasicCardRuleHelpers::DiscardHandCard(FSGSRuleExecutionContext& Co
 			TEXT("Expected a valid hand card to discard."));
 	}
 
+	FSGSCardMoveEventMetadata Metadata;
+	Metadata.Reason = Context.RuleInvocation.IntentTag.MatchesTagExact(SGSGameplayTags::PlayAction_RespondCard.GetTag())
+		? SGSCardMoveReasons::Respond()
+		: SGSCardMoveReasons::Use();
+	if (const FSGSUseCardRulePayload* UsePayload = Context.RuleInvocation.GetPayload<FSGSUseCardRulePayload>())
+	{
+		Metadata.RelatedTargetSeatIndices = UsePayload->TargetSeatIndices;
+	}
+	else if (const FSGSRespondCardRulePayload* ResponsePayload = Context.RuleInvocation.GetPayload<FSGSRespondCardRulePayload>())
+	{
+		if (ResponsePayload->EffectSourceSeat != INDEX_NONE)
+		{
+			Metadata.RelatedTargetSeatIndices.Add(ResponsePayload->EffectSourceSeat);
+		}
+		if (ResponsePayload->EffectTargetSeat != INDEX_NONE
+			&& ResponsePayload->EffectTargetSeat != ResponsePayload->EffectSourceSeat)
+		{
+			Metadata.RelatedTargetSeatIndices.Add(ResponsePayload->EffectTargetSeat);
+		}
+	}
+
 	return Context.Runtime->RunEffectStep(SGSStandardEffectSteps::MakeMoveCardsStep(
 		TArray<USGSCard*>{ Card },
 		SGSGameplayTags::CardZone_Hand.GetTag(),
 		SeatIndex,
 		SGSGameplayTags::CardZone_DiscardPile.GetTag(),
-		INDEX_NONE),
+		INDEX_NONE,
+		MoveTemp(Metadata)),
 		GetCommandId(Context));
 }
 
@@ -223,7 +245,8 @@ FSGSStatus SGSBasicCardRuleHelpers::DiscardProcessingCard(FSGSRuleExecutionConte
 		SGSGameplayTags::CardZone_Processing.GetTag(),
 		INDEX_NONE,
 		SGSGameplayTags::CardZone_DiscardPile.GetTag(),
-		INDEX_NONE),
+		INDEX_NONE,
+		{ SGSCardMoveReasons::Cleanup(), {} }),
 		GetCommandId(Context));
 }
 

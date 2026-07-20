@@ -45,12 +45,20 @@ FVector2D MakeNovaEightPosition(
 	switch (RelativePosition)
 	{
 	case 1:
+	{
+		const float UpperSeatY = ArenaArea.Top
+			+ ArenaSize.Y * 0.10f
+			- SeatSize.Y * (50.0f / 196.0f);
+		const float NovaY = ArenaArea.Top
+			+ ArenaSize.Y * 0.55f
+			- SeatSize.Y * (143.0f / 196.0f);
 		return MakePosition(
 			ArenaArea.Right - SeatSize.X,
-			ArenaArea.Top + ArenaSize.Y * 0.55f - SeatSize.Y * (143.0f / 196.0f),
+			FMath::Max(NovaY, UpperSeatY + SeatSize.Y + 4.0f),
 			SeatSize,
 			ViewSize,
 			SafeMargin);
+	}
 	case 2:
 		return MakePosition(
 			ArenaArea.Right - SeatSize.X,
@@ -87,12 +95,20 @@ FVector2D MakeNovaEightPosition(
 			ViewSize,
 			SafeMargin);
 	case 7:
+	{
+		const float UpperSeatY = ArenaArea.Top
+			+ ArenaSize.Y * 0.10f
+			- SeatSize.Y * (50.0f / 196.0f);
+		const float NovaY = ArenaArea.Top
+			+ ArenaSize.Y * 0.55f
+			- SeatSize.Y * (143.0f / 196.0f);
 		return MakePosition(
 			ArenaArea.Left,
-			ArenaArea.Top + ArenaSize.Y * 0.55f - SeatSize.Y * (143.0f / 196.0f),
+			FMath::Max(NovaY, UpperSeatY + SeatSize.Y + 4.0f),
 			SeatSize,
 			ViewSize,
 			SafeMargin);
+	}
 	default:
 		return FVector2D::ZeroVector;
 	}
@@ -186,6 +202,24 @@ FSGSTableLayoutMetrics FSGSTableLayoutMetrics::Make(FVector2D InViewSize, int32 
 		Metrics.ViewSize.Y * 0.5f - CenterHeight * 0.5f,
 		Metrics.ViewSize.X * 0.5f + CenterWidth * 0.5f,
 		Metrics.ViewSize.Y * 0.5f + CenterHeight * 0.5f);
+	const FVector2D PileSize(58.0f * Metrics.LayoutScale, 82.0f * Metrics.LayoutScale);
+	const FVector2D PlaySize(230.0f * Metrics.LayoutScale, 112.0f * Metrics.LayoutScale);
+	const FVector2D ViewCenter = Metrics.ViewSize * 0.5f;
+	Metrics.PlayArea = FSlateRect(
+		ViewCenter.X - PlaySize.X * 0.5f,
+		ViewCenter.Y - PlaySize.Y * 0.5f,
+		ViewCenter.X + PlaySize.X * 0.5f,
+		ViewCenter.Y + PlaySize.Y * 0.5f);
+	Metrics.DrawPileArea = FSlateRect(
+		Metrics.PlayArea.Left - 22.0f * Metrics.LayoutScale - PileSize.X,
+		ViewCenter.Y - PileSize.Y * 0.5f,
+		Metrics.PlayArea.Left - 22.0f * Metrics.LayoutScale,
+		ViewCenter.Y + PileSize.Y * 0.5f);
+	Metrics.DiscardPileArea = FSlateRect(
+		Metrics.PlayArea.Right + 22.0f * Metrics.LayoutScale,
+		ViewCenter.Y - PileSize.Y * 0.5f,
+		Metrics.PlayArea.Right + 22.0f * Metrics.LayoutScale + PileSize.X,
+		ViewCenter.Y + PileSize.Y * 0.5f);
 
 	const int32 SafeSeatCount = FMath::Max(SeatCount, 0);
 	Metrics.Seats.Reserve(SafeSeatCount);
@@ -277,4 +311,13 @@ FSlateRect FSGSTableLayoutMetrics::GetSeatRect(const FSGSTableSeatLayout& Seat) 
 		Seat.Position.Y,
 		Seat.Position.X + Seat.Size.X,
 		Seat.Position.Y + Seat.Size.Y);
+}
+
+FSlateRect FSGSTableLayoutMetrics::GetSeatRect(int32 SeatIndex) const
+{
+	if (const FSGSTableSeatLayout* Seat = FindSeat(SeatIndex))
+	{
+		return GetSeatRect(*Seat);
+	}
+	return FSlateRect(0.0f, 0.0f, 0.0f, 0.0f);
 }

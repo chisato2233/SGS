@@ -30,6 +30,44 @@ struct SGS_API FSGSCardViewData
 	bool bSelectable = false;
 };
 
+// 已经过观看者权限裁剪的表现提示。VisibleCards 为空而 CardCount > 0 时必须绘制牌背，
+// 不能从缺省值推断服务器牌 ID。
+USTRUCT(BlueprintType)
+struct SGS_API FSGSTableCardMotionCueViewData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	int32 Sequence = INDEX_NONE;
+
+	UPROPERTY()
+	FName Reason = NAME_None;
+
+	UPROPERTY()
+	FGameplayTag FromZone = SGSGameplayTags::CardZone_None.GetTag();
+
+	UPROPERTY()
+	int32 FromSeat = INDEX_NONE;
+
+	UPROPERTY()
+	FGameplayTag ToZone = SGSGameplayTags::CardZone_None.GetTag();
+
+	UPROPERTY()
+	int32 ToSeat = INDEX_NONE;
+
+	UPROPERTY()
+	int32 CardCount = 0;
+
+	UPROPERTY()
+	TArray<FSGSCardViewData> VisibleCards;
+
+	UPROPERTY()
+	TArray<int32> RelatedTargetSeatIndices;
+
+	UPROPERTY()
+	bool bCleanup = false;
+};
+
 USTRUCT(BlueprintType)
 struct SGS_API FSGSSeatViewData
 {
@@ -43,6 +81,9 @@ struct SGS_API FSGSSeatViewData
 
 	UPROPERTY()
 	FName GeneralId = NAME_None;
+
+	UPROPERTY()
+	FGameplayTag Faction;
 
 	UPROPERTY()
 	int32 Health = 0;
@@ -203,6 +244,24 @@ struct SGS_API FSGSTablePublicSnapshot
 	int32 DiscardPileCount = 0;
 
 	UPROPERTY()
+	bool bHasDiscardTopCard = false;
+
+	UPROPERTY()
+	FSGSCardViewData DiscardTopCard;
+
+	UPROPERTY()
+	int32 MotionEpoch = 0;
+
+	UPROPERTY()
+	int32 MotionWindowStartSequence = 0;
+
+	UPROPERTY()
+	int32 MotionLatestSequence = INDEX_NONE;
+
+	UPROPERTY()
+	TArray<FSGSTableCardMotionCueViewData> CardMotionCues;
+
+	UPROPERTY()
 	bool bGameOver = false;
 
 	UPROPERTY()
@@ -232,6 +291,13 @@ struct SGS_API FSGSPlayerPrivateSnapshot
 
 	UPROPERTY()
 	FSGSDecisionPromptViewData Prompt;
+
+	UPROPERTY()
+	int32 MotionEpoch = 0;
+
+	// 仅包含该观看者有权看到的同序号覆盖，不单独构成事件流。
+	UPROPERTY()
+	TArray<FSGSTableCardMotionCueViewData> CardMotionCueOverrides;
 };
 
 USTRUCT(BlueprintType)
@@ -259,6 +325,24 @@ struct SGS_API FSGSTableViewSnapshot
 
 	UPROPERTY()
 	int32 DiscardPileCount = 0;
+
+	UPROPERTY()
+	bool bHasDiscardTopCard = false;
+
+	UPROPERTY()
+	FSGSCardViewData DiscardTopCard;
+
+	UPROPERTY()
+	int32 MotionEpoch = 0;
+
+	UPROPERTY()
+	int32 MotionWindowStartSequence = 0;
+
+	UPROPERTY()
+	int32 MotionLatestSequence = INDEX_NONE;
+
+	UPROPERTY()
+	TArray<FSGSTableCardMotionCueViewData> CardMotionCues;
 
 	UPROPERTY()
 	bool bGameOver = false;
@@ -289,11 +373,35 @@ inline FSGSTableViewSnapshot SGSComposeTableViewSnapshot(
 	Snapshot.CurrentSeatIndex = PublicSnapshot.CurrentSeatIndex;
 	Snapshot.DrawPileCount = PublicSnapshot.DrawPileCount;
 	Snapshot.DiscardPileCount = PublicSnapshot.DiscardPileCount;
+	Snapshot.bHasDiscardTopCard = PublicSnapshot.bHasDiscardTopCard;
+	Snapshot.DiscardTopCard = PublicSnapshot.DiscardTopCard;
+	Snapshot.MotionEpoch = PublicSnapshot.MotionEpoch;
+	Snapshot.MotionWindowStartSequence = PublicSnapshot.MotionWindowStartSequence;
+	Snapshot.MotionLatestSequence = PublicSnapshot.MotionLatestSequence;
+	Snapshot.CardMotionCues = PublicSnapshot.CardMotionCues;
 	Snapshot.bGameOver = PublicSnapshot.bGameOver;
 	Snapshot.GameResult = PublicSnapshot.GameResult;
 	Snapshot.Seats = PublicSnapshot.Seats;
 	Snapshot.HandCards = PrivateSnapshot.HandCards;
 	Snapshot.Prompt = PrivateSnapshot.Prompt;
+	if (PrivateSnapshot.MotionEpoch == PublicSnapshot.MotionEpoch)
+	{
+		for (const FSGSTableCardMotionCueViewData& Override : PrivateSnapshot.CardMotionCueOverrides)
+		{
+			if (FSGSTableCardMotionCueViewData* Existing = Snapshot.CardMotionCues.FindByPredicate(
+				[Sequence = Override.Sequence](const FSGSTableCardMotionCueViewData& Cue)
+				{
+					return Cue.Sequence == Sequence;
+				}))
+			{
+				*Existing = Override;
+			}
+		}
+	}
+	Snapshot.CardMotionCues.Sort([](const FSGSTableCardMotionCueViewData& Left, const FSGSTableCardMotionCueViewData& Right)
+	{
+		return Left.Sequence < Right.Sequence;
+	});
 	for (FSGSSeatViewData& Seat : Snapshot.Seats)
 	{
 		if (Seat.SeatIndex == Snapshot.ViewerSeat && PrivateSnapshot.ViewerIdentity.IsValid())

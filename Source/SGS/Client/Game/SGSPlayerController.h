@@ -26,7 +26,8 @@ public:
 		USGSLocalHumanDecisionAgent* InDecisionAgent,
 		int32 InViewerSeat,
 		TFunction<FSGSPlayerPrivateSnapshot()> InPrivateSnapshotProvider,
-		TFunction<void()> InServerViewRefreshHandler);
+		TFunction<void()> InServerViewRefreshHandler,
+		int32 InInitialMotionSequence = INDEX_NONE);
 
 	void RefreshPrivateSnapshotFromServer();
 	FSGSTableViewSnapshot BuildTableViewSnapshot() const;
@@ -40,7 +41,7 @@ protected:
 
 private:
 	UFUNCTION(Client, Reliable)
-	void ClientAttachLocalHud(int32 InViewerSeat);
+	void ClientAttachLocalHud(int32 InViewerSeat, int32 InInitialMotionSequence);
 
 	UFUNCTION(Server, Reliable)
 	void ServerSubmitUseCard(int32 CardId, int32 TargetSeatIndex);
@@ -70,6 +71,9 @@ private:
 
 	UPROPERTY(Replicated)
 	int32 ViewerSeat = INDEX_NONE;
+
+	UPROPERTY(Replicated)
+	int32 InitialMotionSequence = INDEX_NONE;
 
 	UPROPERTY()
 	TObjectPtr<USGSLocalHumanDecisionAgent> DecisionAgent;

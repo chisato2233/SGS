@@ -8,7 +8,8 @@ void USGSGameContext::Initialize(
 	const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents,
 	int32 RandomSeed,
 	bool bIdentityMode,
-	TConstArrayView<FName> GeneralIdsBySeat)
+	TConstArrayView<FName> GeneralIdsBySeat,
+	TConstArrayView<FGameplayTag> FactionsBySeat)
 {
 	RandomAudit.Initialize(RandomSeed);
 	NextCardId = 0;
@@ -46,6 +47,9 @@ void USGSGameContext::Initialize(
 		Seat->SeatIndex = Index;
 		Seat->DisplayName = FString::Printf(TEXT("Seat%d"), Index);
 		Seat->GeneralId = GeneralIdsBySeat.IsValidIndex(Index) ? GeneralIdsBySeat[Index] : NAME_None;
+		Seat->Faction = FactionsBySeat.IsValidIndex(Index)
+			? FactionsBySeat[Index]
+			: FGameplayTag();
 		Seat->DecisionAgent = SeatAgents[Index];
 		Seat->Identity = Identities.IsValidIndex(Index) ? Identities[Index] : FGameplayTag();
 		Seat->MaxHealth = Seat->Identity.MatchesTagExact(SGSGameplayTags::Identity_Lord.GetTag())

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "UObject/Object.h"
 #include "UObject/ScriptInterface.h"
 #include "Shared/Core/SGSError.h"
@@ -22,6 +23,8 @@ class USGSCard;
 class FSGSDriverRuleRuntime;
 struct FSGSRuleEventPayload;
 
+DECLARE_MULTICAST_DELEGATE(FSGSOnViewStateInvalidated);
+
 struct SGS_API FSGSGameStartConfig
 {
 	int32 RandomSeed = 0;
@@ -29,8 +32,10 @@ struct SGS_API FSGSGameStartConfig
 	bool bShuffleInitialDeck = true;
 	int32 StartingHandSize = 4;
 	int32 MaxTurns = 8;
+	float BasicAIThinkDelaySeconds = 0.45f;
 	TMap<int32, int32> InitialHealthBySeat;
 	TArray<FName> GeneralIdsBySeat;
+	TArray<FGameplayTag> FactionsBySeat;
 	bool bIdentityMode = false;
 };
 
@@ -53,6 +58,7 @@ public:
 
 	// 事件总线：观察者在此订阅对局生命周期事件。
 	FSGSOnGameEvent& OnGameEvent() { return GameEventDelegate; }
+	FSGSOnViewStateInvalidated& OnViewStateInvalidated() { return ViewStateInvalidatedDelegate; }
 
 	USGSGameContext* GetContext() const { return Context; }
 	int32 GetCurrentSeatIndex() const { return CurrentSeatIndex; }
@@ -63,6 +69,7 @@ public:
 	int32 GetTurnsPlayed() const { return TurnsPlayed; }
 	const TArray<FSGSCommandLogEntry>& GetCommandLog() const { return CommandRouter.GetLogEntries(); }
 	const FSGSReplayLog& GetReplayLog() const { return ReplayLog; }
+	int32 GetMotionEpoch() const { return MotionEpoch; }
 	const FSGSGameResult& GetGameResult() const { return GameResult; }
 
 private:
@@ -147,6 +154,7 @@ private:
 	bool bPumping = false;
 
 	FSGSOnGameEvent GameEventDelegate;
+	FSGSOnViewStateInvalidated ViewStateInvalidatedDelegate;
 	FSGSCommandRouter CommandRouter;
 	FSGSAIEvaluatorRegistry AIEvaluatorRegistry;
 	FSGSRuleRegistry RuleRegistry;
@@ -154,6 +162,7 @@ private:
 	FSGSEffectPipeline EffectPipeline;
 	FSGSActiveEffectTimeline ActiveEffectTimeline;
 	FSGSReplayLog ReplayLog;
+	int32 MotionEpoch = 0;
 
 	// 摸牌阶段固定摸牌数（标准规则）。
 	static constexpr int32 DrawCountPerTurn = 2;

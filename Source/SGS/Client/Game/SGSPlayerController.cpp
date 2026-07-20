@@ -17,16 +17,19 @@ void ASGSPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ASGSPlayerController, PrivateSnapshot);
 	DOREPLIFETIME(ASGSPlayerController, ViewerSeat);
+	DOREPLIFETIME(ASGSPlayerController, InitialMotionSequence);
 }
 
 void ASGSPlayerController::AttachToMatch(
 	USGSLocalHumanDecisionAgent* InDecisionAgent,
 	int32 InViewerSeat,
 	TFunction<FSGSPlayerPrivateSnapshot()> InPrivateSnapshotProvider,
-	TFunction<void()> InServerViewRefreshHandler)
+	TFunction<void()> InServerViewRefreshHandler,
+	int32 InInitialMotionSequence)
 {
 	DecisionAgent = InDecisionAgent;
 	ViewerSeat = InViewerSeat;
+	InitialMotionSequence = InInitialMotionSequence;
 	PrivateSnapshotProvider = MoveTemp(InPrivateSnapshotProvider);
 	ServerViewRefreshHandler = MoveTemp(InServerViewRefreshHandler);
 
@@ -43,7 +46,7 @@ void ASGSPlayerController::AttachToMatch(
 	}
 	else
 	{
-		ClientAttachLocalHud(ViewerSeat);
+		ClientAttachLocalHud(ViewerSeat, InitialMotionSequence);
 	}
 }
 
@@ -115,9 +118,10 @@ bool ASGSPlayerController::SubmitPass()
 	return true;
 }
 
-void ASGSPlayerController::ClientAttachLocalHud_Implementation(int32 InViewerSeat)
+void ASGSPlayerController::ClientAttachLocalHud_Implementation(int32 InViewerSeat, int32 InInitialMotionSequence)
 {
 	ViewerSeat = InViewerSeat;
+	InitialMotionSequence = InInitialMotionSequence;
 	AttachLocalHud();
 }
 
@@ -180,7 +184,8 @@ void ASGSPlayerController::AttachLocalHud()
 	TableFeatureController = MakeShared<FSGSTableFeatureController>(
 		ViewerSeat,
 		MoveTemp(Bindings),
-		UIContext.ToSharedRef());
+		UIContext.ToSharedRef(),
+		InitialMotionSequence);
 	TableFeatureController->RefreshFromHost();
 
 	SAssignNew(TableHudWidget, SSGSTableHudWidget)

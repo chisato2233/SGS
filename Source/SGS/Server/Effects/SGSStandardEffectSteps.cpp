@@ -17,19 +17,72 @@ void AppendStandardEvent(FSGSEffectContext& Context, FName EventName, FString Pa
 			MoveTemp(Payload));
 	}
 }
+
+void AppendCardMoveEvent(
+	FSGSEffectContext& Context,
+	FName Reason,
+	const TArray<USGSCard*>& Cards,
+	FSGSCardZone FromZone,
+	int32 FromSeat,
+	FSGSCardZone ToZone,
+	int32 ToSeat,
+	TArray<int32> RelatedTargetSeatIndices)
+{
+	if (Context.ReplayLog == nullptr || Cards.IsEmpty())
+	{
+		return;
+	}
+
+	FSGSCardMoveEventPayload Payload;
+	Payload.Reason = Reason;
+	Payload.FromZone = FromZone;
+	Payload.FromSeat = FromSeat;
+	Payload.ToZone = ToZone;
+	Payload.ToSeat = ToSeat;
+	Payload.RelatedTargetSeatIndices = MoveTemp(RelatedTargetSeatIndices);
+	Payload.CardIds.Reserve(Cards.Num());
+	for (const USGSCard* Card : Cards)
+	{
+		if (Card != nullptr)
+		{
+			Payload.CardIds.Add(Card->CardId);
+		}
+	}
+	if (!Payload.CardIds.IsEmpty())
+	{
+		Context.ReplayLog->AppendCardMoveEvent(
+			Context.CommandId,
+			Context.CurrentStepId,
+			Context.TimingPoint,
+			MoveTemp(Payload));
+	}
 }
+}
+
+FName SGSCardMoveReasons::InitialDeal() { return FName(TEXT("SGS.CardMove.InitialDeal")); }
+FName SGSCardMoveReasons::Draw() { return FName(TEXT("SGS.CardMove.Draw")); }
+FName SGSCardMoveReasons::RewardDraw() { return FName(TEXT("SGS.CardMove.RewardDraw")); }
+FName SGSCardMoveReasons::Use() { return FName(TEXT("SGS.CardMove.Use")); }
+FName SGSCardMoveReasons::Respond() { return FName(TEXT("SGS.CardMove.Respond")); }
+FName SGSCardMoveReasons::Discard() { return FName(TEXT("SGS.CardMove.Discard")); }
+FName SGSCardMoveReasons::Cleanup() { return FName(TEXT("SGS.CardMove.Cleanup")); }
 
 FSGSEffectStep SGSStandardEffectSteps::MakeMoveCardsStep(
 	TArray<USGSCard*> Cards,
 	FSGSCardZone FromZone,
 	int32 FromSeat,
 	FSGSCardZone ToZone,
-	int32 ToSeat)
+	int32 ToSeat,
+	FSGSCardMoveEventMetadata Metadata)
 {
+	if (Metadata.Reason.IsNone())
+	{
+		Metadata.Reason = SGSCardMoveReasons::Discard();
+	}
 	FSGSEffectStep Step;
 	Step.StepName = FName(TEXT("SGS.Effect.MoveCards"));
 	Step.SourceName = FName(TEXT("StandardEffect.MoveCards"));
-	Step.Execute = [Cards = MoveTemp(Cards), FromZone, FromSeat, ToZone, ToSeat](FSGSEffectContext& Context)
+	Step.Execute = [Cards = MoveTemp(Cards), FromZone, FromSeat, ToZone, ToSeat, Metadata = MoveTemp(Metadata)](FSGSEffectContext& Context)
 	{
 		if (Context.GameContext == nullptr)
 		{
@@ -39,24 +92,33 @@ FSGSEffectStep SGSStandardEffectSteps::MakeMoveCardsStep(
 		}
 
 		Context.GameContext->MoveCards(Cards, FromZone, FromSeat, ToZone, ToSeat);
-		AppendStandardEvent(Context, FName(TEXT("SGS.Event.MoveCards")), FString::Printf(
-			TEXT("Count=%d From=%s@%d To=%s@%d"),
-			Cards.Num(),
-			*FromZone.ToString(),
+		AppendCardMoveEvent(
+			Context,
+			Metadata.Reason,
+			Cards,
+			FromZone,
 			FromSeat,
-			*ToZone.ToString(),
-			ToSeat));
+			ToZone,
+			ToSeat,
+			Metadata.RelatedTargetSeatIndices);
 		return FSGSEffectResult::Success();
 	};
 	return Step;
 }
 
-FSGSEffectStep SGSStandardEffectSteps::MakeDrawCardsStep(int32 SeatIndex, int32 Count)
+FSGSEffectStep SGSStandardEffectSteps::MakeDrawCardsStep(
+	int32 SeatIndex,
+	int32 Count,
+	FSGSCardMoveEventMetadata Metadata)
 {
+	if (Metadata.Reason.IsNone())
+	{
+		Metadata.Reason = SGSCardMoveReasons::Draw();
+	}
 	FSGSEffectStep Step;
 	Step.StepName = FName(TEXT("SGS.Effect.DrawCards"));
 	Step.SourceName = FName(TEXT("StandardEffect.DrawCards"));
-	Step.Execute = [SeatIndex, Count](FSGSEffectContext& Context)
+	Step.Execute = [SeatIndex, Count, Metadata = MoveTemp(Metadata)](FSGSEffectContext& Context)
 	{
 		if (Context.GameContext == nullptr)
 		{
@@ -65,12 +127,36 @@ FSGSEffectStep SGSStandardEffectSteps::MakeDrawCardsStep(int32 SeatIndex, int32 
 				TEXT("DrawCards step has no GameContext.")));
 		}
 
+		const int32 DrawPileCountBefore = Context.GameContext->GetCardsInZone(
+			SGSGameplayTags::CardZone_DrawPile.GetTag()).Num();
+		TArray<USGSCard*> RecycledCards;
+		if (DrawPileCountBefore < Count)
+		{
+			RecycledCards = Context.GameContext->GetCardsInZone(
+				SGSGameplayTags::CardZone_DiscardPile.GetTag());
+		}
 		const TArray<USGSCard*> DrawnCards = Context.GameContext->DrawCards(SeatIndex, Count);
-		AppendStandardEvent(Context, FName(TEXT("SGS.Event.DrawCards")), FString::Printf(
-			TEXT("Seat=%d Requested=%d Actual=%d"),
+		if (!RecycledCards.IsEmpty())
+		{
+			AppendCardMoveEvent(
+				Context,
+				SGSCardMoveReasons::Cleanup(),
+				RecycledCards,
+				SGSGameplayTags::CardZone_DiscardPile.GetTag(),
+				INDEX_NONE,
+				SGSGameplayTags::CardZone_DrawPile.GetTag(),
+				INDEX_NONE,
+				{});
+		}
+		AppendCardMoveEvent(
+			Context,
+			Metadata.Reason,
+			DrawnCards,
+			SGSGameplayTags::CardZone_DrawPile.GetTag(),
+			INDEX_NONE,
+			SGSGameplayTags::CardZone_Hand.GetTag(),
 			SeatIndex,
-			Count,
-			DrawnCards.Num()));
+			Metadata.RelatedTargetSeatIndices);
 		return FSGSEffectResult::Success();
 	};
 	return Step;

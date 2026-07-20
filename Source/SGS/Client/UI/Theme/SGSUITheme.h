@@ -33,8 +33,6 @@ public:
 	static float SeatHealthPipGap();
 	static float SeatHealthRightInset();
 	static float SeatHealthBottomInset();
-	static FLinearColor SeatHealthHighColor();
-	static FLinearColor SeatHealthMidColor();
-	static FLinearColor SeatHealthLowColor();
-	static FLinearColor SeatHealthLostColor();
+	static float SeatPortraitLeftInsetRatio();
+	static float SeatPortraitEdgeInsetRatio();
 };

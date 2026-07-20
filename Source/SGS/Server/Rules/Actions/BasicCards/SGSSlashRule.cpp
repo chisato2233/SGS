@@ -90,7 +90,8 @@ FSGSStatus FSGSSlashRule::ExecutePayload(FSGSRuleExecutionContext& Context, cons
 		SGSGameplayTags::CardZone_Hand.GetTag(),
 		SourceSeat,
 		SGSGameplayTags::CardZone_Processing.GetTag(),
-		INDEX_NONE),
+		INDEX_NONE,
+		{ SGSCardMoveReasons::Use(), { TargetSeat } }),
 		SGSBasicCardRuleHelpers::GetCommandId(Context));
 		Status.HasError())
 	{

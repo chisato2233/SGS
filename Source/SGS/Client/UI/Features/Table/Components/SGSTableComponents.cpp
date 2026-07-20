@@ -9,6 +9,7 @@
 #include "Widgets/Layout/SConstraintCanvas.h"
 #include "Widgets/Layout/SScaleBox.h"
 #include "Widgets/SOverlay.h"
+#include "Widgets/Text/STextBlock.h"
 
 void SSGSTableShellWidget::Construct(const FArguments& InArgs)
 {
@@ -19,6 +20,7 @@ void SSGSTableShellWidget::Construct(const FArguments& InArgs)
 	OnSkillClicked = InArgs._OnSkillClicked;
 	OnConfirmClicked = InArgs._OnConfirmClicked;
 	OnPassClicked = InArgs._OnPassClicked;
+	OnMotionCueFinished = InArgs._OnMotionCueFinished;
 	RebuildShell();
 }
 
@@ -33,13 +35,16 @@ void SSGSTableShellWidget::SetProps(FSGSTableShellProps InProps, ESGSTableViewCh
 	if (EnumHasAnyFlags(Change, ESGSTableViewChange::PublicState))
 	{
 		RebuildSeats();
+		RebuildPiles();
 		RebuildDecisionBar();
+		if (MotionWidget.IsValid()) MotionWidget->SetProps(Props.Motion);
 	}
 	if (EnumHasAnyFlags(Change, ESGSTableViewChange::PrivateState))
 	{
 		RebuildSeats();
 		RebuildHand();
 		RebuildDecisionBar();
+		if (MotionWidget.IsValid()) MotionWidget->SetProps(Props.Motion);
 	}
 	if (EnumHasAnyFlags(Change, ESGSTableViewChange::Interaction))
 	{
@@ -50,6 +55,10 @@ void SSGSTableShellWidget::SetProps(FSGSTableShellProps InProps, ESGSTableViewCh
 	if (EnumHasAnyFlags(Change, ESGSTableViewChange::HandPresentation))
 	{
 		RebuildHand();
+	}
+	if (EnumHasAnyFlags(Change, ESGSTableViewChange::Motion) && MotionWidget.IsValid())
+	{
+		MotionWidget->SetProps(Props.Motion);
 	}
 }
 
@@ -77,6 +86,25 @@ void SSGSTableShellWidget::RebuildShell()
 		SeatHosts.Add(PositionedSeat.Seat.SeatIndex, SeatHost);
 	}
 
+	auto AddPileHost = [&Canvas](const FSGSTablePileProps& Pile, TSharedPtr<SBox>& Host)
+	{
+		Canvas->AddSlot()
+			.Anchors(FAnchors(0.0f, 0.0f))
+			.Alignment(FVector2D::ZeroVector)
+			.Offset(FMargin(
+				Pile.Area.Left,
+				Pile.Area.Top,
+				FMath::Max(0.0f, Pile.Area.Right - Pile.Area.Left),
+				FMath::Max(0.0f, Pile.Area.Bottom - Pile.Area.Top)))
+		[
+			SAssignNew(Host, SBox)
+		];
+		Host->SetVisibility(EVisibility::HitTestInvisible);
+	};
+	AddPileHost(Props.DrawPile, DrawPileHost);
+	AddPileHost(Props.PlayArea, PlayAreaHost);
+	AddPileHost(Props.DiscardPile, DiscardPileHost);
+
 	Canvas->AddSlot()
 		.Anchors(FAnchors(0.0f, 0.0f))
 		.Alignment(FVector2D::ZeroVector)
@@ -100,6 +128,17 @@ void SSGSTableShellWidget::RebuildShell()
 	[
 		SAssignNew(HandHost, SBox)
 	];
+
+	if (!MotionWidget.IsValid())
+	{
+		SAssignNew(MotionWidget, SSGSTableCardMotionWidget)
+			.Props(Props.Motion)
+			.OnCueFinished(OnMotionCueFinished);
+	}
+	else
+	{
+		MotionWidget->SetProps(Props.Motion);
+	}
 
 	ChildSlot
 	[
@@ -127,11 +166,16 @@ void SSGSTableShellWidget::RebuildShell()
 		[
 			Canvas
 		]
+		+ SOverlay::Slot()
+		[
+			MotionWidget.ToSharedRef()
+		]
 	];
 
 	RebuildSeats();
 	RebuildDecisionBar();
 	RebuildHand();
+	RebuildPiles();
 }
 
 void SSGSTableShellWidget::RebuildSeats()
@@ -202,4 +246,42 @@ void SSGSTableShellWidget::RebuildHand()
 		HandHost->SetContent(HandWidget.ToSharedRef());
 		MountedHandHost = HandHost;
 	}
+}
+
+void SSGSTableShellWidget::RebuildPiles()
+{
+	auto SetPileContent = [](const TSharedPtr<SBox>& Host, const FSGSTablePileProps& Pile)
+	{
+		if (!Host.IsValid())
+		{
+			return;
+		}
+		Host->SetContent(
+			SNew(SOverlay)
+			+ SOverlay::Slot()
+			[
+				SNew(SBorder)
+					.BorderImage(Pile.bShowCard && Pile.CardBrush != nullptr
+						? Pile.CardBrush
+						: FCoreStyle::Get().GetBrush(TEXT("WhiteBrush")))
+					.BorderBackgroundColor(Pile.bShowCard && Pile.CardBrush != nullptr
+						? FLinearColor::White
+						: FLinearColor(0.06f, 0.07f, 0.08f, 0.45f))
+			]
+			+ SOverlay::Slot()
+				.HAlign(HAlign_Center)
+				.VAlign(VAlign_Bottom)
+				.Padding(2.0f)
+			[
+				SNew(STextBlock)
+					.Text(Pile.Count > 0
+						? FText::Format(FText::FromString(TEXT("{0}  {1}")), Pile.Label, FText::AsNumber(Pile.Count))
+						: Pile.Label)
+					.ColorAndOpacity(FLinearColor::White)
+					.ShadowOffset(FVector2D(1.0f, 1.0f))
+			]);
+	};
+	SetPileContent(DrawPileHost, Props.DrawPile);
+	SetPileContent(PlayAreaHost, Props.PlayArea);
+	SetPileContent(DiscardPileHost, Props.DiscardPile);
 }

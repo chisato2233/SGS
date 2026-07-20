@@ -62,6 +62,11 @@ FSGSTableSeatProps MakeSeatProps(
 		*Seat.DisplayName));
 	Props.Size = Size;
 	Props.PortraitBrush = Assets.GetGeneralPortraitBrush(Seat.GeneralId);
+	Props.FrameBrush = Assets.GetSeatFrameBrush(Seat.Faction);
+	Props.HealthHighBrush = Assets.GetSeatHealthBrush(ESGSSeatHealthVisual::High);
+	Props.HealthMidBrush = Assets.GetSeatHealthBrush(ESGSSeatHealthVisual::Mid);
+	Props.HealthLowBrush = Assets.GetSeatHealthBrush(ESGSSeatHealthVisual::Low);
+	Props.HealthLostBrush = Assets.GetSeatHealthBrush(ESGSSeatHealthVisual::Lost);
 	Props.Health = Seat.Health;
 	Props.MaxHealth = Seat.MaxHealth;
 	Props.HandCount = Seat.HandCount;
@@ -117,6 +122,37 @@ FSGSTableShellProps MakeShellProps(
 	Props.BackgroundBrush = Assets.GetBackgroundBrush();
 	Props.ControlArea = Layout.ControlArea;
 	Props.HandArea = Layout.HandArea;
+	Props.DrawPile.Area = Layout.DrawPileArea;
+	Props.DrawPile.CardBrush = Assets.GetCardBackBrush();
+	Props.DrawPile.Label = FText::FromString(TEXT("牌堆"));
+	Props.DrawPile.Count = Snapshot.DrawPileCount;
+	Props.DrawPile.bShowCard = Snapshot.DrawPileCount > 0;
+	Props.PlayArea.Area = Layout.PlayArea;
+	Props.PlayArea.Label = FText::FromString(TEXT("出牌区"));
+	Props.DiscardPile.Area = Layout.DiscardPileArea;
+	Props.DiscardPile.Label = FText::FromString(TEXT("弃牌"));
+	Props.DiscardPile.Count = Snapshot.DiscardPileCount;
+	Props.DiscardPile.CardBrush = Snapshot.bHasDiscardTopCard
+		? Assets.GetCardFaceBrush(Snapshot.DiscardTopCard.CardName)
+		: nullptr;
+	Props.DiscardPile.bShowCard = Snapshot.bHasDiscardTopCard;
+
+	Props.Motion.MotionEpoch = Snapshot.MotionEpoch;
+	Props.Motion.ViewerSeat = Snapshot.ViewerSeat;
+	Props.Motion.Layout = Layout;
+	Props.Motion.CardSize = FVector2D(64.0f, 90.0f) * Layout.LayoutScale;
+	Props.Motion.CardBackBrush = Assets.GetCardBackBrush();
+	Props.Motion.PendingCues.Reserve(Controller.GetMotionPresentation().PendingCues.Num());
+	for (const FSGSTableCardMotionCueViewData& Cue : Controller.GetMotionPresentation().PendingCues)
+	{
+		FSGSTableMotionCueProps& CueProps = Props.Motion.PendingCues.AddDefaulted_GetRef();
+		CueProps.Cue = Cue;
+		CueProps.VisibleCardBrushes.Reserve(Cue.VisibleCards.Num());
+		for (const FSGSCardViewData& Card : Cue.VisibleCards)
+		{
+			CueProps.VisibleCardBrushes.Add(Assets.GetCardFaceBrush(Card.CardName));
+		}
+	}
 	Props.Seats.Reserve(Snapshot.Seats.Num());
 	for (const FSGSSeatViewData& Seat : Snapshot.Seats)
 	{
@@ -288,6 +324,16 @@ void SSGSTableHudWidget::Construct(const FArguments& InArgs)
 			}
 		},
 		false);
+	Controller->GetMotionPresentationState().Subscribe(
+		Lifetime,
+		[WeakOwner](const FSGSTableMotionPresentationState& Presentation)
+		{
+			if (const TSharedPtr<SSGSTableHudWidget> Pinned = WeakOwner.Pin())
+			{
+				Pinned->HandleMotionPresentation(Presentation);
+			}
+		},
+		false);
 }
 
 void SSGSTableHudWidget::Tick(const FGeometry& AllottedGeometry, double InCurrentTime, float InDeltaTime)
@@ -339,7 +385,8 @@ TSharedRef<SWidget> SSGSTableHudWidget::BuildContent()
 		.OnSeatClicked(this, &SSGSTableHudWidget::OnSeatClicked)
 		.OnSkillClicked(this, &SSGSTableHudWidget::OnSkillClicked)
 		.OnConfirmClicked(this, &SSGSTableHudWidget::OnConfirmClicked)
-		.OnPassClicked(this, &SSGSTableHudWidget::OnPassClicked);
+		.OnPassClicked(this, &SSGSTableHudWidget::OnPassClicked)
+		.OnMotionCueFinished(this, &SSGSTableHudWidget::OnMotionCueFinished);
 }
 
 void SSGSTableHudWidget::UpdateShell(ESGSTableViewChange Change)
@@ -368,6 +415,19 @@ void SSGSTableHudWidget::HandleInteraction(const FSGSTableUIInteractionState& In
 void SSGSTableHudWidget::HandleHandPresentation(const FSGSTableHandPresentationState& Presentation)
 {
 	UpdateShell(ESGSTableViewChange::HandPresentation);
+}
+
+void SSGSTableHudWidget::HandleMotionPresentation(const FSGSTableMotionPresentationState& Presentation)
+{
+	UpdateShell(ESGSTableViewChange::Motion);
+}
+
+void SSGSTableHudWidget::OnMotionCueFinished(int32 Sequence)
+{
+	if (Controller.IsValid())
+	{
+		Controller->AcknowledgeMotionCue(Sequence);
+	}
 }
 
 FReply SSGSTableHudWidget::OnCardClicked(int32 CardId)

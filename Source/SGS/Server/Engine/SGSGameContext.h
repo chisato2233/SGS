@@ -71,7 +71,8 @@ public:
 		const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents,
 		int32 RandomSeed,
 		bool bIdentityMode = false,
-		TConstArrayView<FName> GeneralIdsBySeat = TConstArrayView<FName>());
+		TConstArrayView<FName> GeneralIdsBySeat = TConstArrayView<FName>(),
+		TConstArrayView<FGameplayTag> FactionsBySeat = TConstArrayView<FGameplayTag>());
 
 	int32 NumSeats() const { return Seats.Num(); }
 	USGSSeat* GetSeat(int32 Index) const;

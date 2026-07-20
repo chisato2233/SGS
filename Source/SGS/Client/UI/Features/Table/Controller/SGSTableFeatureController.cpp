@@ -32,10 +32,11 @@ FString SeatDisplayName(const FSGSTableViewSnapshot& Snapshot, int32 SeatIndex)
 FSGSTableFeatureController::FSGSTableFeatureController(
 	int32 InViewerSeat,
 	FSGSTableFeatureBindings InBindings,
-	TSharedRef<FSGSUIContext> InUIContext)
+	TSharedRef<FSGSUIContext> InUIContext,
+	int32 InInitialMotionSequence)
 	: Bindings(MoveTemp(InBindings))
 	, UIContext(MoveTemp(InUIContext))
-	, State(InViewerSeat)
+	, State(InViewerSeat, InInitialMotionSequence)
 {
 }
 

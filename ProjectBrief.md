@@ -57,13 +57,14 @@
 ### 当前工作面
 
 - `Source/Doc/Plan/0017-mature-rules-skills-ai-roadmap.md` — `In Progress`。以标准身份局为闭环，分 M1 通用 AI、M2 技能运行时、M3 完整流程、M4 标准内容、M5 身份策略推进；当前正在实施 M1。
-- `Source/Doc/Plan/0017-M1-information-safe-ai-evaluation.md` — `In Progress`。生产实现已完成：BasicAI 已迁移到只消费合法候选和受限 WorldView 的组合评分框架，基础牌评价器、评分明细与稳定决胜已接入，隐藏身份不进入 AI 视图；Development Editor 编译通过，等待 PIE 手工玩法验收。
+- `Source/Doc/Plan/0017-M1-information-safe-ai-evaluation.md` — `In Progress`。生产实现已完成：BasicAI 已迁移到只消费合法候选和受限 WorldView 的组合评分框架，基础牌评价器、评分明细与稳定决胜已接入，隐藏身份不进入 AI 视图；AI 动作与 Pass 默认延迟 0.45 秒提交，Development Editor 编译通过，等待 PIE 手工玩法验收。
 - `Source/Doc/Plan/0015-minimal-playable-identity-demo.md` — `In Progress`。固定 `1 真人 + 7 AI` 八人身份局的生产实现已完成：随机座次/身份、身份胜负、完整最小回合、杀闪桃酒、身份 AI 与复用现有 UI 的终局展示已接通，Development Editor 编译通过；按用户要求未新增或运行测试，未新增日志代码，等待 PIE 整局手工验收。
 - `Source/Doc/Plan/0011-native-code-first-ui.md` — `Ready`。UI 长期技术路线父计划。
 - `Source/Doc/Plan/0011-M1-minimal-code-first-table-ui.md` — `In Progress`。最小代码优先牌桌 UI 纵切代码已实现，PIE 默认进入 8 人 Nova 牌桌；摄像机、全视口背景、武将面板和压叠手牌底栏已按 NoName 布局纠偏，1280x720 离屏 UI 截图通过人工检查；`SGS.Plan0011M1.LocalUI.DecisionBridge` 自动化通过，等待 PIE / Standalone 真实点击与主观视觉验收。
 - `Source/Doc/Plan/0011-M2-react-inspired-ui-foundation-events.md` — `In Progress`。M2.2-M2.6 生产实现已完成：业务无关 state/signal/lifetime/context、Table Controller/Shell/叶组件、Host adapter、精准区域更新以及真实 Toast/Focus 消费者已经接入；Development Editor 编译通过。按用户要求未运行自动化，等待独立测试模型完成 Core、交互与多 LocalPlayer 验收。
 - `Source/Doc/Plan/0011-M3-high-performance-hand-interaction.md` — `In Progress`。本地展示牌序、按 CardId 复用的稳定 Hand/Card 树、Slate 原生拖拽、边缘滚动以及单 Active Timer 弹性动画已完成生产接入；Development Editor 构建和 graphify 更新通过，等待独立 PIE / Slate Insights 运行验收。
 - `Source/Doc/Plan/0011-M4-unified-response-ui.md` — `In Progress`。参考 NoName 的统一选择事件，已完成服务器权威响应请求、私有 ViewData、本地技能 / 牌 / 目标选择状态、独立 Slate DecisionPanel、Controller / HUD / RPC / Agent 提交链路；Development Editor 编译与 graphify 更新通过。当前真实纵切为杀→闪、濒死→桃，等待 PIE 交互验收；万箭 / 南蛮、无懈与具体武将技能仍需后续服务端规则计划。
+- `Source/Doc/Plan/0011-M5-authoritative-card-motion.md` — `In Progress`。服务器权威结构化牌移动事件、隐私安全的 64 条公共/私有快照窗口、Table 端有界消费队列、三个牌区锚点和单 Active Timer 全桌摸牌/出牌/弃牌演出已完成；Development Editor 全量构建与 `SGS.Plan0011*` 回归通过，等待 PIE 主观演出验收。
 - 开发日志已从牌桌 UI 和 Table Snapshot 协议中移除；`SGSEditor` 模块会把 `LogSGS*` 分类汇集到 Unreal Message Log 的 `SGS` 专属页，Runtime / Shipping 不加载该工具。
 - 当前主要 `In Progress` gameplay 工作面为 `0015` 最小可玩身份 Demo；`0011-M1` 至 `M4` 保持各自的 UI 运行验收工作面。Rule 层骨架已在 `0014` 收束，0015 直接复用既有规则与 UI 接缝，不扩建平行基础设施。
 - `Source/Doc/Plan/0000-RawRequirements.md` 是原始需求历史，不算活跃 Plan，默认不要全文读取。
@@ -76,6 +77,7 @@
 - 由独立测试模型验收 `0011-M2` 的 observable/batch/selector、lifetime teardown、typed signal、Table 真实操作链和多 LocalPlayer 隔离；通过后再将 M2 标记 Done。Motion 等两个真实消费者出现后再提炼，CommonUI / 菜单栈按明确需求另立计划。
 - 由独立测试模型用 PIE 与 Slate Insights 验收 `0011-M3` 的 20+ 手牌、滚动、缩放、取消路径和 Idle 零计时器；生产实现已经完成 Development 编译与 graphify 更新。任何 UE 画面读取仍须逐次先向用户确认。
 - 在 PIE 中验收 `0011-M4` 的杀→闪、濒死→桃提示、合法牌高亮、确认 / 不响应和请求结束清理；后续用真实服务端规则请求接入万箭 / 南蛮、无懈和首个响应技能，不为它们新增专用 Widget。任何 UE 画面读取仍须逐次先向用户确认。
+- 在 PIE 验收 M5 的开局发牌、双方摸牌、杀/闪/桃/酒、批量弃牌、死亡清牌、目标连线和空闲零 Motion Timer。任何画面读取仍须逐次先向用户确认。
 - 编辑器重启后从 `Window → Developer Tools → Message Log` 选择 `SGS`，确认 PIE 期间 `LogSGS*` 信息、警告和错误按严重度显示，且牌桌中央不再渲染调试文本。
 - 0015 完成后再为距离修正、坐骑、更多卡牌、锦囊、装备和首个武将技分别建立后续真实玩法计划，不把这些范围提前并入最小 Demo。
 

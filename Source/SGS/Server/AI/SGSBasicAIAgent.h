@@ -15,7 +15,11 @@ class SGS_API USGSBasicAIAgent : public UObject, public ISGSDecisionAgent
 	GENERATED_BODY()
 
 public:
-	void BindToSeat(USGSGameContext* InContext, int32 InSeatIndex, const FSGSAIEvaluatorRegistry* InEvaluatorRegistry);
+	void BindToSeat(
+		USGSGameContext* InContext,
+		int32 InSeatIndex,
+		const FSGSAIEvaluatorRegistry* InEvaluatorRegistry,
+		float InThinkDelaySeconds);
 
 	virtual void RequestPlayPhaseAction(const FSGSPlayPhaseRequest& Request, FSGSPlayPhaseDecisionDelegate OnDecided) override;
 	virtual void RequestResponseAction(const FSGSResponseRequest& Request, FSGSResponseDecisionDelegate OnDecided) override;
@@ -24,4 +28,5 @@ private:
 	TWeakObjectPtr<USGSGameContext> Context;
 	const FSGSAIEvaluatorRegistry* EvaluatorRegistry = nullptr;
 	int32 SeatIndex = INDEX_NONE;
+	float ThinkDelaySeconds = 0.45f;
 };

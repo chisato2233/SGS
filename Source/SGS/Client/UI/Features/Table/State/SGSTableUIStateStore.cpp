@@ -23,6 +23,28 @@ bool SameHandPresentation(
 	return A.OrderedCardIds == B.OrderedCardIds;
 }
 
+bool SameMotionPresentation(
+	const FSGSTableMotionPresentationState& A,
+	const FSGSTableMotionPresentationState& B)
+{
+	if (A.MotionEpoch != B.MotionEpoch
+		|| A.LastConsumedSequence != B.LastConsumedSequence
+		|| A.LastQueuedSequence != B.LastQueuedSequence
+		|| A.PendingCues.Num() != B.PendingCues.Num())
+	{
+		return false;
+	}
+	for (int32 Index = 0; Index < A.PendingCues.Num(); ++Index)
+	{
+		if (A.PendingCues[Index].Sequence != B.PendingCues[Index].Sequence
+			|| A.PendingCues[Index].VisibleCards.Num() != B.PendingCues[Index].VisibleCards.Num())
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 bool HasValidHandCardIds(const FSGSTableViewSnapshot& Snapshot)
 {
 	TSet<int32> CardIds;
@@ -45,11 +67,13 @@ bool RejectHandReorder(const TCHAR* Reason)
 }
 }
 
-FSGSTableUIStateStore::FSGSTableUIStateStore(int32 InViewerSeat)
+FSGSTableUIStateStore::FSGSTableUIStateStore(int32 InViewerSeat, int32 InInitialMotionSequence)
 	: ViewerSeat(InViewerSeat)
+	, InitialMotionSequence(InInitialMotionSequence)
 	, SnapshotState(FSGSTableViewSnapshot(), &SameSnapshotRevision)
 	, InteractionState(FSGSTableUIInteractionState(), &SameInteraction)
 	, HandPresentationState(FSGSTableHandPresentationState(), &SameHandPresentation)
+	, MotionPresentationState(FSGSTableMotionPresentationState(), &SameMotionPresentation)
 	, PublicRevisionSelector(
 		SnapshotState,
 		[](const FSGSTableViewSnapshot& Snapshot) { return Snapshot.PublicRevision; },
@@ -81,10 +105,38 @@ bool FSGSTableUIStateStore::IngestSnapshot(const FSGSTableViewSnapshot& InSnapsh
 
 	FSGSUIStateBatch Batch;
 	bHasSnapshot = true;
+	ReconcileMotionPresentation(AcceptedSnapshot);
 	SnapshotState.Set(MoveTemp(AcceptedSnapshot));
 	ReconcileHandPresentation();
 	NormalizeSelection();
 	return true;
+}
+
+void FSGSTableUIStateStore::AcknowledgeMotionCue(int32 Sequence)
+{
+	FSGSTableMotionPresentationState Next = MotionPresentationState.Get();
+	if (Sequence <= Next.LastConsumedSequence)
+	{
+		return;
+	}
+	Next.LastConsumedSequence = Sequence;
+	Next.PendingCues.RemoveAll([Sequence](const FSGSTableCardMotionCueViewData& Cue)
+	{
+		return Cue.Sequence <= Sequence;
+	});
+	MotionPresentationState.Set(MoveTemp(Next));
+}
+
+void FSGSTableUIStateStore::ClearMotionQueueToLatest()
+{
+	FSGSTableMotionPresentationState Next = MotionPresentationState.Get();
+	Next.PendingCues.Reset();
+	if (bHasSnapshot)
+	{
+		Next.LastConsumedSequence = FMath::Max(Next.LastConsumedSequence, GetSnapshot().MotionLatestSequence);
+		Next.LastQueuedSequence = FMath::Max(Next.LastQueuedSequence, Next.LastConsumedSequence);
+	}
+	MotionPresentationState.Set(MoveTemp(Next));
 }
 
 bool FSGSTableUIStateStore::SelectCard(int32 CardId)
@@ -366,4 +418,62 @@ void FSGSTableUIStateStore::NormalizeSelection()
 		Next.SelectedTargetSeat = INDEX_NONE;
 	}
 	InteractionState.Set(MoveTemp(Next));
+}
+
+void FSGSTableUIStateStore::ReconcileMotionPresentation(const FSGSTableViewSnapshot& InSnapshot)
+{
+	constexpr int32 MaxPendingMotionCues = 32;
+	FSGSTableMotionPresentationState Next = MotionPresentationState.Get();
+	if (Next.MotionEpoch != InSnapshot.MotionEpoch)
+	{
+		Next = FSGSTableMotionPresentationState();
+		Next.MotionEpoch = InSnapshot.MotionEpoch;
+		Next.LastConsumedSequence = InitialMotionSequence;
+		Next.LastQueuedSequence = InitialMotionSequence;
+	}
+
+	const int32 Cursor = FMath::Max(Next.LastConsumedSequence, Next.LastQueuedSequence);
+	if (InSnapshot.MotionLatestSequence >= 0
+		&& Cursor < InSnapshot.MotionWindowStartSequence - 1)
+	{
+		Next.PendingCues.Reset();
+		Next.LastConsumedSequence = InSnapshot.MotionLatestSequence;
+		Next.LastQueuedSequence = InSnapshot.MotionLatestSequence;
+		MotionPresentationState.Set(MoveTemp(Next));
+		return;
+	}
+
+	TArray<FSGSTableCardMotionCueViewData> SortedCues = InSnapshot.CardMotionCues;
+	SortedCues.Sort([](const FSGSTableCardMotionCueViewData& Left, const FSGSTableCardMotionCueViewData& Right)
+	{
+		return Left.Sequence < Right.Sequence;
+	});
+	for (const FSGSTableCardMotionCueViewData& Cue : SortedCues)
+	{
+		if (FSGSTableCardMotionCueViewData* Existing = Next.PendingCues.FindByPredicate(
+			[Sequence = Cue.Sequence](const FSGSTableCardMotionCueViewData& Pending)
+			{
+				return Pending.Sequence == Sequence;
+			}); Existing != nullptr)
+		{
+			if (Cue.VisibleCards.Num() > Existing->VisibleCards.Num())
+			{
+				*Existing = Cue;
+			}
+			continue;
+		}
+		if (Cue.Sequence > Next.LastQueuedSequence && Cue.Sequence > Next.LastConsumedSequence)
+		{
+			Next.PendingCues.Add(Cue);
+			Next.LastQueuedSequence = Cue.Sequence;
+		}
+	}
+
+	if (Next.PendingCues.Num() > MaxPendingMotionCues)
+	{
+		Next.PendingCues.Reset();
+		Next.LastConsumedSequence = InSnapshot.MotionLatestSequence;
+		Next.LastQueuedSequence = InSnapshot.MotionLatestSequence;
+	}
+	MotionPresentationState.Set(MoveTemp(Next));
 }

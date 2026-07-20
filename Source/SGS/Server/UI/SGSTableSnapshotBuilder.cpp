@@ -4,6 +4,7 @@
 #include "Client/UI/Bridge/SGSLocalHumanDecisionAgent.h"
 #include "Server/Engine/SGSGameContext.h"
 #include "Server/Engine/SGSGameDriver.h"
+#include "Server/Effects/SGSStandardEffectSteps.h"
 #include "Server/Players/SGSSeat.h"
 #include "Shared/Decisions/SGSDecisionTypes.h"
 
@@ -24,6 +25,70 @@ FString SnapshotTagLeaf(const FGameplayTag& Tag)
 FString FormatCard(const USGSCard& Card)
 {
 	return FString::Printf(TEXT("%s %s%d"), *Card.CardName.ToString(), *SnapshotTagLeaf(Card.Suit), Card.Number);
+}
+
+FSGSCardViewData MakeCardView(const USGSCard& Card)
+{
+	FSGSCardViewData CardView;
+	CardView.CardId = Card.CardId;
+	CardView.CardName = Card.CardName;
+	CardView.DisplayText = FormatCard(Card);
+	CardView.Suit = Card.Suit;
+	CardView.Number = Card.Number;
+	return CardView;
+}
+
+bool IsPublicCardFaceReason(FName Reason)
+{
+	return Reason == SGSCardMoveReasons::Use()
+		|| Reason == SGSCardMoveReasons::Respond()
+		|| Reason == SGSCardMoveReasons::Discard();
+}
+
+FSGSTableCardMotionCueViewData MakeMotionCue(
+	const FSGSCardMoveEventPayload& Move,
+	const USGSGameContext& Context,
+	bool bRevealFaces)
+{
+	FSGSTableCardMotionCueViewData Cue;
+	Cue.Sequence = Move.Sequence;
+	Cue.Reason = Move.Reason;
+	Cue.FromZone = Move.FromZone;
+	Cue.FromSeat = Move.FromSeat;
+	Cue.ToZone = Move.ToZone;
+	Cue.ToSeat = Move.ToSeat;
+	Cue.CardCount = Move.CardIds.Num();
+	Cue.RelatedTargetSeatIndices = Move.RelatedTargetSeatIndices;
+	Cue.bCleanup = Move.Reason == SGSCardMoveReasons::Cleanup();
+	if (bRevealFaces && !Cue.bCleanup)
+	{
+		for (const int32 CardId : Move.CardIds)
+		{
+			if (const USGSCard* Card = Context.FindCardById(CardId))
+			{
+				Cue.VisibleCards.Add(MakeCardView(*Card));
+			}
+		}
+	}
+	return Cue;
+}
+
+TArray<const FSGSCardMoveEventPayload*> GetRecentCardMoves(const USGSGameDriver& Driver)
+{
+	constexpr int32 MaxMotionEvents = 64;
+	TArray<const FSGSCardMoveEventPayload*> Moves;
+	for (const FSGSEventLogEntry& Entry : Driver.GetReplayLog().GetEventLog())
+	{
+		if (Entry.CardMove.IsSet())
+		{
+			Moves.Add(&Entry.CardMove.GetValue());
+		}
+	}
+	if (Moves.Num() > MaxMotionEvents)
+	{
+		Moves.RemoveAt(0, Moves.Num() - MaxMotionEvents, EAllowShrinking::No);
+	}
+	return Moves;
 }
 
 void AddUniqueInts(TArray<int32>& Target, const TArray<int32>& Source)
@@ -131,6 +196,25 @@ FSGSTablePublicSnapshot FSGSTableSnapshotBuilder::BuildPublicSnapshot(const USGS
 
 	Snapshot.DrawPileCount = Context->GetCardsInZone(SGSGameplayTags::CardZone_DrawPile.GetTag()).Num();
 	Snapshot.DiscardPileCount = Context->GetCardsInZone(SGSGameplayTags::CardZone_DiscardPile.GetTag()).Num();
+	const TArray<USGSCard*> DiscardPile = Context->GetCardsInZone(SGSGameplayTags::CardZone_DiscardPile.GetTag());
+	if (!DiscardPile.IsEmpty() && DiscardPile.Last() != nullptr)
+	{
+		Snapshot.bHasDiscardTopCard = true;
+		Snapshot.DiscardTopCard = MakeCardView(*DiscardPile.Last());
+	}
+
+	Snapshot.MotionEpoch = Driver->GetMotionEpoch();
+	const TArray<const FSGSCardMoveEventPayload*> RecentMoves = GetRecentCardMoves(*Driver);
+	if (!RecentMoves.IsEmpty())
+	{
+		Snapshot.MotionWindowStartSequence = RecentMoves[0]->Sequence;
+		Snapshot.MotionLatestSequence = RecentMoves.Last()->Sequence;
+		Snapshot.CardMotionCues.Reserve(RecentMoves.Num());
+		for (const FSGSCardMoveEventPayload* Move : RecentMoves)
+		{
+			Snapshot.CardMotionCues.Add(MakeMotionCue(*Move, *Context, IsPublicCardFaceReason(Move->Reason)));
+		}
+	}
 
 	for (int32 SeatIndex = 0; SeatIndex < Context->NumSeats(); ++SeatIndex)
 	{
@@ -146,6 +230,7 @@ FSGSTablePublicSnapshot FSGSTableSnapshotBuilder::BuildPublicSnapshot(const USGS
 			? FString::Printf(TEXT("Seat %d"), SeatIndex)
 			: Seat->DisplayName;
 		SeatView.GeneralId = Seat->GeneralId;
+		SeatView.Faction = Seat->Faction;
 		SeatView.Health = Seat->Health;
 		SeatView.MaxHealth = Seat->MaxHealth;
 		SeatView.bIsAlive = Seat->bIsAlive;
@@ -184,6 +269,17 @@ FSGSPlayerPrivateSnapshot FSGSTableSnapshotBuilder::BuildPrivateSnapshot(
 		return Snapshot;
 	}
 
+	Snapshot.MotionEpoch = Driver->GetMotionEpoch();
+	for (const FSGSCardMoveEventPayload* Move : GetRecentCardMoves(*Driver))
+	{
+		const bool bViewerDraw = Move->ToZone.MatchesTagExact(SGSGameplayTags::CardZone_Hand.GetTag())
+			&& Move->ToSeat == ViewerSeat;
+		if (bViewerDraw)
+		{
+			Snapshot.CardMotionCueOverrides.Add(MakeMotionCue(*Move, *Context, true));
+		}
+	}
+
 	if (const USGSSeat* Viewer = Context->GetSeat(ViewerSeat))
 	{
 		Snapshot.ViewerIdentity = Viewer->Identity;
@@ -196,13 +292,7 @@ FSGSPlayerPrivateSnapshot FSGSTableSnapshotBuilder::BuildPrivateSnapshot(
 			continue;
 		}
 
-		FSGSCardViewData CardView;
-		CardView.CardId = Card->CardId;
-		CardView.CardName = Card->CardName;
-		CardView.DisplayText = FormatCard(*Card);
-		CardView.Suit = Card->Suit;
-		CardView.Number = Card->Number;
-		Snapshot.HandCards.Add(MoveTemp(CardView));
+		Snapshot.HandCards.Add(MakeCardView(*Card));
 	}
 
 	ApplyPromptSnapshot(Snapshot, DecisionAgent);

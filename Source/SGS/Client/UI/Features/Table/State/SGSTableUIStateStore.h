@@ -17,18 +17,30 @@ struct SGS_API FSGSTableHandPresentationState
 	TArray<int32> OrderedCardIds;
 };
 
+struct SGS_API FSGSTableMotionPresentationState
+{
+	int32 MotionEpoch = INDEX_NONE;
+	int32 LastConsumedSequence = INDEX_NONE;
+	int32 LastQueuedSequence = INDEX_NONE;
+	TArray<FSGSTableCardMotionCueViewData> PendingCues;
+};
+
 // Table feature 的本地非权威状态边界。通用 observable/selector/batch 由 Core
 // 提供；revision、viewer 和合法选择归一化仍完全属于 Table。
 class SGS_API FSGSTableUIStateStore
 {
 public:
-	explicit FSGSTableUIStateStore(int32 InViewerSeat = INDEX_NONE);
+	explicit FSGSTableUIStateStore(
+		int32 InViewerSeat = INDEX_NONE,
+		int32 InInitialMotionSequence = INDEX_NONE);
 
 	bool IngestSnapshot(const FSGSTableViewSnapshot& InSnapshot);
 	bool SelectCard(int32 CardId);
 	bool SelectTarget(int32 TargetSeatIndex);
 	bool SelectSkill(FName SkillName);
 	bool ReorderHand(TConstArrayView<int32> OrderedCardIds);
+	void AcknowledgeMotionCue(int32 Sequence);
+	void ClearMotionQueueToLatest();
 	void ClearSelection();
 	bool IsCardSelectable(int32 CardId) const;
 	bool IsTargetSelectable(int32 TargetSeatIndex) const;
@@ -41,6 +53,10 @@ public:
 	const FSGSTableHandPresentationState& GetHandPresentation() const
 	{
 		return HandPresentationState.Get();
+	}
+	const FSGSTableMotionPresentationState& GetMotionPresentation() const
+	{
+		return MotionPresentationState.Get();
 	}
 
 	const TSGSUIObservable<int32>& GetPublicRevisionState() const
@@ -65,6 +81,10 @@ public:
 	{
 		return SnapshotState;
 	}
+	const TSGSUIObservable<FSGSTableMotionPresentationState>& GetMotionPresentationState() const
+	{
+		return MotionPresentationState;
+	}
 
 private:
 	bool IsRevisionAccepted(const FSGSTableViewSnapshot& InSnapshot) const;
@@ -73,12 +93,15 @@ private:
 	TArray<int32> GetTargetsForCurrentSelection() const;
 	void ReconcileHandPresentation();
 	void NormalizeSelection();
+	void ReconcileMotionPresentation(const FSGSTableViewSnapshot& InSnapshot);
 
 	int32 ViewerSeat = INDEX_NONE;
+	int32 InitialMotionSequence = INDEX_NONE;
 	bool bHasSnapshot = false;
 	TSGSUIObservable<FSGSTableViewSnapshot> SnapshotState;
 	TSGSUIObservable<FSGSTableUIInteractionState> InteractionState;
 	TSGSUIObservable<FSGSTableHandPresentationState> HandPresentationState;
+	TSGSUIObservable<FSGSTableMotionPresentationState> MotionPresentationState;
 	TSGSUISelector<FSGSTableViewSnapshot, int32> PublicRevisionSelector;
 	TSGSUISelector<FSGSTableViewSnapshot, int32> PrivateRevisionSelector;
 };
