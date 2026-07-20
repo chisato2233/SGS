@@ -57,14 +57,30 @@ FSGSStatus FSGSRespondCardCommandType::ValidateTyped(
 			FName(TEXT("SGS.Command.InvalidCard")),
 			TEXT("RespondCard requires exactly one card currently in the responding seat's hand.")));
 	}
-	if (!Payload.SkillName.IsNone() && Payload.ResultCardName.IsNone())
+	if (!Payload.SkillName.IsNone()
+		&& Payload.ResultCardName.IsNone()
+		&& (!Context.RequiredCardName.IsNone() || !Context.AcceptedCardNames.IsEmpty()))
 	{
 		return MakeError(FSGSError::Make(
 			FName(TEXT("SGS.Command.InvalidSkillResponse")),
-			TEXT("A skill response requires its server-listed result card name.")));
+			TEXT("A card-producing skill response requires its server-listed result card name.")));
+	}
+	TSet<int32> UniqueCards;
+	for (const int32 CardId : Payload.SelectedCardIds)
+	{
+		if (UniqueCards.Contains(CardId)
+			|| FindRespondCardHandCardStateById(CardId, Command, Context) == nullptr)
+		{
+			return MakeError(FSGSError::Make(
+				FName(TEXT("SGS.Command.InvalidSkillResponseCard")),
+				TEXT("Every response skill material must be a distinct card in the responding seat's hand.")));
+		}
+		UniqueCards.Add(CardId);
 	}
 
-	const FName EffectiveCardName = Payload.SkillName.IsNone() ? State->CardName : Payload.ResultCardName;
+	const FName EffectiveCardName = Payload.SkillName.IsNone()
+		? State->CardName
+		: (!Payload.ResultCardName.IsNone() ? Payload.ResultCardName : Payload.SkillName);
 	const bool bCardNameAccepted = Context.AcceptedCardNames.IsEmpty()
 		? Context.RequiredCardName.IsNone() || EffectiveCardName == Context.RequiredCardName
 		: Context.AcceptedCardNames.Contains(EffectiveCardName);
@@ -93,6 +109,7 @@ TSGSResult<FSGSRuleInvocation> FSGSRespondCardCommandType::BuildRuleInvocationTy
 
 	FSGSRespondCardRulePayload RulePayload;
 	RulePayload.CardId = Payload.CardId;
+	RulePayload.SelectedCardIds = Payload.SelectedCardIds;
 	RulePayload.CardName = Payload.SkillName.IsNone() ? State->CardName : Payload.ResultCardName;
 	RulePayload.MaterialCardName = State != nullptr ? State->CardName : NAME_None;
 	RulePayload.SkillName = Payload.SkillName;
@@ -106,7 +123,7 @@ TSGSResult<FSGSRuleInvocation> FSGSRespondCardCommandType::BuildRuleInvocationTy
 	FSGSRuleInvocation Invocation;
 	Invocation.RuleKindTag = SGSRuleKinds::Response();
 	Invocation.IntentTag = Command.Type;
-	Invocation.SubjectName = RulePayload.CardName;
+	Invocation.SubjectName = !RulePayload.CardName.IsNone() ? RulePayload.CardName : RulePayload.SkillName;
 	Invocation.ActorSeat = Command.SeatIndex;
 	Invocation.WindowName = Payload.WindowName;
 	Invocation.SourceCommandId = Command.CommandId;

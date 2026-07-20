@@ -63,6 +63,25 @@ ESGSAIRelation GetRelation(const FSGSAIWorldView& WorldView, int32 TargetSeatInd
 	return ESGSAIRelation::Hostile;
 }
 
+double ScoreSlashTargets(const FSGSAIWorldView& WorldView, const FSGSAIActionCandidate& Candidate)
+{
+	double Score = 0.0;
+	for (const int32 TargetSeat : Candidate.TargetSeatIndices)
+	{
+		const FSGSAISeatView* Target = WorldView.FindSeat(TargetSeat);
+		const double MissingHealth = Target != nullptr
+			? static_cast<double>(Target->MaxHealth - Target->Health)
+			: 0.0;
+		switch (GetRelation(WorldView, TargetSeat))
+		{
+		case ESGSAIRelation::Friendly: Score -= 100.0; break;
+		case ESGSAIRelation::Hostile: Score += 40.0 + 5.0 * MissingHealth; break;
+		case ESGSAIRelation::Unknown: Score += 10.0 + 5.0 * MissingHealth; break;
+		}
+	}
+	return Score;
+}
+
 class FSGSDodgeAIEvaluator final : public ISGSAIActionEvaluator
 {
 public:
@@ -82,9 +101,64 @@ public:
 	{
 		return Context.DecisionKind == SGSAIDecisionKinds::Response()
 			&& Context.WindowName != FName(TEXT("Dying.Peach"))
+			&& Candidate.ActionKind != SGSAIActionKinds::ChooseCards()
 			&& !Candidate.bPass
 			? 70.0
 			: 0.0;
+	}
+};
+
+class FSGSCardChoiceAIEvaluator final : public ISGSAIActionEvaluator
+{
+public:
+	virtual FName GetEvaluatorId() const override { return FName(TEXT("SGS.AI.Response.CardChoice")); }
+	virtual int32 GetPriority() const override { return 90; }
+	virtual double Evaluate(
+		const FSGSAIEvaluationContext& Context,
+		const FSGSAIActionCandidate& Candidate) const override
+	{
+		if (Candidate.ActionKind != SGSAIActionKinds::ChooseCards())
+		{
+			return 0.0;
+		}
+		if (Candidate.SkillName == TEXT("Axe.Discard"))
+		{
+			double Benefit = 15.0;
+			switch (GetRelation(Context.WorldView, Context.EffectTargetSeat))
+			{
+			case ESGSAIRelation::Friendly: Benefit = -100.0; break;
+			case ESGSAIRelation::Hostile: Benefit = 55.0; break;
+			case ESGSAIRelation::Unknown: Benefit = 15.0; break;
+			}
+			double Cost = 0.0;
+			for (const int32 CardId : Candidate.SelectedCardIds)
+			{
+				const FSGSAICardView* Card = Context.WorldView.FindOwnCard(CardId);
+				if (Card == nullptr) { Cost += 12.0; continue; }
+				if (Card->CardName == TEXT("Peach")) Cost += 35.0;
+				else if (Card->CardName == TEXT("Dodge") || Card->CardName == TEXT("Nullification")) Cost += 24.0;
+				else if (Card->CardName == TEXT("Slash")) Cost += 18.0;
+				else Cost += 12.0;
+			}
+			return Benefit - Cost;
+		}
+		if (Candidate.SkillName == TEXT("KylinBow.DiscardHorse"))
+		{
+			switch (GetRelation(Context.WorldView, Context.EffectTargetSeat))
+			{
+			case ESGSAIRelation::Friendly: return -100.0;
+			case ESGSAIRelation::Hostile: return 25.0;
+			case ESGSAIRelation::Unknown: return 5.0;
+			}
+		}
+		if (Candidate.SkillName == TEXT("AmazingGrace.Choose"))
+		{
+			if (Candidate.CardName == TEXT("Peach")) return 35.0;
+			if (Candidate.CardName == TEXT("Dodge") || Candidate.CardName == TEXT("Nullification")) return 28.0;
+			if (Candidate.CardName == TEXT("Slash")) return 20.0;
+			return 12.0;
+		}
+		return 1.0;
 	}
 };
 
@@ -186,19 +260,7 @@ public:
 		{
 			return 0.0;
 		}
-
-		const FSGSAISeatView* Target = Context.WorldView.FindSeat(Candidate.TargetSeatIndices[0]);
-		const double MissingHealth = Target != nullptr ? static_cast<double>(Target->MaxHealth - Target->Health) : 0.0;
-		switch (GetRelation(Context.WorldView, Candidate.TargetSeatIndices[0]))
-		{
-		case ESGSAIRelation::Friendly:
-			return -100.0;
-		case ESGSAIRelation::Hostile:
-			return 40.0 + 5.0 * MissingHealth;
-		case ESGSAIRelation::Unknown:
-		default:
-			return 10.0 + 5.0 * MissingHealth;
-		}
+		return ScoreSlashTargets(Context.WorldView, Candidate);
 	}
 };
 
@@ -213,13 +275,17 @@ public:
 			return Context.EffectTargetSeat == Context.WorldView.ObserverSeat ? 100.0 : 0.0;
 		}
 
-		return Context.Candidates.ContainsByPredicate(
-			[](const FSGSAIActionCandidate& Candidate)
+		double BestFollowUpScore = 0.0;
+		for (const FSGSAIActionCandidate& FollowUp : Context.Candidates)
+		{
+			if (FollowUp.CardName == TEXT("Slash") && !FollowUp.TargetSeatIndices.IsEmpty())
 			{
-				return Candidate.CardName == TEXT("Slash") && !Candidate.TargetSeatIndices.IsEmpty();
-			})
-			? 20.0
-			: 0.0;
+				BestFollowUpScore = FMath::Max(
+					BestFollowUpScore,
+					ScoreSlashTargets(Context.WorldView, FollowUp));
+			}
+		}
+		return BestFollowUpScore > 0.0 ? BestFollowUpScore + 20.0 : 0.0;
 	}
 };
 
@@ -269,7 +335,20 @@ TArray<FSGSAIActionCandidate> BuildPlayCandidates(const FSGSPlayPhaseRequest& Re
 		Candidate.ActionKind = SGSAIActionKinds::UseCard();
 		Candidate.CardId = Option.CardId;
 		Candidate.CardName = Option.CardName;
-		AddCandidateForTargets(Candidates, MoveTemp(Candidate), Option.TargetSeatIndices, StableOrder);
+		if (!Option.CandidateTargetSelections.IsEmpty())
+		{
+			for (const TArray<int32>& Targets : Option.CandidateTargetSelections)
+			{
+				FSGSAIActionCandidate Targeted = Candidate;
+				Targeted.TargetSeatIndices = Targets;
+				Targeted.StableOrder = StableOrder++;
+				Candidates.Add(MoveTemp(Targeted));
+			}
+		}
+		else
+		{
+			AddCandidateForTargets(Candidates, MoveTemp(Candidate), Option.TargetSeatIndices, StableOrder);
+		}
 	}
 
 	for (const FSGSDecisionSkillOption& Option : Request.SkillOptions)
@@ -301,6 +380,61 @@ TArray<FSGSAIActionCandidate> BuildResponseCandidates(const FSGSResponseRequest&
 	{
 		Candidates.Add(MakePassCandidate(StableOrder++));
 	}
+	if (Request.bIsOptionChoice)
+	{
+		for (const FSGSDecisionNamedOption& Option : Request.NamedOptions)
+		{
+			FSGSAIActionCandidate Candidate;
+			Candidate.ActionKind = SGSAIActionKinds::ChooseOption();
+			Candidate.SkillName = Option.OptionName;
+			Candidate.StableOrder = StableOrder++;
+			Candidates.Add(MoveTemp(Candidate));
+		}
+		return Candidates;
+	}
+	if (Request.bIsCardChoice)
+	{
+		TArray<TArray<int32>> Selections = Request.CandidateCardSelections;
+		if (Selections.IsEmpty() && Request.MinChoiceCount == 1 && Request.MaxChoiceCount == 1)
+		{
+			for (const FSGSDecisionCardChoiceOption& Option : Request.CardChoiceOptions)
+			{
+				Selections.Add({ Option.CardId });
+			}
+		}
+		if (Selections.IsEmpty() && Request.MinChoiceCount > 0)
+		{
+			TArray<int32> Selection;
+			for (int32 Index = 0; Index < Request.MinChoiceCount && Request.CardChoiceOptions.IsValidIndex(Index); ++Index)
+			{
+				Selection.Add(Request.CardChoiceOptions[Index].CardId);
+			}
+			Selections.Add(MoveTemp(Selection));
+		}
+		for (const TArray<int32>& Selection : Selections)
+		{
+			if (Selection.Num() < Request.MinChoiceCount || Selection.Num() > Request.MaxChoiceCount)
+			{
+				continue;
+			}
+			FSGSAIActionCandidate Candidate;
+			Candidate.ActionKind = SGSAIActionKinds::ChooseCards();
+			Candidate.SkillName = Request.ChoiceName;
+			Candidate.SelectedCardIds = Selection;
+			Candidate.CardId = Selection.Num() == 1 ? Selection[0] : INDEX_NONE;
+			if (Selection.Num() == 1)
+			{
+				if (const FSGSDecisionCardChoiceOption* Option = Request.CardChoiceOptions.FindByPredicate(
+					[&Selection](const FSGSDecisionCardChoiceOption& Item) { return Item.CardId == Selection[0]; }))
+				{
+					Candidate.CardName = Option->bFaceVisible ? Option->CardName : NAME_None;
+				}
+			}
+			Candidate.StableOrder = StableOrder++;
+			Candidates.Add(MoveTemp(Candidate));
+		}
+		return Candidates;
+	}
 
 	TArray<int32> DefaultTargets;
 	if (Request.EffectTargetSeat != INDEX_NONE)
@@ -325,24 +459,32 @@ TArray<FSGSAIActionCandidate> BuildResponseCandidates(const FSGSResponseRequest&
 
 	for (const FSGSDecisionSkillOption& Option : Request.SkillOptions)
 	{
-		TArray<int32> SkillCards = Option.SelectableCardIds;
+		TArray<TArray<int32>> SkillSelections = Option.CandidateCardSelections;
+		if (SkillSelections.IsEmpty())
+		{
+			for (const int32 CardId : Option.SelectableCardIds)
+			{
+				SkillSelections.Add({ CardId });
+			}
+		}
 		if (!Option.RequiresCard())
 		{
-			SkillCards.Add(INDEX_NONE);
+			SkillSelections.AddUnique(TArray<int32>());
 		}
 		const TConstArrayView<int32> Targets = Option.TargetSeatIndices.IsEmpty()
 			? TConstArrayView<int32>(DefaultTargets)
 			: TConstArrayView<int32>(Option.TargetSeatIndices);
-		for (const int32 CardId : SkillCards)
+		for (const TArray<int32>& CardSelection : SkillSelections)
 		{
 			FSGSAIActionCandidate Candidate;
 			Candidate.ActionKind = SGSAIActionKinds::RespondSkill();
-			Candidate.CardId = CardId;
+			Candidate.SelectedCardIds = CardSelection;
+			Candidate.CardId = CardSelection.IsEmpty() ? INDEX_NONE : CardSelection[0];
 			Candidate.SkillName = Option.SkillName;
 			Candidate.CardName = Option.ResultCardName;
 			if (Candidate.CardName.IsNone())
 			{
-				if (const FSGSAICardView* Card = WorldView.FindOwnCard(CardId))
+				if (const FSGSAICardView* Card = WorldView.FindOwnCard(Candidate.CardId))
 				{
 					Candidate.CardName = Card->CardName;
 				}
@@ -458,6 +600,8 @@ FName SGSAIActionKinds::UseCard() { return FName(TEXT("UseCard")); }
 FName SGSAIActionKinds::RespondCard() { return FName(TEXT("RespondCard")); }
 FName SGSAIActionKinds::RespondSkill() { return FName(TEXT("RespondSkill")); }
 FName SGSAIActionKinds::ActivateSkill() { return FName(TEXT("ActivateSkill")); }
+FName SGSAIActionKinds::ChooseCards() { return FName(TEXT("ChooseCards")); }
+FName SGSAIActionKinds::ChooseOption() { return FName(TEXT("ChooseOption")); }
 FName SGSAIDecisionKinds::Play() { return FName(TEXT("Play")); }
 FName SGSAIDecisionKinds::Response() { return FName(TEXT("Response")); }
 
@@ -477,7 +621,12 @@ void FSGSAIEvaluatorRegistry::RegisterCardSemantics(FName CardName, FSGSAIBehavi
 
 void FSGSAIEvaluatorRegistry::RegisterSkillSemantics(FName SkillName, FSGSAIBehaviorSemantics Semantics)
 {
-	SkillSemantics.Add(SkillName, MoveTemp(Semantics));
+	SkillSemantics.Add(SkillName, Semantics);
+	RegisterSkill(
+		SkillName,
+		MakeShared<FSGSSemanticAIEvaluator>(
+			FName(*FString::Printf(TEXT("SGS.AI.Semantics.Skill.%s"), *SkillName.ToString())),
+			MoveTemp(Semantics)));
 }
 
 const FSGSAIBehaviorSemantics* FSGSAIEvaluatorRegistry::FindSemantics(const FSGSAIActionCandidate& Candidate) const
@@ -648,17 +797,35 @@ FSGSResponseDecision FSGSAIDecisionEngine::DecideResponse(
 	}
 	else
 	{
-		Decision.Command = FSGSCommandFactory::Make(
-			FSGSCommandBuildRequest::FromDecisionRequest(
-				Request,
-				FName(TEXT("AI")),
-				Best.Candidate.SkillName.IsNone() ? Best.Candidate.CardName : Best.Candidate.SkillName),
-			FSGSRespondCardCommandPayload(
-				Best.Candidate.CardId,
-				Best.Candidate.TargetSeatIndices,
-				Request.WindowName,
-				Best.Candidate.SkillName,
-				Best.Candidate.CardName));
+		const FSGSCommandBuildRequest BuildRequest = FSGSCommandBuildRequest::FromDecisionRequest(
+			Request,
+			FName(TEXT("AI")),
+			Best.Candidate.SkillName.IsNone() ? Best.Candidate.CardName : Best.Candidate.SkillName);
+		if (Best.Candidate.ActionKind == SGSAIActionKinds::ChooseCards())
+		{
+			Decision.Command = FSGSCommandFactory::Make(
+				BuildRequest,
+				FSGSChooseCardsCommandPayload(Request.ChoiceName, Request.WindowName, Best.Candidate.SelectedCardIds));
+		}
+		else if (Best.Candidate.ActionKind == SGSAIActionKinds::ChooseOption())
+		{
+			Decision.Command = FSGSCommandFactory::Make(
+				BuildRequest,
+				FSGSChooseOptionCommandPayload(Request.ChoiceName, Request.WindowName, Best.Candidate.SkillName));
+		}
+		else
+		{
+			Decision.Command = FSGSCommandFactory::Make(
+				BuildRequest,
+				FSGSRespondCardCommandPayload(
+					Best.Candidate.SelectedCardIds.IsEmpty() && Best.Candidate.CardId != INDEX_NONE
+						? TArray<int32>{ Best.Candidate.CardId }
+						: Best.Candidate.SelectedCardIds,
+					Best.Candidate.TargetSeatIndices,
+					Request.WindowName,
+					Best.Candidate.SkillName,
+					Best.Candidate.CardName));
+		}
 	}
 	if (OutEvaluatedCandidates != nullptr)
 	{
@@ -674,6 +841,7 @@ void SGSBasicAIEvaluators::Register(FSGSAIEvaluatorRegistry& Registry)
 	Registry.RegisterCardSemantics(TEXT("Dodge"), { 0, 20, 0, 5, SGSAIEffectAttitudes::Neutral() });
 	Registry.RegisterCardSemantics(TEXT("Analeptic"), { 16, 10, 12, 8, SGSAIEffectAttitudes::Helpful() });
 	Registry.RegisterGlobal(MakeShared<FSGSLegalResponseAIEvaluator>());
+	Registry.RegisterGlobal(MakeShared<FSGSCardChoiceAIEvaluator>());
 	Registry.RegisterCard(FName(TEXT("Dodge")), MakeShared<FSGSDodgeAIEvaluator>());
 	Registry.RegisterCard(FName(TEXT("Peach")), MakeShared<FSGSPeachAIEvaluator>());
 	Registry.RegisterCard(FName(TEXT("Slash")), MakeShared<FSGSSlashAIEvaluator>());

@@ -1,7 +1,6 @@
 #include "Server/Rules/Responses/BasicCards/SGSDodgeRules.h"
 
 #include "Shared/Cards/SGSCard.h"
-#include "Server/Rules/Actions/BasicCards/SGSSlashRule.h"
 #include "Server/Rules/BasicCards/SGSBasicCardRuleHelpers.h"
 
 FName FSGSDodgePassRule::GetRuleName() const
@@ -75,30 +74,5 @@ FSGSStatus FSGSDodgeResponseRule::ExecutePayload(FSGSRuleExecutionContext& Conte
 	{
 		return Status;
 	}
-	FSGSResolutionFrame* SlashFrame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
-	FSGSSlashResolutionState* SlashState = SlashFrame != nullptr
-		? SlashFrame->GetMutableState<FSGSSlashResolutionState>()
-		: nullptr;
-	if (SlashState != nullptr && ++SlashState->DodgeCount < SlashState->RequiredDodgeCount)
-	{
-		FSGSRuleResponseWindowSpec WindowSpec;
-		WindowSpec.SeatIndex = SlashState->TargetSeat;
-		WindowSpec.WindowName = SGSBasicCardRuleHelpers::SlashDodgeWindowName();
-		WindowSpec.RequiredCardName = FName(TEXT("Dodge"));
-		WindowSpec.AcceptedCardNames.Add(FName(TEXT("Dodge")));
-		WindowSpec.ContextName = FName(TEXT("Slash"));
-		WindowSpec.EffectSourceSeat = SlashState->SourceSeat;
-		WindowSpec.EffectTargetSeat = SlashState->TargetSeat;
-		if (Context.Runtime->OpenResponseWindow(WindowSpec))
-		{
-			return MakeValue();
-		}
-		return SGSBasicCardRuleHelpers::ResolveSlashHit(Context);
-	}
-	if (FSGSStatus Status = SGSBasicCardRuleHelpers::DiscardProcessingCard(Context); Status.HasError())
-	{
-		return Status;
-	}
-
-	return SGSBasicCardRuleHelpers::CompleteCurrentFrame(Context, FName(TEXT("SGS.Resolution.SlashDodged")));
+	return SGSBasicCardRuleHelpers::ResolveSuccessfulSlashDodge(Context);
 }

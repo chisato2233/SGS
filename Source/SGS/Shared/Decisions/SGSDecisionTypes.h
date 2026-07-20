@@ -11,6 +11,26 @@ struct FSGSCardActionOption
 	int32 CardId = INDEX_NONE;
 	FName CardName = NAME_None;
 	TArray<int32> TargetSeatIndices;
+	int32 MinTargetCount = 0;
+	int32 MaxTargetCount = 0;
+	TArray<TArray<int32>> CandidateTargetSelections;
+};
+
+// 服务器已经裁剪可见性的通用选牌项。CardName 仅在观察者有权看到牌面时填写；
+// 不可见项仍可用不透明 CardId 选择，但不会向代理泄露牌面。
+struct FSGSDecisionCardChoiceOption
+{
+	int32 CardId = INDEX_NONE;
+	FName CardName = NAME_None;
+	FGameplayTag Suit;
+	int32 Number = 0;
+	bool bFaceVisible = false;
+};
+
+struct FSGSDecisionNamedOption
+{
+	FName OptionName = NAME_None;
+	FName DisplayName = NAME_None;
 };
 
 // 规则层已经判定可用于当前响应窗口的技能入口。UI 只选择其中一个选项，
@@ -79,6 +99,15 @@ struct FSGSResponseRequest
 	bool bAllowPass = true;
 	TArray<int32> ResponseCardIds;
 	TArray<FSGSDecisionSkillOption> SkillOptions;
+
+	bool bIsCardChoice = false;
+	FName ChoiceName = NAME_None;
+	int32 MinChoiceCount = 0;
+	int32 MaxChoiceCount = 0;
+	TArray<FSGSDecisionCardChoiceOption> CardChoiceOptions;
+	TArray<TArray<int32>> CandidateCardSelections;
+	bool bIsOptionChoice = false;
+	TArray<FSGSDecisionNamedOption> NamedOptions;
 };
 
 struct FSGSResponseDecision

@@ -25,6 +25,7 @@ struct SGS_API FSGSTableSeatProps
 	int32 Health = 0;
 	int32 MaxHealth = 0;
 	int32 HandCount = 0;
+	FText PublicZoneText;
 	float LayoutScale = 1.0f;
 	bool bAlive = true;
 	bool bSelectable = false;

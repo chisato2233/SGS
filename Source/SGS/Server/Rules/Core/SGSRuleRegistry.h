@@ -38,8 +38,10 @@ public:
 	void Reset();
 	void RegisterRule(TSharedRef<ISGSRule> Rule);
 	TArray<FName> FindCandidateRuleNames(const FSGSRuleInvocation& Invocation) const;
+	TArray<FName> FindMatchingTriggerRuleNames(FSGSRuleExecutionContext& Context) const;
 	FSGSStatus Resolve(FSGSRuleExecutionContext& Context) const;
 	FSGSStatus DispatchAll(FSGSRuleExecutionContext& Context) const;
+	FSGSStatus DispatchTriggerByName(FSGSRuleExecutionContext& Context, FName RuleName) const;
 	int32 ApplyNumericModifiers(const FSGSRuleQueryContext& Context, FSGSNumericRuleQuery Query) const;
 	TArray<FSGSDecisionSkillOption> CollectSkillOptions(
 		const FSGSRuleQueryContext& Context,

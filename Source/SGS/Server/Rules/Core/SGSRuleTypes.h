@@ -27,6 +27,7 @@ struct SGS_API FSGSRuleQueryContext
 	FName WindowName = NAME_None;
 	FName RequiredCardName = NAME_None;
 	TConstArrayView<FName> AcceptedCardNames;
+	bool bArmorIgnored = false;
 };
 
 struct SGS_API FSGSNumericRuleQuery
@@ -53,7 +54,9 @@ namespace SGSRuleQueries
 {
 	inline FName SlashUseLimit() { return FName(TEXT("SGS.RuleQuery.SlashUseLimit")); }
 	inline FName SlashTargetDistance() { return FName(TEXT("SGS.RuleQuery.SlashTargetDistance")); }
+	inline FName SlashTargetCount() { return FName(TEXT("SGS.RuleQuery.SlashTargetCount")); }
 	inline FName RequiredResponseCount() { return FName(TEXT("SGS.RuleQuery.RequiredResponseCount")); }
+	inline FName PeachHealAmount() { return FName(TEXT("SGS.RuleQuery.PeachHealAmount")); }
 	inline FName PlaySkillOptions() { return FName(TEXT("SGS.RuleQuery.PlaySkillOptions")); }
 	inline FName ResponseSkillOptions() { return FName(TEXT("SGS.RuleQuery.ResponseSkillOptions")); }
 }
@@ -67,7 +70,16 @@ struct SGS_API FSGSRuleResponseWindowSpec
 	FName ContextName = NAME_None;
 	int32 EffectSourceSeat = INDEX_NONE;
 	int32 EffectTargetSeat = INDEX_NONE;
+	bool bAllowPass = true;
 	TArray<FSGSDecisionSkillOption> SkillOptions;
+	bool bIsCardChoice = false;
+	FName ChoiceName = NAME_None;
+	int32 MinChoiceCount = 0;
+	int32 MaxChoiceCount = 0;
+	TArray<FSGSDecisionCardChoiceOption> CardChoiceOptions;
+	TArray<TArray<int32>> CandidateCardSelections;
+	bool bIsOptionChoice = false;
+	TArray<FSGSDecisionNamedOption> NamedOptions;
 };
 
 class SGS_API ISGSRuleRuntime
@@ -84,6 +96,8 @@ public:
 	virtual FSGSResolutionStack& GetResolutionStack() = 0;
 	virtual const FSGSResolutionStack& GetResolutionStack() const = 0;
 	virtual FSGSStatus PublishTimingEvent(const FSGSRuleEventPayload& Payload) = 0;
+	virtual FSGSStatus ContinueTimingEventDispatch() { return MakeValue(); }
+	virtual FSGSStatus ContinueGeneralSelection() { return MakeValue(); }
 	virtual void RequestCurrentPhaseResume() {}
 };
 

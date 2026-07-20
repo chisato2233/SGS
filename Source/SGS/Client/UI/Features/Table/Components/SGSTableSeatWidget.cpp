@@ -287,8 +287,14 @@ FMargin SSGSTableSeatWidget::GetPortraitPadding() const
 
 FText SSGSTableSeatWidget::GetFooterText() const
 {
-	return FText::FromString(FString::Printf(
+	FString Footer = FString::Printf(
 		TEXT("Hand %d%s"),
 		Props.HandCount,
-		Props.bAlive ? TEXT("") : TEXT("  |  OUT")));
+		Props.bAlive ? TEXT("") : TEXT("  |  OUT"));
+	if (!Props.PublicZoneText.IsEmpty())
+	{
+		Footer += TEXT("\n");
+		Footer += Props.PublicZoneText.ToString();
+	}
+	return FText::FromString(MoveTemp(Footer));
 }

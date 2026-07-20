@@ -7,13 +7,18 @@
 
 FString FSGSSlashResolutionState::ToLogString() const
 {
-	return FString::Printf(TEXT("SlashCard=%d Source=%d Target=%d"), SlashCardId, SourceSeat, TargetSeat);
+	return FString::Printf(TEXT("SlashCard=%d Virtual=%s IgnoreArmor=%s Source=%d Target=%d"),
+		SlashCardId,
+		bVirtualSlash ? TEXT("true") : TEXT("false"),
+		bIgnoreArmor ? TEXT("true") : TEXT("false"),
+		SourceSeat,
+		TargetSeat);
 }
 
 bool FSGSSlashResolutionState::CheckInvariants() const
 {
 	bool bOk = true;
-	bOk &= ensureMsgf(SlashCardId != INDEX_NONE, TEXT("SlashResolutionState requires a Slash card id."));
+	bOk &= ensureMsgf(bVirtualSlash || SlashCardId != INDEX_NONE, TEXT("Physical Slash resolution requires a card id."));
 	bOk &= ensureMsgf(SourceSeat != INDEX_NONE, TEXT("SlashResolutionState requires a source seat."));
 	bOk &= ensureMsgf(TargetSeat != INDEX_NONE, TEXT("SlashResolutionState requires a target seat."));
 	bOk &= ensureMsgf(DamageAmount > 0, TEXT("SlashResolutionState requires positive damage."));

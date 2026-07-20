@@ -6,6 +6,8 @@
 #include "Server/Players/SGSSeat.h"
 #include "Server/Rules/BasicCards/SGSBasicCardRuleHelpers.h"
 #include "Server/Rules/Core/SGSRuleRegistry.h"
+#include "Server/Rules/Resolution/SGSDamageResolution.h"
+#include "Server/Rules/Resolution/SGSJudgementResolution.h"
 
 namespace
 {
@@ -83,7 +85,6 @@ FSGSStatus FSGSDelayedTrickJudgementRule::ExecutePayload(
 	FSGSRuleExecutionContext& Context,
 	const FSGSJudgementRulePayload& Payload) const
 {
-	USGSCard* DelayedCard = Context.GameContext->FindCardById(Payload.DelayedTrickCardId);
 	FSGSResolutionFrame Frame;
 	Frame.SourceRuleName = GetRuleName();
 	Frame.SourceCommandId = Context.RuleInvocation.SourceCommandId;
@@ -91,17 +92,38 @@ FSGSStatus FSGSDelayedTrickJudgementRule::ExecutePayload(
 	Frame.SourceSeat = Payload.SeatIndex;
 	Frame.TargetSeat = Payload.SeatIndex;
 	Frame.ProcessingCardId = Payload.DelayedTrickCardId;
+	FSGSDelayedTrickResolutionState ResolutionState;
+	ResolutionState.JudgedSeat = Payload.SeatIndex;
+	ResolutionState.DelayedTrickCardId = Payload.DelayedTrickCardId;
+	ResolutionState.CardName = CardName;
+	Frame.FrameState = FInstancedStruct::Make(ResolutionState);
 	Context.Runtime->PushResolutionFrame(MoveTemp(Frame));
+	return SGSJudgementResolution::Start(
+		Context,
+		Payload.SeatIndex,
+		CardName,
+		SGSDelayedTrickRules::AfterJudgementContinuation());
+}
 
-	TSharedRef<TObjectPtr<USGSCard>> JudgementCard = MakeShared<TObjectPtr<USGSCard>>();
-	if (FSGSStatus Status = Context.Runtime->RunEffectStep(
-		SGSStandardEffectSteps::MakeJudgementDrawStep(Payload.SeatIndex, JudgementCard),
-		Context.RuleInvocation.SourceCommandId);
-		Status.HasError())
-	{
-		return Status;
-	}
-	USGSCard* ResultCard = JudgementCard.Get().Get();
+FName SGSDelayedTrickRules::AfterJudgementContinuation()
+{
+	return FName(TEXT("SGS.Resolution.Continuation.DelayedTrickAfterJudgement"));
+}
+
+FSGSStatus SGSDelayedTrickRules::ContinueAfterJudgement(
+	FSGSRuleExecutionContext& Context,
+	int32 ResultCardId)
+{
+	FSGSResolutionFrame* Frame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
+	FSGSDelayedTrickResolutionState* ResolutionState = Frame != nullptr
+		? Frame->GetMutableState<FSGSDelayedTrickResolutionState>()
+		: nullptr;
+	check(ResolutionState != nullptr);
+	const int32 JudgedSeat = ResolutionState->JudgedSeat;
+	const int32 DelayedTrickCardId = ResolutionState->DelayedTrickCardId;
+	const FName CardName = ResolutionState->CardName;
+	USGSCard* DelayedCard = Context.GameContext->FindCardById(DelayedTrickCardId);
+	USGSCard* ResultCard = Context.GameContext->FindCardById(ResultCardId);
 	if (ResultCard != nullptr)
 	{
 		if (FSGSStatus Status = Context.Runtime->RunEffectStep(
@@ -111,7 +133,7 @@ FSGSStatus FSGSDelayedTrickJudgementRule::ExecutePayload(
 				INDEX_NONE,
 				SGSGameplayTags::CardZone_DiscardPile.GetTag(),
 				INDEX_NONE,
-				{ SGSCardMoveReasons::Cleanup(), { Payload.SeatIndex } }),
+				{ SGSCardMoveReasons::Cleanup(), { JudgedSeat } }),
 			Context.RuleInvocation.SourceCommandId);
 			Status.HasError())
 		{
@@ -125,9 +147,9 @@ FSGSStatus FSGSDelayedTrickJudgementRule::ExecutePayload(
 		if (!IsSuit(ResultCard, SGSGameplayTags::Suit_Heart))
 		{
 			SGSBasicCardRuleHelpers::AddStatus(
-				Context, Payload.SeatIndex, FName(TEXT("SGS.ActiveEffect.SkipPlay")),
+				Context, JudgedSeat, FName(TEXT("SGS.ActiveEffect.SkipPlay")),
 				SGSGameplayTags::Status_SkipPlayPhase.GetTag(),
-				FSGSDurationSpec::ThisTurn(Payload.SeatIndex, Context.TimingPoint));
+				FSGSDurationSpec::ThisTurn(JudgedSeat, Context.TimingPoint));
 		}
 	}
 	else if (CardName == TEXT("SupplyShortage"))
@@ -135,9 +157,9 @@ FSGSStatus FSGSDelayedTrickJudgementRule::ExecutePayload(
 		if (!IsSuit(ResultCard, SGSGameplayTags::Suit_Club))
 		{
 			SGSBasicCardRuleHelpers::AddStatus(
-				Context, Payload.SeatIndex, FName(TEXT("SGS.ActiveEffect.SkipDraw")),
+				Context, JudgedSeat, FName(TEXT("SGS.ActiveEffect.SkipDraw")),
 				SGSGameplayTags::Status_SkipDrawPhase.GetTag(),
-				FSGSDurationSpec::ThisTurn(Payload.SeatIndex, Context.TimingPoint));
+				FSGSDurationSpec::ThisTurn(JudgedSeat, Context.TimingPoint));
 		}
 	}
 	else if (CardName == TEXT("Lightning"))
@@ -149,14 +171,14 @@ FSGSStatus FSGSDelayedTrickJudgementRule::ExecutePayload(
 
 	if (CardName == TEXT("Lightning") && !bLightningHit)
 	{
-		const int32 NextSeat = FindNextLightningSeat(*Context.GameContext, Payload.SeatIndex);
+		const int32 NextSeat = FindNextLightningSeat(*Context.GameContext, JudgedSeat);
 		if (NextSeat != INDEX_NONE)
 		{
 			if (FSGSStatus Status = Context.Runtime->RunEffectStep(
 				SGSStandardEffectSteps::MakeMoveCardsStep(
 					{ DelayedCard },
 					SGSGameplayTags::CardZone_Judgement.GetTag(),
-					Payload.SeatIndex,
+					JudgedSeat,
 					SGSGameplayTags::CardZone_Judgement.GetTag(),
 					NextSeat,
 					{ SGSCardMoveReasons::Use(), { NextSeat } }),
@@ -166,6 +188,19 @@ FSGSStatus FSGSDelayedTrickJudgementRule::ExecutePayload(
 				return Status;
 			}
 		}
+		else if (FSGSStatus Status = Context.Runtime->RunEffectStep(
+			SGSStandardEffectSteps::MakeMoveCardsStep(
+				{ DelayedCard },
+				SGSGameplayTags::CardZone_Judgement.GetTag(),
+				JudgedSeat,
+				SGSGameplayTags::CardZone_DiscardPile.GetTag(),
+				INDEX_NONE,
+				{ SGSCardMoveReasons::Cleanup(), { JudgedSeat } }),
+			Context.RuleInvocation.SourceCommandId);
+			Status.HasError())
+		{
+			return Status;
+		}
 	}
 	else
 	{
@@ -173,10 +208,10 @@ FSGSStatus FSGSDelayedTrickJudgementRule::ExecutePayload(
 			SGSStandardEffectSteps::MakeMoveCardsStep(
 				{ DelayedCard },
 				SGSGameplayTags::CardZone_Judgement.GetTag(),
-				Payload.SeatIndex,
+				JudgedSeat,
 				SGSGameplayTags::CardZone_DiscardPile.GetTag(),
 				INDEX_NONE,
-				{ SGSCardMoveReasons::Cleanup(), { Payload.SeatIndex } }),
+				{ SGSCardMoveReasons::Cleanup(), { JudgedSeat } }),
 			Context.RuleInvocation.SourceCommandId);
 			Status.HasError())
 		{
@@ -187,39 +222,13 @@ FSGSStatus FSGSDelayedTrickJudgementRule::ExecutePayload(
 	Context.Runtime->RequestCurrentPhaseResume();
 	if (bLightningHit)
 	{
-		if (FSGSStatus Status = Context.Runtime->RunEffectStep(
-			SGSStandardEffectSteps::MakeDamageStep(INDEX_NONE, Payload.SeatIndex, 3),
-			Context.RuleInvocation.SourceCommandId);
-			Status.HasError())
-		{
-			return Status;
-		}
-
-		FSGSRuleEventPayload DamageAfter;
-		DamageAfter.EventTag = SGSGameplayTags::GameEvent_DamageAfter.GetTag();
-		DamageAfter.EventName = FName(TEXT("DamageAfter"));
-		DamageAfter.TargetSeat = Payload.SeatIndex;
-		DamageAfter.SourceCommandId = Context.RuleInvocation.SourceCommandId;
-		DamageAfter.TimingPoint = Context.TimingPoint;
-		DamageAfter.TimingPoint.Step = SGSTimingSteps::After();
-		FSGSDamageEventData DamageData;
-		DamageData.CardId = Payload.DelayedTrickCardId;
-		DamageData.Amount = 3;
-		DamageAfter.EventData = FInstancedStruct::Make(DamageData);
-		if (FSGSStatus Status = Context.Runtime->PublishTimingEvent(DamageAfter); Status.HasError())
-		{
-			return Status;
-		}
-
-		const USGSSeat* Seat = Context.GameContext->GetSeat(Payload.SeatIndex);
-		if (Seat != nullptr && Seat->Health <= 0)
-		{
-			if (FSGSResolutionFrame* Parent = Context.Runtime->GetResolutionStack().GetCurrentFrame())
-			{
-				Parent->OnChildCompletedContinuation = SGSResolutionContinuations::FinishParentCardResolution();
-			}
-			return SGSBasicCardRuleHelpers::StartDyingPeachResolution(Context, Payload.SeatIndex);
-		}
+		return SGSDamageResolution::Start(
+			Context,
+			INDEX_NONE,
+			JudgedSeat,
+			3,
+			DelayedTrickCardId,
+			SGSResolutionContinuations::FinishParentCardResolution());
 	}
 
 	return Context.Runtime->CompleteCurrentFrame(FName(TEXT("SGS.Resolution.JudgementComplete")));

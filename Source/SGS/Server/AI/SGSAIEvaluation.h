@@ -88,6 +88,8 @@ namespace SGSAIActionKinds
 	SGS_API FName RespondCard();
 	SGS_API FName RespondSkill();
 	SGS_API FName ActivateSkill();
+	SGS_API FName ChooseCards();
+	SGS_API FName ChooseOption();
 }
 
 struct SGS_API FSGSAIActionCandidate

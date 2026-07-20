@@ -41,12 +41,23 @@ FString IdentityDisplayName(const FGameplayTag& Identity)
 	return FString();
 }
 
+FString JoinCardNames(TConstArrayView<FSGSCardViewData> Cards)
+{
+	TArray<FString> Names;
+	Names.Reserve(Cards.Num());
+	for (const FSGSCardViewData& Card : Cards)
+	{
+		Names.Add(Card.CardName.ToString());
+	}
+	return FString::Join(Names, TEXT("/"));
+}
+
 FSGSTableSeatProps MakeSeatProps(
 	const FSGSSeatViewData& Seat,
 	FVector2D Size,
 	float LayoutScale,
 	int32 ViewerSeat,
-	int32 SelectedTargetSeat,
+	TConstArrayView<int32> SelectedTargetSeats,
 	bool bSelectable,
 	FSGSTableAssetCatalog& Assets)
 {
@@ -70,10 +81,20 @@ FSGSTableSeatProps MakeSeatProps(
 	Props.Health = Seat.Health;
 	Props.MaxHealth = Seat.MaxHealth;
 	Props.HandCount = Seat.HandCount;
+	TArray<FString> PublicZones;
+	if (!Seat.EquipmentCards.IsEmpty())
+	{
+		PublicZones.Add(FString::Printf(TEXT("E %s"), *JoinCardNames(Seat.EquipmentCards)));
+	}
+	if (!Seat.JudgementCards.IsEmpty())
+	{
+		PublicZones.Add(FString::Printf(TEXT("J %s"), *JoinCardNames(Seat.JudgementCards)));
+	}
+	Props.PublicZoneText = FText::FromString(FString::Join(PublicZones, TEXT(" · ")));
 	Props.LayoutScale = LayoutScale;
 	Props.bAlive = Seat.bIsAlive;
 	Props.bSelectable = bSelectable;
-	Props.bSelected = Seat.SeatIndex == SelectedTargetSeat;
+	Props.bSelected = SelectedTargetSeats.Contains(Seat.SeatIndex);
 	Props.bCurrent = Seat.bIsCurrent;
 	Props.bViewer = Seat.SeatIndex == ViewerSeat;
 	return Props;
@@ -99,6 +120,10 @@ FSGSTableCardProps MakeCardProps(
 		Card.CardId));
 	Props.Size = Size;
 	Props.FaceBrush = Assets.GetCardFaceBrush(Card.CardName);
+	if (Card.bFaceDown)
+	{
+		Props.FaceBrush = Assets.GetCardBackBrush();
+	}
 	Props.bSelectable = bSelectable;
 	Props.bSelected = SelectedCardIds.Contains(Card.CardId);
 	Props.bDimmed = bDimmed;
@@ -168,7 +193,7 @@ FSGSTableShellProps MakeShellProps(
 			SeatLayout->Size,
 			Layout.LayoutScale,
 			Snapshot.ViewerSeat,
-			Interaction.SelectedTargetSeat,
+			Interaction.SelectedTargetSeatIndices,
 			!bGameFinished && Controller.IsTargetSelectable(Seat.SeatIndex),
 			Assets);
 	}
@@ -219,17 +244,23 @@ FSGSTableShellProps MakeShellProps(
 	Props.Hand.CardSize = Layout.HandCardSize;
 	Props.Hand.LayoutScale = Layout.LayoutScale;
 	Props.Hand.AvailableWidth = FMath::Max(0.0f, Layout.HandArea.Right - Layout.HandArea.Left);
-	Props.Hand.Cards.Reserve(Snapshot.HandCards.Num());
+	const TArray<FSGSCardViewData>& DisplayCards = Snapshot.Prompt.bIsCardChoice
+		? Snapshot.Prompt.ChoiceCards
+		: Snapshot.HandCards;
+	Props.Hand.Cards.Reserve(DisplayCards.Num());
 	TMap<int32, const FSGSCardViewData*> CardsById;
-	CardsById.Reserve(Snapshot.HandCards.Num());
-	for (const FSGSCardViewData& Card : Snapshot.HandCards)
+	CardsById.Reserve(DisplayCards.Num());
+	for (const FSGSCardViewData& Card : DisplayCards)
 	{
 		CardsById.Add(Card.CardId, &Card);
 	}
 
 	TSet<int32> AddedCardIds;
-	AddedCardIds.Reserve(Snapshot.HandCards.Num());
-	for (const int32 CardId : Controller.GetHandPresentation().OrderedCardIds)
+	AddedCardIds.Reserve(DisplayCards.Num());
+	const TArray<int32> OrderedCardIds = Snapshot.Prompt.bIsCardChoice
+		? Snapshot.Prompt.SelectableCardIds
+		: Controller.GetHandPresentation().OrderedCardIds;
+	for (const int32 CardId : OrderedCardIds)
 	{
 		if (const FSGSCardViewData* const* Card = CardsById.Find(CardId))
 		{
@@ -245,7 +276,7 @@ FSGSTableShellProps MakeShellProps(
 	}
 
 	// 首帧或异常输入下仍保持完整可见；Store 会在下一次有效快照中归一化顺序。
-	for (const FSGSCardViewData& Card : Snapshot.HandCards)
+	for (const FSGSCardViewData& Card : DisplayCards)
 	{
 		if (!AddedCardIds.Contains(Card.CardId))
 		{

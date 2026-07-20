@@ -7,6 +7,10 @@
 #include "Server/Players/SGSSeat.h"
 #include "Server/Rules/BasicCards/SGSBasicCardRuleHelpers.h"
 #include "Server/Rules/Core/SGSRuleRegistry.h"
+#include "Server/Rules/Resolution/SGSDamageResolution.h"
+#include "Server/Rules/Resolution/SGSJudgementResolution.h"
+#include "Server/Rules/Resolution/SGSLordAssistResolution.h"
+#include "Server/Rules/Resolution/SGSTimingEventResolution.h"
 #include "Server/Rules/StandardCards/SGSStandardTrickRules.h"
 
 namespace
@@ -58,6 +62,86 @@ int32 CountSeatStatus(const FSGSRuleQueryContext& Context, int32 SeatIndex, FGam
 		}
 	}
 	return Count;
+}
+
+FName JianxiongWindow() { return FName(TEXT("Skill.Jianxiong")); }
+FName FankuiWindow() { return FName(TEXT("Skill.Fankui")); }
+FName FankuiChoiceWindow() { return FName(TEXT("Skill.Fankui.ChooseCard")); }
+FName FankuiChoiceName() { return FName(TEXT("Fankui.Choose")); }
+FName GanglieInvokeWindow() { return FName(TEXT("Skill.Ganglie.Invoke")); }
+FName GanglieDiscardWindow() { return FName(TEXT("Skill.Ganglie.Discard")); }
+FName GuicaiWindow() { return FName(TEXT("Skill.Guicai")); }
+
+int32 FindLivingSkillOwner(const USGSGameContext* Context, FName SkillName)
+{
+	if (Context == nullptr)
+	{
+		return INDEX_NONE;
+	}
+	for (int32 SeatIndex = 0; SeatIndex < Context->NumSeats(); ++SeatIndex)
+	{
+		if (OwnsSkill(Context, SeatIndex, SkillName))
+		{
+			return SeatIndex;
+		}
+	}
+	return INDEX_NONE;
+}
+
+const FSGSRuleEventPayload* GetTimingEvent(const FSGSRuleExecutionContext& Context)
+{
+	const FSGSResolutionFrame* Frame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
+	const FSGSTimingEventResolutionState* State = Frame != nullptr
+		? Frame->GetState<FSGSTimingEventResolutionState>()
+		: nullptr;
+	return State != nullptr ? &State->EventPayload : nullptr;
+}
+
+FSGSStatus OpenOptionalTrigger(
+	FSGSRuleExecutionContext& Context,
+	int32 OwnerSeat,
+	FName SkillName,
+	FName DisplayName,
+	FName WindowName,
+	int32 EffectSourceSeat)
+{
+	FSGSDecisionSkillOption Option;
+	Option.SkillName = SkillName;
+	Option.DisplayName = DisplayName;
+	Option.RuleKindTag = SGSRuleKinds::Trigger();
+	Option.MinCardCount = 0;
+	Option.MaxCardCount = 0;
+
+	FSGSRuleResponseWindowSpec Spec;
+	Spec.SeatIndex = OwnerSeat;
+	Spec.WindowName = WindowName;
+	Spec.ContextName = SkillName;
+	Spec.EffectSourceSeat = EffectSourceSeat;
+	Spec.EffectTargetSeat = OwnerSeat;
+	Spec.SkillOptions.Add(MoveTemp(Option));
+	Context.Runtime->OpenResponseWindow(Spec);
+	return MakeValue();
+}
+
+FSGSStatus ResolveGanglieFailure(FSGSRuleExecutionContext& Context)
+{
+	const FSGSRuleEventPayload* Event = GetTimingEvent(Context);
+	if (Event == nullptr)
+	{
+		return SGSBasicCardRuleHelpers::MakeRuleError(
+			FName(TEXT("SGS.Skill.InvalidGanglieEvent")),
+			TEXT("Ganglie requires its damage event."));
+	}
+	FSGSResolutionFrame* TimingFrame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
+	check(TimingFrame != nullptr);
+	TimingFrame->OnChildCompletedContinuation = SGSTimingEventResolution::ResumeDispatchAfterChild();
+	return SGSDamageResolution::Start(
+		Context,
+		Event->TargetSeat,
+		Event->SourceSeat,
+		1,
+		INDEX_NONE,
+		SGSTimingEventResolution::ResumeDispatchAfterChild());
 }
 }
 
@@ -115,6 +199,381 @@ void FSGSWushuangModifierRule::ModifyNumericQuery(
 	{
 		Query.Value = FMath::Max(Query.Value, 2);
 	}
+}
+
+FName FSGSJiuyuanModifierRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Jiuyuan.PeachHealAmount"));
+}
+
+FSGSRuleDescriptor FSGSJiuyuanModifierRule::GetDescriptor() const
+{
+	return MakeSkillDescriptor(
+		GetRuleName(),
+		SGSRuleKinds::Modifier(),
+		FGameplayTag(),
+		SGSRuleQueries::PeachHealAmount(),
+		200,
+		true);
+}
+
+void FSGSJiuyuanModifierRule::ModifyNumericQuery(
+	const FSGSRuleQueryContext& Context,
+	FSGSNumericRuleQuery& Query) const
+{
+	if (Query.QueryName != SGSRuleQueries::PeachHealAmount()
+		|| Query.CardName != TEXT("Peach")
+		|| Query.ActorSeat == Query.TargetSeat)
+	{
+		return;
+	}
+	const USGSSeat* Responder = Context.GameContext != nullptr
+		? Context.GameContext->GetSeat(Query.ActorSeat)
+		: nullptr;
+	const USGSSeat* Target = Context.GameContext != nullptr
+		? Context.GameContext->GetSeat(Query.TargetSeat)
+		: nullptr;
+	if (Responder != nullptr
+		&& Target != nullptr
+		&& Responder->Faction.MatchesTagExact(SGSGameplayTags::Faction_Wu.GetTag())
+		&& Target->Identity.MatchesTagExact(SGSGameplayTags::Identity_Lord.GetTag())
+		&& Target->HasSkill(FName(TEXT("Jiuyuan"))))
+	{
+		++Query.Value;
+	}
+}
+
+FName FSGSHujiaOptionRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Hujia.Option"));
+}
+
+FSGSRuleDescriptor FSGSHujiaOptionRule::GetDescriptor() const
+{
+	return MakeSkillDescriptor(
+		GetRuleName(), SGSRuleKinds::ViewAs(), FGameplayTag(), FName(TEXT("Hujia")), 180, true);
+}
+
+void FSGSHujiaOptionRule::CollectSkillOptions(
+	const FSGSRuleQueryContext& Context,
+	FSGSSkillOptionQuery& Query) const
+{
+	const USGSSeat* Lord = Context.GameContext != nullptr
+		? Context.GameContext->GetSeat(Query.ActorSeat)
+		: nullptr;
+	if (Query.QueryName != SGSRuleQueries::ResponseSkillOptions()
+		|| !Query.AcceptedCardNames.Contains(FName(TEXT("Dodge")))
+		|| Lord == nullptr
+		|| !Lord->Identity.MatchesTagExact(SGSGameplayTags::Identity_Lord.GetTag())
+		|| !Lord->HasSkill(FName(TEXT("Hujia"))))
+	{
+		return;
+	}
+	FSGSDecisionSkillOption Option;
+	Option.SkillName = FName(TEXT("Hujia"));
+	Option.DisplayName = FName(TEXT("护驾"));
+	Option.RuleKindTag = SGSRuleKinds::ViewAs();
+	Option.ResultCardName = FName(TEXT("Dodge"));
+	Query.Options.Add(MoveTemp(Option));
+}
+
+FName FSGSJijiangOptionRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Jijiang.Option"));
+}
+
+FSGSRuleDescriptor FSGSJijiangOptionRule::GetDescriptor() const
+{
+	return MakeSkillDescriptor(
+		GetRuleName(), SGSRuleKinds::ViewAs(), FGameplayTag(), FName(TEXT("Jijiang")), 180, true);
+}
+
+void FSGSJijiangOptionRule::CollectSkillOptions(
+	const FSGSRuleQueryContext& Context,
+	FSGSSkillOptionQuery& Query) const
+{
+	const USGSSeat* Lord = Context.GameContext != nullptr
+		? Context.GameContext->GetSeat(Query.ActorSeat)
+		: nullptr;
+	const bool bPlay = Query.QueryName == SGSRuleQueries::PlaySkillOptions();
+	const bool bResponse = Query.QueryName == SGSRuleQueries::ResponseSkillOptions()
+		&& Query.AcceptedCardNames.Contains(FName(TEXT("Slash")));
+	if ((!bPlay && !bResponse)
+		|| Lord == nullptr
+		|| !Lord->Identity.MatchesTagExact(SGSGameplayTags::Identity_Lord.GetTag())
+		|| !Lord->HasSkill(FName(TEXT("Jijiang"))))
+	{
+		return;
+	}
+	if (bPlay
+		&& CountSeatStatus(Context, Query.ActorSeat, SGSGameplayTags::Status_JijiangFailed.GetTag()) > 0)
+	{
+		return;
+	}
+	if (bPlay)
+	{
+		FSGSNumericRuleQuery LimitQuery;
+		LimitQuery.QueryName = SGSRuleQueries::SlashUseLimit();
+		LimitQuery.ActorSeat = Query.ActorSeat;
+		LimitQuery.CardName = FName(TEXT("Slash"));
+		LimitQuery.BaseValue = 1;
+		const int32 Limit = Context.RuleRegistry != nullptr
+			? Context.RuleRegistry->ApplyNumericModifiers(Context, LimitQuery)
+			: 1;
+		if (CountSeatStatus(Context, Query.ActorSeat, SGSGameplayTags::Status_SlashUsed.GetTag()) >= Limit)
+		{
+			return;
+		}
+	}
+
+	FSGSDecisionSkillOption Option;
+	Option.SkillName = FName(TEXT("Jijiang"));
+	Option.DisplayName = FName(TEXT("激将"));
+	Option.RuleKindTag = bPlay ? SGSRuleKinds::Action() : SGSRuleKinds::ViewAs();
+	Option.ResultCardName = FName(TEXT("Slash"));
+	Option.MinTargetCount = bPlay ? 1 : 0;
+	Option.MaxTargetCount = bPlay ? 1 : 0;
+	if (bPlay)
+	{
+		FSGSNumericRuleQuery DistanceQuery;
+		DistanceQuery.QueryName = SGSRuleQueries::SlashTargetDistance();
+		DistanceQuery.ActorSeat = Query.ActorSeat;
+		DistanceQuery.CardName = FName(TEXT("Slash"));
+		DistanceQuery.BaseValue = 1;
+		const int32 Distance = Context.RuleRegistry != nullptr
+			? Context.RuleRegistry->ApplyNumericModifiers(Context, DistanceQuery)
+			: 1;
+		for (int32 SeatIndex = 0; SeatIndex < Context.GameContext->NumSeats(); ++SeatIndex)
+		{
+			const USGSSeat* Target = Context.GameContext->GetSeat(SeatIndex);
+			if (Target != nullptr && Target->bIsAlive && SeatIndex != Query.ActorSeat
+				&& Context.GameContext->GetDistance(Query.ActorSeat, SeatIndex) <= Distance)
+			{
+				Option.TargetSeatIndices.Add(SeatIndex);
+			}
+		}
+	}
+	if (!bPlay || !Option.TargetSeatIndices.IsEmpty())
+	{
+		Query.Options.Add(MoveTemp(Option));
+	}
+}
+
+FName FSGSHujiaResponseRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Hujia.Invoke"));
+}
+
+FSGSRuleDescriptor FSGSHujiaResponseRule::GetDescriptor() const
+{
+	return SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+		GetRuleName(), SGSRuleKinds::Response(), SGSGameplayTags::PlayAction_RespondCard.GetTag(),
+		FName(TEXT("Dodge")), NAME_None, 350, false, false, true);
+}
+
+bool FSGSHujiaResponseRule::CanHandlePayload(
+	const FSGSRuleExecutionContext&,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	return Payload.SkillName == TEXT("Hujia") && Payload.CardName == TEXT("Dodge");
+}
+
+FSGSStatus FSGSHujiaResponseRule::ValidatePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload&) const
+{
+	const USGSSeat* Lord = Context.GameContext->GetSeat(Context.RuleInvocation.ActorSeat);
+	return Lord != nullptr
+		&& Lord->Identity.MatchesTagExact(SGSGameplayTags::Identity_Lord.GetTag())
+		&& Lord->HasSkill(FName(TEXT("Hujia")))
+		? MakeValue()
+		: SGSBasicCardRuleHelpers::MakeRuleError(
+			FName(TEXT("SGS.Skill.InvalidHujia")), TEXT("Only the Wei lord may invoke Hujia."));
+}
+
+FSGSStatus FSGSHujiaResponseRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	return SGSLordAssistResolution::Start(
+		Context,
+		FName(TEXT("Hujia")),
+		Context.RuleInvocation.ActorSeat,
+		FName(TEXT("Dodge")),
+		Payload.EffectTargetSeat,
+		SGSGameplayTags::Faction_Wei.GetTag(),
+		false);
+}
+
+FName FSGSJijiangActionRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Jijiang.Action"));
+}
+
+FSGSRuleDescriptor FSGSJijiangActionRule::GetDescriptor() const
+{
+	return MakeSkillDescriptor(
+		GetRuleName(), SGSRuleKinds::Action(), SGSGameplayTags::PlayAction_ActivateSkill.GetTag(),
+		FName(TEXT("Jijiang")), 200);
+}
+
+bool FSGSJijiangActionRule::CanHandlePayload(
+	const FSGSRuleExecutionContext&,
+	const FSGSActivateSkillRulePayload& Payload) const
+{
+	return Payload.SkillName == TEXT("Jijiang") && Payload.ResultCardName == TEXT("Slash");
+}
+
+FSGSStatus FSGSJijiangActionRule::ValidatePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSActivateSkillRulePayload& Payload) const
+{
+	const USGSSeat* Lord = Context.GameContext->GetSeat(Context.RuleInvocation.ActorSeat);
+	if (Lord == nullptr
+		|| !Lord->Identity.MatchesTagExact(SGSGameplayTags::Identity_Lord.GetTag())
+		|| !Lord->HasSkill(FName(TEXT("Jijiang"))))
+	{
+		return SGSBasicCardRuleHelpers::MakeRuleError(
+			FName(TEXT("SGS.Skill.InvalidJijiang")), TEXT("Only the Shu lord may invoke Jijiang."));
+	}
+	if (SGSBasicCardRuleHelpers::HasStatus(
+		Context, Context.RuleInvocation.ActorSeat, SGSGameplayTags::Status_JijiangFailed.GetTag()))
+	{
+		return SGSBasicCardRuleHelpers::MakeRuleError(
+			FName(TEXT("SGS.Skill.JijiangUnavailable")), TEXT("Jijiang already failed in this play phase."));
+	}
+	return SGSBasicCardRuleHelpers::ValidateVirtualSlashUse(
+		Context, Context.RuleInvocation.ActorSeat, Payload.TargetSeatIndices);
+}
+
+FSGSStatus FSGSJijiangActionRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSActivateSkillRulePayload& Payload) const
+{
+	return SGSLordAssistResolution::Start(
+		Context,
+		FName(TEXT("Jijiang")),
+		Context.RuleInvocation.ActorSeat,
+		FName(TEXT("Slash")),
+		Payload.TargetSeatIndices[0],
+		SGSGameplayTags::Faction_Shu.GetTag(),
+		true);
+}
+
+FName FSGSJijiangResponseRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Jijiang.Response"));
+}
+
+FSGSRuleDescriptor FSGSJijiangResponseRule::GetDescriptor() const
+{
+	return SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+		GetRuleName(), SGSRuleKinds::Response(), SGSGameplayTags::PlayAction_RespondCard.GetTag(),
+		FName(TEXT("Slash")), NAME_None, 350, false, false, true);
+}
+
+bool FSGSJijiangResponseRule::CanHandlePayload(
+	const FSGSRuleExecutionContext&,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	return Payload.SkillName == TEXT("Jijiang") && Payload.CardName == TEXT("Slash");
+}
+
+FSGSStatus FSGSJijiangResponseRule::ValidatePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload&) const
+{
+	const USGSSeat* Lord = Context.GameContext->GetSeat(Context.RuleInvocation.ActorSeat);
+	return Lord != nullptr
+		&& Lord->Identity.MatchesTagExact(SGSGameplayTags::Identity_Lord.GetTag())
+		&& Lord->HasSkill(FName(TEXT("Jijiang")))
+		? MakeValue()
+		: SGSBasicCardRuleHelpers::MakeRuleError(
+			FName(TEXT("SGS.Skill.InvalidJijiang")), TEXT("Only the Shu lord may invoke Jijiang."));
+}
+
+FSGSStatus FSGSJijiangResponseRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	return SGSLordAssistResolution::Start(
+		Context,
+		FName(TEXT("Jijiang")),
+		Context.RuleInvocation.ActorSeat,
+		FName(TEXT("Slash")),
+		Payload.EffectTargetSeat,
+		SGSGameplayTags::Faction_Shu.GetTag(),
+		false);
+}
+
+FName FSGSLordAssistCardRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.LordAssist.Card"));
+}
+
+FSGSRuleDescriptor FSGSLordAssistCardRule::GetDescriptor() const
+{
+	return SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+		GetRuleName(), SGSRuleKinds::Response(), SGSGameplayTags::PlayAction_RespondCard.GetTag(),
+		NAME_None, SGSLordAssistResolution::WindowName(), 300, false, true);
+}
+
+bool FSGSLordAssistCardRule::CanHandlePayload(
+	const FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	const FSGSResolutionFrame* Frame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
+	const FSGSLordAssistResolutionState* State = Frame != nullptr
+		? Frame->GetState<FSGSLordAssistResolutionState>()
+		: nullptr;
+	return State != nullptr && Payload.SkillName.IsNone() && Payload.CardName == State->RequiredCardName;
+}
+
+FSGSStatus FSGSLordAssistCardRule::ValidatePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	const FSGSResolutionFrame* Frame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
+	const FSGSLordAssistResolutionState* State = Frame->GetState<FSGSLordAssistResolutionState>();
+	USGSCard* Card = Context.GameContext->FindCardById(Payload.CardId);
+	return Card != nullptr && Card->CardName == State->RequiredCardName
+		? MakeValue()
+		: SGSBasicCardRuleHelpers::MakeRuleError(
+			FName(TEXT("SGS.Skill.InvalidLordAssistCard")), TEXT("The provided card does not satisfy the lord skill."));
+}
+
+FSGSStatus FSGSLordAssistCardRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	if (FSGSStatus Status = SGSBasicCardRuleHelpers::DiscardHandCard(
+		Context,
+		Context.GameContext->FindCardById(Payload.CardId),
+		Context.RuleInvocation.ActorSeat);
+		Status.HasError())
+	{
+		return Status;
+	}
+	return SGSLordAssistResolution::Continue(Context, true);
+}
+
+FName FSGSLordAssistPassRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.LordAssist.Pass"));
+}
+
+FSGSRuleDescriptor FSGSLordAssistPassRule::GetDescriptor() const
+{
+	return SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+		GetRuleName(), SGSRuleKinds::Response(), SGSGameplayTags::PlayAction_Pass.GetTag(),
+		NAME_None, SGSLordAssistResolution::WindowName(), 300);
+}
+
+FSGSStatus FSGSLordAssistPassRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSPassRulePayload&) const
+{
+	return SGSLordAssistResolution::Continue(Context, false);
 }
 
 FName FSGSWushengViewAsRule::GetRuleName() const
@@ -199,20 +658,24 @@ FName FSGSWushengResponseRule::GetRuleName() const
 
 FSGSRuleDescriptor FSGSWushengResponseRule::GetDescriptor() const
 {
-	return SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+	FSGSRuleDescriptor Descriptor = SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
 		GetRuleName(),
 		SGSRuleKinds::Response(),
 		SGSGameplayTags::PlayAction_RespondCard.GetTag(),
 		FName(TEXT("Slash")),
-		SGSStandardTrickRules::EffectResponseWindow(),
+		NAME_None,
 		300);
+	Descriptor.bWildcardWindow = true;
+	return Descriptor;
 }
 
 bool FSGSWushengResponseRule::CanHandlePayload(
 	const FSGSRuleExecutionContext& Context,
 	const FSGSRespondCardRulePayload& Payload) const
 {
-	return Context.RuleInvocation.WindowName == SGSStandardTrickRules::EffectResponseWindow()
+	return (Context.RuleInvocation.WindowName == SGSStandardTrickRules::EffectResponseWindow()
+			|| Context.RuleInvocation.WindowName == SGSLordAssistResolution::WindowName()
+			|| Context.RuleInvocation.WindowName == SGSBasicCardRuleHelpers::BladeWindowName())
 		&& Payload.SkillName == TEXT("Wusheng")
 		&& Payload.CardName == TEXT("Slash");
 }
@@ -237,6 +700,11 @@ FSGSStatus FSGSWushengResponseRule::ExecutePayload(
 	FSGSRuleExecutionContext& Context,
 	const FSGSRespondCardRulePayload& Payload) const
 {
+	if (Context.RuleInvocation.WindowName == SGSBasicCardRuleHelpers::BladeWindowName())
+	{
+		return SGSBasicCardRuleHelpers::RestartSlashAfterBlade(
+			Context, { Payload.CardId }, Payload.CardId, false);
+	}
 	if (FSGSStatus Status = SGSBasicCardRuleHelpers::DiscardHandCard(
 		Context,
 		Context.GameContext->FindCardById(Payload.CardId),
@@ -245,7 +713,9 @@ FSGSStatus FSGSWushengResponseRule::ExecutePayload(
 	{
 		return Status;
 	}
-	return SGSStandardTrickRules::ContinueAfterAcceptedResponse(Context);
+	return Context.RuleInvocation.WindowName == SGSLordAssistResolution::WindowName()
+		? SGSLordAssistResolution::Continue(Context, true)
+		: SGSStandardTrickRules::ContinueAfterAcceptedResponse(Context);
 }
 
 bool FSGSWushengViewAsRule::CanHandlePayload(
@@ -324,18 +794,85 @@ FSGSStatus FSGSJianxiongTriggerRule::ExecutePayload(
 	FSGSRuleExecutionContext& Context,
 	const FSGSRuleEventPayload& Payload) const
 {
-	const FSGSDamageEventData* Damage = Payload.EventData.GetPtr<FSGSDamageEventData>();
+	return OpenOptionalTrigger(
+		Context,
+		Payload.TargetSeat,
+		FName(TEXT("Jianxiong")),
+		FName(TEXT("奸雄")),
+		JianxiongWindow(),
+		Payload.SourceSeat);
+}
+
+FName FSGSJianxiongResponseRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Jianxiong.Invoke"));
+}
+
+FSGSRuleDescriptor FSGSJianxiongResponseRule::GetDescriptor() const
+{
+	return SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+		GetRuleName(), SGSRuleKinds::Response(), SGSGameplayTags::PlayAction_RespondCard.GetTag(),
+		FName(TEXT("Jianxiong")), JianxiongWindow(), 300);
+}
+
+bool FSGSJianxiongResponseRule::CanHandlePayload(
+	const FSGSRuleExecutionContext&,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	return Payload.SkillName == TEXT("Jianxiong");
+}
+
+FSGSStatus FSGSJianxiongResponseRule::ValidatePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload&) const
+{
+	const FSGSRuleEventPayload* Event = GetTimingEvent(Context);
+	return Event != nullptr && OwnsSkill(Context.GameContext, Event->TargetSeat, FName(TEXT("Jianxiong")))
+		? MakeValue()
+		: SGSBasicCardRuleHelpers::MakeRuleError(FName(TEXT("SGS.Skill.InvalidJianxiong")), TEXT("Jianxiong is not available for this damage event."));
+}
+
+FSGSStatus FSGSJianxiongResponseRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload&) const
+{
+	const FSGSRuleEventPayload* Event = GetTimingEvent(Context);
+	const FSGSDamageEventData* Damage = Event != nullptr ? Event->EventData.GetPtr<FSGSDamageEventData>() : nullptr;
 	USGSCard* DamageCard = Damage != nullptr ? Context.GameContext->FindCardById(Damage->CardId) : nullptr;
 	const FSGSCardState* State = Damage != nullptr ? Context.GameContext->FindCardStateById(Damage->CardId) : nullptr;
-	return Context.Runtime->RunEffectStep(
-		SGSStandardEffectSteps::MakeMoveCardsStep(
-			{ DamageCard },
-			State->Zone,
-			State->OwnerSeat,
-			SGSGameplayTags::CardZone_Hand.GetTag(),
-			Payload.TargetSeat,
-			{ SGSCardMoveReasons::Gain(), {} }),
-		Payload.SourceCommandId);
+	if (DamageCard != nullptr && State != nullptr)
+	{
+		if (FSGSStatus Status = Context.Runtime->RunEffectStep(
+			SGSStandardEffectSteps::MakeMoveCardsStep(
+				{ DamageCard }, State->Zone, State->OwnerSeat,
+				SGSGameplayTags::CardZone_Hand.GetTag(), Event->TargetSeat,
+				{ SGSCardMoveReasons::Gain(), {} }),
+			Event->SourceCommandId);
+			Status.HasError())
+		{
+			return Status;
+		}
+	}
+	return Context.Runtime->ContinueTimingEventDispatch();
+}
+
+FName FSGSJianxiongPassRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Jianxiong.Pass"));
+}
+
+FSGSRuleDescriptor FSGSJianxiongPassRule::GetDescriptor() const
+{
+	return SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+		GetRuleName(), SGSRuleKinds::Response(), SGSGameplayTags::PlayAction_Pass.GetTag(),
+		NAME_None, JianxiongWindow(), 300);
+}
+
+FSGSStatus FSGSJianxiongPassRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSPassRulePayload&) const
+{
+	return Context.Runtime->ContinueTimingEventDispatch();
 }
 
 FName FSGSFankuiTriggerRule::GetRuleName() const
@@ -375,22 +912,576 @@ FSGSStatus FSGSFankuiTriggerRule::ExecutePayload(
 	FSGSRuleExecutionContext& Context,
 	const FSGSRuleEventPayload& Payload) const
 {
-	FSGSCardZone FromZone = SGSGameplayTags::CardZone_Equipment.GetTag();
-	TArray<USGSCard*> Cards = Context.GameContext->GetCardsInZone(FromZone, Payload.SourceSeat);
-	if (Cards.IsEmpty())
+	return OpenOptionalTrigger(
+		Context,
+		Payload.TargetSeat,
+		FName(TEXT("Fankui")),
+		FName(TEXT("反馈")),
+		FankuiWindow(),
+		Payload.SourceSeat);
+}
+
+FName FSGSFankuiResponseRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Fankui.Invoke"));
+}
+
+FSGSRuleDescriptor FSGSFankuiResponseRule::GetDescriptor() const
+{
+	return SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+		GetRuleName(), SGSRuleKinds::Response(), SGSGameplayTags::PlayAction_RespondCard.GetTag(),
+		FName(TEXT("Fankui")), FankuiWindow(), 300);
+}
+
+bool FSGSFankuiResponseRule::CanHandlePayload(
+	const FSGSRuleExecutionContext&,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	return Payload.SkillName == TEXT("Fankui");
+}
+
+FSGSStatus FSGSFankuiResponseRule::ValidatePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload&) const
+{
+	const FSGSRuleEventPayload* Event = GetTimingEvent(Context);
+	return Event != nullptr && OwnsSkill(Context.GameContext, Event->TargetSeat, FName(TEXT("Fankui")))
+		? MakeValue()
+		: SGSBasicCardRuleHelpers::MakeRuleError(FName(TEXT("SGS.Skill.InvalidFankui")), TEXT("Fankui is not available for this damage event."));
+}
+
+FSGSStatus FSGSFankuiResponseRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload&) const
+{
+	const FSGSRuleEventPayload* Event = GetTimingEvent(Context);
+	FSGSRuleResponseWindowSpec Spec;
+	Spec.SeatIndex = Event->TargetSeat;
+	Spec.WindowName = FankuiChoiceWindow();
+	Spec.ContextName = FName(TEXT("Fankui"));
+	Spec.EffectSourceSeat = Event->SourceSeat;
+	Spec.EffectTargetSeat = Event->TargetSeat;
+	Spec.bAllowPass = false;
+	Spec.bIsCardChoice = true;
+	Spec.ChoiceName = FankuiChoiceName();
+	Spec.MinChoiceCount = 1;
+	Spec.MaxChoiceCount = 1;
+	for (const FSGSCardZone Zone : {
+		SGSGameplayTags::CardZone_Equipment.GetTag(), SGSGameplayTags::CardZone_Hand.GetTag() })
 	{
-		FromZone = SGSGameplayTags::CardZone_Hand.GetTag();
-		Cards = Context.GameContext->GetCardsInZone(FromZone, Payload.SourceSeat);
+		for (const USGSCard* Card : Context.GameContext->GetCardsInZone(Zone, Event->SourceSeat))
+		{
+			if (Card != nullptr)
+			{
+				const bool bVisible = Zone.MatchesTagExact(SGSGameplayTags::CardZone_Equipment.GetTag());
+				Spec.CardChoiceOptions.Add({
+					Card->CardId,
+					bVisible ? Card->CardName : NAME_None,
+					bVisible ? Card->Suit : SGSGameplayTags::Suit_None.GetTag(),
+					bVisible ? Card->Number : 0,
+					bVisible });
+			}
+		}
 	}
-	return Context.Runtime->RunEffectStep(
+	return !Spec.CardChoiceOptions.IsEmpty() && Context.Runtime->OpenResponseWindow(Spec)
+		? MakeValue()
+		: Context.Runtime->ContinueTimingEventDispatch();
+}
+
+FName FSGSFankuiPassRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Fankui.Pass"));
+}
+
+FSGSRuleDescriptor FSGSFankuiPassRule::GetDescriptor() const
+{
+	return SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+		GetRuleName(), SGSRuleKinds::Response(), SGSGameplayTags::PlayAction_Pass.GetTag(),
+		NAME_None, FankuiWindow(), 300);
+}
+
+FSGSStatus FSGSFankuiPassRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSPassRulePayload&) const
+{
+	return Context.Runtime->ContinueTimingEventDispatch();
+}
+
+FName FSGSFankuiCardChoiceRule::GetRuleName() const { return FName(TEXT("SGS.Skill.Fankui.ChooseCard")); }
+FSGSRuleDescriptor FSGSFankuiCardChoiceRule::GetDescriptor() const
+{
+	return SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+		GetRuleName(), SGSRuleKinds::Response(), SGSGameplayTags::PlayAction_ChooseCards.GetTag(),
+		FankuiChoiceName(), FankuiChoiceWindow(), 310);
+}
+FSGSStatus FSGSFankuiCardChoiceRule::ValidatePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSChooseCardsRulePayload& Payload) const
+{
+	const FSGSRuleEventPayload* Event = GetTimingEvent(Context);
+	const FSGSCardState* State = Payload.SelectedCardIds.Num() == 1
+		? Context.GameContext->FindCardStateById(Payload.SelectedCardIds[0])
+		: nullptr;
+	return Event != nullptr && State != nullptr && State->OwnerSeat == Event->SourceSeat
+		&& (State->Zone.MatchesTagExact(SGSGameplayTags::CardZone_Hand.GetTag())
+			|| State->Zone.MatchesTagExact(SGSGameplayTags::CardZone_Equipment.GetTag()))
+		? MakeValue()
+		: SGSBasicCardRuleHelpers::MakeRuleError(
+			FName(TEXT("SGS.Skill.InvalidFankuiChoice")), TEXT("Fankui choice is no longer available."));
+}
+FSGSStatus FSGSFankuiCardChoiceRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSChooseCardsRulePayload& Payload) const
+{
+	const FSGSRuleEventPayload* Event = GetTimingEvent(Context);
+	const FSGSCardState* State = Context.GameContext->FindCardStateById(Payload.SelectedCardIds[0]);
+	check(Event != nullptr && State != nullptr);
+	if (FSGSStatus Status = Context.Runtime->RunEffectStep(
 		SGSStandardEffectSteps::MakeMoveCardsStep(
-			{ Cards[0] },
-			FromZone,
-			Payload.SourceSeat,
+			{ State->Card.Get() }, State->Zone, Event->SourceSeat,
+			SGSGameplayTags::CardZone_Hand.GetTag(), Event->TargetSeat,
+			{ SGSCardMoveReasons::Gain(), { Event->SourceSeat } }),
+		Event->SourceCommandId);
+		Status.HasError())
+	{
+		return Status;
+	}
+	return Context.Runtime->ContinueTimingEventDispatch();
+}
+
+FName FSGSGanglieTriggerRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Ganglie.DamageAfter"));
+}
+
+FSGSRuleDescriptor FSGSGanglieTriggerRule::GetDescriptor() const
+{
+	FSGSRuleDescriptor Descriptor = MakeSkillDescriptor(
+		GetRuleName(),
+		SGSRuleKinds::Trigger(),
+		SGSGameplayTags::GameEvent_DamageAfter.GetTag(),
+		NAME_None,
+		80);
+	Descriptor.bWildcardSubject = true;
+	return Descriptor;
+}
+
+bool FSGSGanglieTriggerRule::CanHandlePayload(
+	const FSGSRuleExecutionContext& Context,
+	const FSGSRuleEventPayload& Payload) const
+{
+	if (!OwnsSkill(Context.GameContext, Payload.TargetSeat, FName(TEXT("Ganglie")))
+		|| Payload.SourceSeat == INDEX_NONE
+		|| Payload.SourceSeat == Payload.TargetSeat)
+	{
+		return false;
+	}
+	const USGSSeat* Source = Context.GameContext->GetSeat(Payload.SourceSeat);
+	return Source != nullptr && Source->bIsAlive;
+}
+
+FSGSStatus FSGSGanglieTriggerRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRuleEventPayload& Payload) const
+{
+	return OpenOptionalTrigger(
+		Context,
+		Payload.TargetSeat,
+		FName(TEXT("Ganglie")),
+		FName(TEXT("刚烈")),
+		GanglieInvokeWindow(),
+		Payload.SourceSeat);
+}
+
+FName FSGSGanglieInvokeRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Ganglie.Invoke"));
+}
+
+FSGSRuleDescriptor FSGSGanglieInvokeRule::GetDescriptor() const
+{
+	return SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+		GetRuleName(), SGSRuleKinds::Response(), SGSGameplayTags::PlayAction_RespondCard.GetTag(),
+		FName(TEXT("Ganglie")), GanglieInvokeWindow(), 300);
+}
+
+bool FSGSGanglieInvokeRule::CanHandlePayload(
+	const FSGSRuleExecutionContext&,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	return Payload.SkillName == TEXT("Ganglie");
+}
+
+FSGSStatus FSGSGanglieInvokeRule::ValidatePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload&) const
+{
+	const FSGSRuleEventPayload* Event = GetTimingEvent(Context);
+	return Event != nullptr
+		&& OwnsSkill(Context.GameContext, Event->TargetSeat, FName(TEXT("Ganglie")))
+		&& Event->SourceSeat != INDEX_NONE
+		? MakeValue()
+		: SGSBasicCardRuleHelpers::MakeRuleError(
+			FName(TEXT("SGS.Skill.InvalidGanglie")),
+			TEXT("Ganglie is not available for this damage event."));
+}
+
+FSGSStatus FSGSGanglieInvokeRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload&) const
+{
+	const FSGSRuleEventPayload* Event = GetTimingEvent(Context);
+	return SGSJudgementResolution::Start(
+		Context,
+		Event->TargetSeat,
+		FName(TEXT("Ganglie")),
+		SGSStandardSkillRules::GanglieAfterJudgementContinuation());
+}
+
+FName SGSStandardSkillRules::GanglieAfterJudgementContinuation()
+{
+	return FName(TEXT("SGS.Resolution.Continuation.GanglieAfterJudgement"));
+}
+
+FSGSStatus SGSStandardSkillRules::ContinueGanglieAfterJudgement(
+	FSGSRuleExecutionContext& Context,
+	int32 ResultCardId)
+{
+	const FSGSRuleEventPayload* Event = GetTimingEvent(Context);
+	check(Event != nullptr);
+	const int32 SkillOwnerSeat = Event->TargetSeat;
+	const int32 DamageSourceSeat = Event->SourceSeat;
+	USGSCard* ResultCard = Context.GameContext->FindCardById(ResultCardId);
+	if (ResultCard != nullptr)
+	{
+		if (FSGSStatus Status = Context.Runtime->RunEffectStep(
+			SGSStandardEffectSteps::MakeMoveCardsStep(
+				{ ResultCard },
+				SGSGameplayTags::CardZone_Processing.GetTag(),
+				INDEX_NONE,
+				SGSGameplayTags::CardZone_DiscardPile.GetTag(),
+				INDEX_NONE,
+				{ SGSCardMoveReasons::Cleanup(), { SkillOwnerSeat } }),
+			Context.RuleInvocation.SourceCommandId);
+			Status.HasError())
+		{
+			return Status;
+		}
+	}
+	if (ResultCard != nullptr && ResultCard->Suit.MatchesTagExact(SGSGameplayTags::Suit_Heart.GetTag()))
+	{
+		return Context.Runtime->ContinueTimingEventDispatch();
+	}
+
+	const TArray<USGSCard*> SourceHand = Context.GameContext->GetCardsInZone(
+		SGSGameplayTags::CardZone_Hand.GetTag(), DamageSourceSeat);
+	if (SourceHand.Num() < 2)
+	{
+		return ResolveGanglieFailure(Context);
+	}
+
+	FSGSDecisionSkillOption Option;
+	Option.SkillName = FName(TEXT("GanglieDiscard"));
+	Option.DisplayName = FName(TEXT("弃两张牌"));
+	Option.RuleKindTag = SGSRuleKinds::Response();
+	Option.MinCardCount = 2;
+	Option.MaxCardCount = 2;
+	for (const USGSCard* Card : SourceHand)
+	{
+		if (Card != nullptr)
+		{
+			Option.SelectableCardIds.Add(Card->CardId);
+		}
+	}
+	for (int32 First = 0; First < Option.SelectableCardIds.Num(); ++First)
+	{
+		for (int32 Second = First + 1; Second < Option.SelectableCardIds.Num(); ++Second)
+		{
+			Option.CandidateCardSelections.Add({ Option.SelectableCardIds[First], Option.SelectableCardIds[Second] });
+		}
+	}
+
+	FSGSRuleResponseWindowSpec Spec;
+	Spec.SeatIndex = DamageSourceSeat;
+	Spec.WindowName = GanglieDiscardWindow();
+	Spec.ContextName = FName(TEXT("Ganglie"));
+	Spec.EffectSourceSeat = SkillOwnerSeat;
+	Spec.EffectTargetSeat = DamageSourceSeat;
+	Spec.SkillOptions.Add(MoveTemp(Option));
+	return Context.Runtime->OpenResponseWindow(Spec)
+		? MakeValue()
+		: ResolveGanglieFailure(Context);
+}
+
+FName FSGSGanglieDiscardRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Ganglie.Discard"));
+}
+
+FSGSRuleDescriptor FSGSGanglieDiscardRule::GetDescriptor() const
+{
+	return SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+		GetRuleName(), SGSRuleKinds::Response(), SGSGameplayTags::PlayAction_RespondCard.GetTag(),
+		FName(TEXT("GanglieDiscard")), GanglieDiscardWindow(), 300);
+}
+
+bool FSGSGanglieDiscardRule::CanHandlePayload(
+	const FSGSRuleExecutionContext&,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	return Payload.SkillName == TEXT("GanglieDiscard");
+}
+
+FSGSStatus FSGSGanglieDiscardRule::ValidatePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	if (Payload.SelectedCardIds.Num() != 2)
+	{
+		return SGSBasicCardRuleHelpers::MakeRuleError(
+			FName(TEXT("SGS.Skill.InvalidGanglieDiscard")),
+			TEXT("Ganglie requires exactly two hand cards to avoid damage."));
+	}
+	TSet<int32> UniqueCards;
+	for (const int32 CardId : Payload.SelectedCardIds)
+	{
+		const FSGSCardState* State = Context.GameContext->FindCardStateById(CardId);
+		if (UniqueCards.Contains(CardId)
+			|| State == nullptr
+			|| State->OwnerSeat != Context.RuleInvocation.ActorSeat
+			|| !State->Zone.MatchesTagExact(SGSGameplayTags::CardZone_Hand.GetTag()))
+		{
+			return SGSBasicCardRuleHelpers::MakeRuleError(
+				FName(TEXT("SGS.Skill.InvalidGanglieDiscardCard")),
+				TEXT("Ganglie discard materials must be two distinct hand cards."));
+		}
+		UniqueCards.Add(CardId);
+	}
+	return MakeValue();
+}
+
+FSGSStatus FSGSGanglieDiscardRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	TArray<USGSCard*> Cards;
+	for (const int32 CardId : Payload.SelectedCardIds)
+	{
+		Cards.Add(Context.GameContext->FindCardById(CardId));
+	}
+	if (FSGSStatus Status = Context.Runtime->RunEffectStep(
+		SGSStandardEffectSteps::MakeMoveCardsStep(
+			MoveTemp(Cards),
 			SGSGameplayTags::CardZone_Hand.GetTag(),
-			Payload.TargetSeat,
-			{ SGSCardMoveReasons::Gain(), { Payload.SourceSeat } }),
-		Payload.SourceCommandId);
+			Context.RuleInvocation.ActorSeat,
+			SGSGameplayTags::CardZone_DiscardPile.GetTag(),
+			INDEX_NONE,
+			{ SGSCardMoveReasons::Discard(), {} }),
+		Context.RuleInvocation.SourceCommandId);
+		Status.HasError())
+	{
+		return Status;
+	}
+	return Context.Runtime->ContinueTimingEventDispatch();
+}
+
+FName FSGSGangliePassRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Ganglie.Pass"));
+}
+
+FSGSRuleDescriptor FSGSGangliePassRule::GetDescriptor() const
+{
+	return SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+		GetRuleName(), SGSRuleKinds::Response(), SGSGameplayTags::PlayAction_Pass.GetTag(),
+		NAME_None, NAME_None, 310, false, false, true);
+}
+
+bool FSGSGangliePassRule::CanHandlePayload(
+	const FSGSRuleExecutionContext& Context,
+	const FSGSPassRulePayload&) const
+{
+	return Context.RuleInvocation.WindowName == GanglieInvokeWindow()
+		|| Context.RuleInvocation.WindowName == GanglieDiscardWindow();
+}
+
+FSGSStatus FSGSGangliePassRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSPassRulePayload&) const
+{
+	return Context.RuleInvocation.WindowName == GanglieDiscardWindow()
+		? ResolveGanglieFailure(Context)
+		: Context.Runtime->ContinueTimingEventDispatch();
+}
+
+FName FSGSGuicaiTriggerRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Guicai.JudgementRevealed"));
+}
+
+FSGSRuleDescriptor FSGSGuicaiTriggerRule::GetDescriptor() const
+{
+	FSGSRuleDescriptor Descriptor = MakeSkillDescriptor(
+		GetRuleName(),
+		SGSRuleKinds::Trigger(),
+		SGSGameplayTags::GameEvent_JudgementRevealed.GetTag(),
+		NAME_None,
+		100);
+	Descriptor.bWildcardSubject = true;
+	return Descriptor;
+}
+
+bool FSGSGuicaiTriggerRule::CanHandlePayload(
+	const FSGSRuleExecutionContext& Context,
+	const FSGSRuleEventPayload& Payload) const
+{
+	if (!Payload.EventTag.MatchesTagExact(SGSGameplayTags::GameEvent_JudgementRevealed.GetTag()))
+	{
+		return false;
+	}
+	const int32 OwnerSeat = FindLivingSkillOwner(Context.GameContext, FName(TEXT("Guicai")));
+	return OwnerSeat != INDEX_NONE
+		&& !Context.GameContext->GetCardsInZone(
+			SGSGameplayTags::CardZone_Hand.GetTag(), OwnerSeat).IsEmpty();
+}
+
+FSGSStatus FSGSGuicaiTriggerRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRuleEventPayload& Payload) const
+{
+	const int32 OwnerSeat = FindLivingSkillOwner(Context.GameContext, FName(TEXT("Guicai")));
+	FSGSDecisionSkillOption Option;
+	Option.SkillName = FName(TEXT("Guicai"));
+	Option.DisplayName = FName(TEXT("鬼才"));
+	Option.RuleKindTag = SGSRuleKinds::Trigger();
+	Option.MinCardCount = 1;
+	Option.MaxCardCount = 1;
+	for (const USGSCard* Card : Context.GameContext->GetCardsInZone(
+		SGSGameplayTags::CardZone_Hand.GetTag(), OwnerSeat))
+	{
+		if (Card != nullptr)
+		{
+			Option.SelectableCardIds.Add(Card->CardId);
+			Option.CandidateCardSelections.Add({ Card->CardId });
+		}
+	}
+
+	FSGSRuleResponseWindowSpec Spec;
+	Spec.SeatIndex = OwnerSeat;
+	Spec.WindowName = GuicaiWindow();
+	Spec.ContextName = FName(TEXT("Guicai"));
+	Spec.EffectSourceSeat = OwnerSeat;
+	Spec.EffectTargetSeat = Payload.TargetSeat;
+	Spec.SkillOptions.Add(MoveTemp(Option));
+	Context.Runtime->OpenResponseWindow(Spec);
+	return MakeValue();
+}
+
+FName FSGSGuicaiResponseRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Guicai.Replace"));
+}
+
+FSGSRuleDescriptor FSGSGuicaiResponseRule::GetDescriptor() const
+{
+	return SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+		GetRuleName(), SGSRuleKinds::Response(), SGSGameplayTags::PlayAction_RespondCard.GetTag(),
+		FName(TEXT("Guicai")), GuicaiWindow(), 300);
+}
+
+bool FSGSGuicaiResponseRule::CanHandlePayload(
+	const FSGSRuleExecutionContext&,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	return Payload.SkillName == TEXT("Guicai");
+}
+
+FSGSStatus FSGSGuicaiResponseRule::ValidatePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	const FSGSCardState* Replacement = Payload.SelectedCardIds.Num() == 1
+		? Context.GameContext->FindCardStateById(Payload.SelectedCardIds[0])
+		: nullptr;
+	return OwnsSkill(Context.GameContext, Context.RuleInvocation.ActorSeat, FName(TEXT("Guicai")))
+		&& Replacement != nullptr
+		&& Replacement->OwnerSeat == Context.RuleInvocation.ActorSeat
+		&& Replacement->Zone.MatchesTagExact(SGSGameplayTags::CardZone_Hand.GetTag())
+		&& SGSJudgementResolution::FindActiveState(Context.Runtime->GetResolutionStack()) != nullptr
+		? MakeValue()
+		: SGSBasicCardRuleHelpers::MakeRuleError(
+			FName(TEXT("SGS.Skill.InvalidGuicai")),
+			TEXT("Guicai requires one hand card during an active judgement."));
+}
+
+FSGSStatus FSGSGuicaiResponseRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	FSGSJudgementResolutionState* Judgement = SGSJudgementResolution::FindActiveState(
+		Context.Runtime->GetResolutionStack());
+	USGSCard* PreviousCard = Context.GameContext->FindCardById(Judgement->ResultCardId);
+	USGSCard* ReplacementCard = Context.GameContext->FindCardById(Payload.SelectedCardIds[0]);
+	const int32 PreviousCardId = Judgement->ResultCardId;
+	if (PreviousCard != nullptr)
+	{
+		if (FSGSStatus Status = Context.Runtime->RunEffectStep(
+			SGSStandardEffectSteps::MakeMoveCardsStep(
+				{ PreviousCard },
+				SGSGameplayTags::CardZone_Processing.GetTag(), INDEX_NONE,
+				SGSGameplayTags::CardZone_DiscardPile.GetTag(), INDEX_NONE,
+				{ SGSCardMoveReasons::Cleanup(), { Judgement->JudgedSeat } }),
+			Context.RuleInvocation.SourceCommandId);
+			Status.HasError())
+		{
+			return Status;
+		}
+	}
+	if (FSGSStatus Status = Context.Runtime->RunEffectStep(
+		SGSStandardEffectSteps::MakeMoveCardsStep(
+			{ ReplacementCard },
+			SGSGameplayTags::CardZone_Hand.GetTag(), Context.RuleInvocation.ActorSeat,
+			SGSGameplayTags::CardZone_Processing.GetTag(), INDEX_NONE,
+			{ SGSCardMoveReasons::Use(), { Judgement->JudgedSeat } }),
+		Context.RuleInvocation.SourceCommandId);
+		Status.HasError())
+	{
+		return Status;
+	}
+	Judgement->ResultCardId = ReplacementCard->CardId;
+	if (FSGSStatus Status = Context.Runtime->RunEffectStep(
+		SGSStandardEffectSteps::MakeRuleOutcomeStep(
+			FName(TEXT("SGS.Event.JudgementReplaced")),
+			FString::Printf(
+				TEXT("JudgedSeat=%d PreviousCard=%d ReplacementCard=%d Skill=Guicai"),
+				Judgement->JudgedSeat,
+				PreviousCardId,
+				ReplacementCard->CardId)),
+		Context.RuleInvocation.SourceCommandId);
+		Status.HasError())
+	{
+		return Status;
+	}
+	return Context.Runtime->ContinueTimingEventDispatch();
+}
+
+FName FSGSGuicaiPassRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Skill.Guicai.Pass"));
+}
+
+FSGSRuleDescriptor FSGSGuicaiPassRule::GetDescriptor() const
+{
+	return SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+		GetRuleName(), SGSRuleKinds::Response(), SGSGameplayTags::PlayAction_Pass.GetTag(),
+		NAME_None, GuicaiWindow(), 300);
+}
+
+FSGSStatus FSGSGuicaiPassRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSPassRulePayload&) const
+{
+	return Context.Runtime->ContinueTimingEventDispatch();
 }
 
 FName FSGSZhihengActionRule::GetRuleName() const

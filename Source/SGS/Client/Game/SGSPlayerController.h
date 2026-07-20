@@ -33,8 +33,10 @@ public:
 	FSGSTableViewSnapshot BuildTableViewSnapshot() const;
 
 	bool SubmitUseCard(int32 CardId, int32 TargetSeatIndex);
+	bool SubmitUseCard(int32 CardId, TArray<int32> TargetSeatIndices);
 	bool SubmitSkill(FName SkillName, TArray<int32> CardIds, int32 TargetSeatIndex);
 	bool SubmitResponseCard(int32 CardId, int32 TargetSeatIndex, FName SkillName = NAME_None);
+	bool SubmitResponseCards(TArray<int32> CardIds, int32 TargetSeatIndex, FName SkillName = NAME_None);
 	bool SubmitPass();
 
 protected:
@@ -48,10 +50,13 @@ private:
 	void ServerSubmitUseCard(int32 CardId, int32 TargetSeatIndex);
 
 	UFUNCTION(Server, Reliable)
+	void ServerSubmitUseCardTargets(int32 CardId, const TArray<int32>& TargetSeatIndices);
+
+	UFUNCTION(Server, Reliable)
 	void ServerSubmitSkill(FName SkillName, const TArray<int32>& CardIds, int32 TargetSeatIndex);
 
 	UFUNCTION(Server, Reliable)
-	void ServerSubmitResponseCard(int32 CardId, int32 TargetSeatIndex, FName SkillName);
+	void ServerSubmitResponseCards(const TArray<int32>& CardIds, int32 TargetSeatIndex, FName SkillName);
 
 	UFUNCTION(Server, Reliable)
 	void ServerSubmitPass();
@@ -66,8 +71,9 @@ private:
 	void HandlePublicSnapshotChanged();
 	void RefreshTableFeature();
 	bool SubmitUseCardOnServer(int32 CardId, int32 TargetSeatIndex);
+	bool SubmitUseCardOnServer(int32 CardId, TArray<int32> TargetSeatIndices);
 	bool SubmitSkillOnServer(FName SkillName, TArray<int32> CardIds, int32 TargetSeatIndex);
-	bool SubmitResponseCardOnServer(int32 CardId, int32 TargetSeatIndex, FName SkillName);
+	bool SubmitResponseCardsOnServer(TArray<int32> CardIds, int32 TargetSeatIndex, FName SkillName);
 	bool SubmitPassOnServer();
 	void RefreshAfterServerDecision();
 

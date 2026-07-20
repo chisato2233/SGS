@@ -7,12 +7,15 @@
 #include "Server/Players/SGSSeat.h"
 #include "Server/Rules/BasicCards/SGSBasicCardRuleHelpers.h"
 #include "Server/Rules/Core/SGSRuleRegistry.h"
+#include "Server/Rules/Resolution/SGSDamageResolution.h"
 
 namespace
 {
 FName NullificationStage() { return FName(TEXT("SGS.Trick.Stage.Nullification")); }
 FName EffectResponseStage() { return FName(TEXT("SGS.Trick.Stage.EffectResponse")); }
 FName DuelStage() { return FName(TEXT("SGS.Trick.Stage.Duel")); }
+FName AmazingGraceChoiceStage() { return FName(TEXT("SGS.Trick.Stage.AmazingGraceChoice")); }
+FName TargetCardChoiceStage() { return FName(TEXT("SGS.Trick.Stage.TargetCardChoice")); }
 
 FSGSStandardTrickResolutionState* GetState(FSGSRuleExecutionContext& Context)
 {
@@ -70,6 +73,37 @@ int32 CurrentTarget(const FSGSStandardTrickResolutionState& State)
 
 FSGSStatus FinishTrick(FSGSRuleExecutionContext& Context)
 {
+	FSGSStandardTrickResolutionState* State = GetState(Context);
+	if (State != nullptr && !State->RevealedCardIds.IsEmpty())
+	{
+		TArray<USGSCard*> RemainingCards;
+		for (const int32 CardId : State->RevealedCardIds)
+		{
+			const FSGSCardState* CardState = Context.GameContext->FindCardStateById(CardId);
+			if (CardState != nullptr
+				&& CardState->Zone.MatchesTagExact(SGSGameplayTags::CardZone_Processing.GetTag()))
+			{
+				RemainingCards.Add(CardState->Card.Get());
+			}
+		}
+		if (!RemainingCards.IsEmpty())
+		{
+			if (FSGSStatus Status = Context.Runtime->RunEffectStep(
+				SGSStandardEffectSteps::MakeMoveCardsStep(
+					RemainingCards,
+					SGSGameplayTags::CardZone_Processing.GetTag(),
+					INDEX_NONE,
+					SGSGameplayTags::CardZone_DiscardPile.GetTag(),
+					INDEX_NONE,
+					{ SGSCardMoveReasons::Cleanup(), {} }),
+				Context.RuleInvocation.SourceCommandId);
+				Status.HasError())
+			{
+				return Status;
+			}
+		}
+		State->RevealedCardIds.Reset();
+	}
 	if (FSGSStatus Status = SGSBasicCardRuleHelpers::DiscardProcessingCard(Context); Status.HasError())
 	{
 		return Status;
@@ -92,48 +126,14 @@ FSGSStatus AdvanceTarget(FSGSRuleExecutionContext& Context)
 
 FSGSStatus ApplyTrickDamage(FSGSRuleExecutionContext& Context, int32 SourceSeat, int32 TargetSeat)
 {
-	FSGSResolutionFrame* Frame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
-	FSGSStandardTrickResolutionState* State = Frame != nullptr
-		? Frame->GetMutableState<FSGSStandardTrickResolutionState>()
-		: nullptr;
-	if (Frame == nullptr || State == nullptr)
+	const FSGSResolutionFrame* Frame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
+	if (Frame == nullptr || Frame->GetState<FSGSStandardTrickResolutionState>() == nullptr)
 	{
 		return MakeError(FSGSError::Make(FName(TEXT("SGS.Trick.MissingState")), TEXT("Damage requires a standard trick frame.")));
 	}
-
-	if (FSGSStatus Status = Context.Runtime->RunEffectStep(
-		SGSStandardEffectSteps::MakeDamageStep(SourceSeat, TargetSeat, 1),
-		Context.RuleInvocation.SourceCommandId);
-		Status.HasError())
-	{
-		return Status;
-	}
-
-	FSGSRuleEventPayload DamageAfter;
-	DamageAfter.EventTag = SGSGameplayTags::GameEvent_DamageAfter.GetTag();
-	DamageAfter.EventName = FName(TEXT("DamageAfter"));
-	DamageAfter.SourceSeat = SourceSeat;
-	DamageAfter.TargetSeat = TargetSeat;
-	DamageAfter.SourceCommandId = Context.RuleInvocation.SourceCommandId;
-	DamageAfter.TimingPoint = Context.TimingPoint;
-	DamageAfter.TimingPoint.Step = SGSTimingSteps::After();
-	DamageAfter.TimingPoint.SubOrder += 1;
-	FSGSDamageEventData DamageData;
-	DamageData.CardId = Frame->ProcessingCardId;
-	DamageData.Amount = 1;
-	DamageAfter.EventData = FInstancedStruct::Make(DamageData);
-	if (FSGSStatus Status = Context.Runtime->PublishTimingEvent(DamageAfter); Status.HasError())
-	{
-		return Status;
-	}
-
-	const USGSSeat* Target = Context.GameContext->GetSeat(TargetSeat);
-	if (Target != nullptr && Target->bIsAlive && Target->Health <= 0)
-	{
-		Frame->OnChildCompletedContinuation = SGSStandardTrickRules::ResumeContinuation();
-		return SGSBasicCardRuleHelpers::StartDyingPeachResolution(Context, TargetSeat);
-	}
-	return SGSStandardTrickRules::Continue(Context);
+	return SGSDamageResolution::Start(
+		Context, SourceSeat, TargetSeat, 1, Frame->ProcessingCardId,
+		SGSStandardTrickRules::ResumeContinuation());
 }
 
 FSGSStatus ResolveCurrentEffect(FSGSRuleExecutionContext& Context)
@@ -174,50 +174,70 @@ FSGSStatus ResolveCurrentEffect(FSGSRuleExecutionContext& Context)
 	}
 	if (State->CardName == TEXT("AmazingGrace"))
 	{
-		if (FSGSStatus Status = Context.Runtime->RunEffectStep(
-			SGSStandardEffectSteps::MakeDrawCardsStep(TargetSeat, 1),
-			Context.RuleInvocation.SourceCommandId);
-			Status.HasError())
+		if (State->RevealedCardIds.IsEmpty())
 		{
-			return Status;
+			return AdvanceTarget(Context);
 		}
-		return AdvanceTarget(Context);
+		State->Stage = AmazingGraceChoiceStage();
+		FSGSRuleResponseWindowSpec Spec;
+		Spec.SeatIndex = TargetSeat;
+		Spec.WindowName = SGSStandardTrickRules::CardChoiceWindow();
+		Spec.ContextName = State->CardName;
+		Spec.EffectSourceSeat = SourceSeat;
+		Spec.EffectTargetSeat = TargetSeat;
+		Spec.bAllowPass = false;
+		Spec.bIsCardChoice = true;
+		Spec.ChoiceName = SGSStandardTrickRules::AmazingGraceChoice();
+		Spec.MinChoiceCount = 1;
+		Spec.MaxChoiceCount = 1;
+		for (const int32 CardId : State->RevealedCardIds)
+		{
+			const USGSCard* Card = Context.GameContext->FindCardById(CardId);
+			if (Card != nullptr)
+			{
+				Spec.CardChoiceOptions.Add({ CardId, Card->CardName, Card->Suit, Card->Number, true });
+			}
+		}
+		return Context.Runtime->OpenResponseWindow(Spec)
+			? MakeValue()
+			: AdvanceTarget(Context);
 	}
 	if (State->CardName == TEXT("Dismantlement") || State->CardName == TEXT("Snatch"))
 	{
-		USGSCard* Chosen = nullptr;
-		FSGSCardZone FromZone = SGSGameplayTags::CardZone_None.GetTag();
+		State->Stage = TargetCardChoiceStage();
+		FSGSRuleResponseWindowSpec Spec;
+		Spec.SeatIndex = SourceSeat;
+		Spec.WindowName = SGSStandardTrickRules::CardChoiceWindow();
+		Spec.ContextName = State->CardName;
+		Spec.EffectSourceSeat = SourceSeat;
+		Spec.EffectTargetSeat = TargetSeat;
+		Spec.bAllowPass = false;
+		Spec.bIsCardChoice = true;
+		Spec.ChoiceName = SGSStandardTrickRules::TargetCardChoice();
+		Spec.MinChoiceCount = 1;
+		Spec.MaxChoiceCount = 1;
 		for (const FSGSCardZone Zone : {
 			SGSGameplayTags::CardZone_Equipment.GetTag(),
 			SGSGameplayTags::CardZone_Judgement.GetTag(),
 			SGSGameplayTags::CardZone_Hand.GetTag() })
 		{
-			TArray<USGSCard*> Cards = Context.GameContext->GetCardsInZone(Zone, TargetSeat);
-			if (!Cards.IsEmpty())
+			for (const USGSCard* Card : Context.GameContext->GetCardsInZone(Zone, TargetSeat))
 			{
-				Chosen = Cards[0];
-				FromZone = Zone;
-				break;
+				if (Card != nullptr)
+				{
+					const bool bVisible = !Zone.MatchesTagExact(SGSGameplayTags::CardZone_Hand.GetTag());
+					Spec.CardChoiceOptions.Add({
+						Card->CardId,
+						bVisible ? Card->CardName : NAME_None,
+						bVisible ? Card->Suit : SGSGameplayTags::Suit_None.GetTag(),
+						bVisible ? Card->Number : 0,
+						bVisible });
+				}
 			}
 		}
-		if (Chosen != nullptr)
-		{
-			const bool bSnatch = State->CardName == TEXT("Snatch");
-			if (FSGSStatus Status = Context.Runtime->RunEffectStep(
-				SGSStandardEffectSteps::MakeMoveCardsStep(
-					{ Chosen },
-					FromZone,
-					TargetSeat,
-					bSnatch ? SGSGameplayTags::CardZone_Hand.GetTag() : SGSGameplayTags::CardZone_DiscardPile.GetTag(),
-					bSnatch ? SourceSeat : INDEX_NONE,
-					{ bSnatch ? SGSCardMoveReasons::Gain() : SGSCardMoveReasons::Discard(), { TargetSeat } }),
-				Context.RuleInvocation.SourceCommandId);
-				Status.HasError())
-			{
-				return Status;
-			}
-		}
-		return AdvanceTarget(Context);
+		return !Spec.CardChoiceOptions.IsEmpty() && Context.Runtime->OpenResponseWindow(Spec)
+			? MakeValue()
+			: AdvanceTarget(Context);
 	}
 	if (State->CardName == TEXT("Indulgence")
 		|| State->CardName == TEXT("SupplyShortage")
@@ -357,6 +377,63 @@ TArray<int32> MakeTargets(const USGSGameContext& Context, int32 SourceSeat, FNam
 FName SGSStandardTrickRules::NullificationWindow() { return FName(TEXT("Trick.Nullification")); }
 FName SGSStandardTrickRules::EffectResponseWindow() { return FName(TEXT("Trick.EffectResponse")); }
 FName SGSStandardTrickRules::ResumeContinuation() { return FName(TEXT("SGS.Resolution.Continuation.ResumeStandardTrick")); }
+FName SGSStandardTrickRules::CardChoiceWindow() { return FName(TEXT("Trick.CardChoice")); }
+FName SGSStandardTrickRules::AmazingGraceChoice() { return FName(TEXT("AmazingGrace.Choose")); }
+FName SGSStandardTrickRules::TargetCardChoice() { return FName(TEXT("Trick.TargetCard.Choose")); }
+
+bool SGSStandardTrickRules::IsLegalExplicitTarget(
+	const USGSGameContext& Context,
+	int32 SourceSeat,
+	FName CardName,
+	int32 TargetSeat)
+{
+	const FSGSStandardCardDefinition* Definition = SGSStandardCardDefinitions::Find(CardName);
+	const USGSSeat* Target = Context.GetSeat(TargetSeat);
+	if (Definition == nullptr || Target == nullptr || !Target->bIsAlive)
+	{
+		return false;
+	}
+	if (Definition->TargetMode == SGSCardTargetModes::Self())
+	{
+		if (TargetSeat != SourceSeat)
+		{
+			return false;
+		}
+	}
+	else if (Definition->TargetMode == SGSCardTargetModes::Other())
+	{
+		if (TargetSeat == SourceSeat)
+		{
+			return false;
+		}
+		if (Definition->MaxDistance != INDEX_NONE
+			&& Context.GetDistance(SourceSeat, TargetSeat) > Definition->MaxDistance)
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+	if (CardName == TEXT("Dismantlement") || CardName == TEXT("Snatch"))
+	{
+		return !Context.GetCardsInZone(SGSGameplayTags::CardZone_Hand.GetTag(), TargetSeat).IsEmpty()
+			|| !Context.GetCardsInZone(SGSGameplayTags::CardZone_Equipment.GetTag(), TargetSeat).IsEmpty()
+			|| !Context.GetCardsInZone(SGSGameplayTags::CardZone_Judgement.GetTag(), TargetSeat).IsEmpty();
+	}
+	if (Definition->bDelayedTrick)
+	{
+		return !Context.GetCardsInZone(
+			SGSGameplayTags::CardZone_Judgement.GetTag(), TargetSeat).ContainsByPredicate(
+			[CardName](const USGSCard* Card)
+			{
+				return Card != nullptr && Card->CardName == CardName;
+			});
+	}
+	return true;
+}
 
 FSGSStatus SGSStandardTrickRules::Continue(FSGSRuleExecutionContext& Context)
 {
@@ -493,9 +570,20 @@ FSGSStatus FSGSStandardTrickUseRule::ValidatePayload(
 	}
 	if ((Definition->TargetMode == SGSCardTargetModes::Self()
 			|| Definition->TargetMode == SGSCardTargetModes::Other())
-		&& Payload.TargetSeatIndices.Num() != 1)
+		&& (Payload.TargetSeatIndices.Num() != 1
+			|| !SGSStandardTrickRules::IsLegalExplicitTarget(
+				*Context.GameContext,
+				Context.RuleInvocation.ActorSeat,
+				CardName,
+				Payload.TargetSeatIndices[0])))
 	{
-		return SGSBasicCardRuleHelpers::MakeRuleError(FName(TEXT("SGS.Rule.InvalidTarget")), TEXT("This trick requires exactly one target."));
+		return SGSBasicCardRuleHelpers::MakeRuleError(FName(TEXT("SGS.Rule.InvalidTarget")), TEXT("This trick requires one currently legal target."));
+	}
+	if (Definition->TargetMode != SGSCardTargetModes::Self()
+		&& Definition->TargetMode != SGSCardTargetModes::Other()
+		&& !Payload.TargetSeatIndices.IsEmpty())
+	{
+		return SGSBasicCardRuleHelpers::MakeRuleError(FName(TEXT("SGS.Rule.InvalidTarget")), TEXT("This trick determines its targets from the current table state."));
 	}
 	return MakeValue();
 }
@@ -522,6 +610,28 @@ FSGSStatus FSGSStandardTrickUseRule::ExecutePayload(
 	State.CardName = CardName;
 	State.SourceSeat = SourceSeat;
 	State.TargetSeatIndices = MakeTargets(*Context.GameContext, SourceSeat, Definition->TargetMode, Payload.TargetSeatIndices);
+	if (CardName == TEXT("AmazingGrace"))
+	{
+		TSharedRef<TArray<TObjectPtr<USGSCard>>> RevealedCards = MakeShared<TArray<TObjectPtr<USGSCard>>>();
+		if (FSGSStatus Status = Context.Runtime->RunEffectStep(
+			SGSStandardEffectSteps::MakeRevealTopCardsStep(
+				SourceSeat,
+				State.TargetSeatIndices.Num(),
+				RevealedCards,
+				State.TargetSeatIndices),
+			Context.RuleInvocation.SourceCommandId);
+			Status.HasError())
+		{
+			return Status;
+		}
+		for (const TObjectPtr<USGSCard>& RevealedCard : *RevealedCards)
+		{
+			if (RevealedCard != nullptr)
+			{
+				State.RevealedCardIds.Add(RevealedCard->CardId);
+			}
+		}
+	}
 
 	FSGSResolutionFrame Frame;
 	Frame.SourceRuleName = GetRuleName();
@@ -573,6 +683,19 @@ FSGSStatus FSGSTrickNullificationResponseRule::ExecutePayload(FSGSRuleExecutionC
 	State->bNullified = !State->bNullified;
 	State->NullificationNextSeat = (Context.RuleInvocation.ActorSeat + 1) % Context.GameContext->NumSeats();
 	State->NullificationVisited = 0;
+	if (FSGSStatus Status = Context.Runtime->RunEffectStep(
+		SGSStandardEffectSteps::MakeRuleOutcomeStep(
+			FName(TEXT("SGS.Event.TrickNullificationChanged")),
+			FString::Printf(
+				TEXT("Card=%s Target=%d Nullified=%s"),
+				*State->CardName.ToString(),
+				CurrentTarget(*State),
+				State->bNullified ? TEXT("true") : TEXT("false"))),
+		Context.RuleInvocation.SourceCommandId);
+		Status.HasError())
+	{
+		return Status;
+	}
 	return SGSStandardTrickRules::Continue(Context);
 }
 
@@ -616,6 +739,86 @@ FSGSStatus FSGSTrickEffectResponseRule::ExecutePayload(FSGSRuleExecutionContext&
 	return SGSStandardTrickRules::ContinueAfterAcceptedResponse(Context);
 }
 
+FName FSGSTrickCardChoiceRule::GetRuleName() const { return FName(TEXT("SGS.Rule.Trick.CardChoice")); }
+FSGSRuleDescriptor FSGSTrickCardChoiceRule::GetDescriptor() const
+{
+	FSGSRuleDescriptor Descriptor = SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+		GetRuleName(), SGSRuleKinds::Response(), SGSGameplayTags::PlayAction_ChooseCards.GetTag(), NAME_None,
+		SGSStandardTrickRules::CardChoiceWindow(), 220);
+	Descriptor.bWildcardSubject = true;
+	return Descriptor;
+}
+FSGSStatus FSGSTrickCardChoiceRule::ValidatePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSChooseCardsRulePayload& Payload) const
+{
+	FSGSStandardTrickResolutionState* State = GetState(Context);
+	if (State == nullptr || Payload.SelectedCardIds.Num() != 1)
+	{
+		return SGSBasicCardRuleHelpers::MakeRuleError(
+			FName(TEXT("SGS.Trick.InvalidCardChoice")), TEXT("Trick card choice requires one authorized card."));
+	}
+	const FSGSCardState* CardState = Context.GameContext->FindCardStateById(Payload.SelectedCardIds[0]);
+	if (State->Stage == AmazingGraceChoiceStage())
+	{
+		return CardState != nullptr
+			&& CardState->Zone.MatchesTagExact(SGSGameplayTags::CardZone_Processing.GetTag())
+			&& State->RevealedCardIds.Contains(CardState->CardId)
+			? MakeValue()
+			: SGSBasicCardRuleHelpers::MakeRuleError(
+				FName(TEXT("SGS.Trick.InvalidAmazingGraceChoice")), TEXT("The chosen card is not in the Amazing Grace pool."));
+	}
+	const int32 TargetSeat = CurrentTarget(*State);
+	return State->Stage == TargetCardChoiceStage()
+		&& CardState != nullptr
+		&& CardState->OwnerSeat == TargetSeat
+		&& (CardState->Zone.MatchesTagExact(SGSGameplayTags::CardZone_Hand.GetTag())
+			|| CardState->Zone.MatchesTagExact(SGSGameplayTags::CardZone_Equipment.GetTag())
+			|| CardState->Zone.MatchesTagExact(SGSGameplayTags::CardZone_Judgement.GetTag()))
+		? MakeValue()
+		: SGSBasicCardRuleHelpers::MakeRuleError(
+			FName(TEXT("SGS.Trick.InvalidTargetCardChoice")), TEXT("The chosen target card is no longer removable."));
+}
+FSGSStatus FSGSTrickCardChoiceRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSChooseCardsRulePayload& Payload) const
+{
+	FSGSStandardTrickResolutionState* State = GetState(Context);
+	const FSGSCardState* CardState = Context.GameContext->FindCardStateById(Payload.SelectedCardIds[0]);
+	check(State != nullptr && CardState != nullptr);
+	USGSCard* Chosen = CardState->Card.Get();
+	if (State->Stage == AmazingGraceChoiceStage())
+	{
+		State->RevealedCardIds.Remove(Chosen->CardId);
+		if (FSGSStatus Status = Context.Runtime->RunEffectStep(
+			SGSStandardEffectSteps::MakeMoveCardsStep(
+				{ Chosen }, SGSGameplayTags::CardZone_Processing.GetTag(), INDEX_NONE,
+				SGSGameplayTags::CardZone_Hand.GetTag(), CurrentTarget(*State),
+				{ SGSCardMoveReasons::Gain(), { CurrentTarget(*State) } }),
+			Context.RuleInvocation.SourceCommandId);
+			Status.HasError())
+		{
+			return Status;
+		}
+		return AdvanceTarget(Context);
+	}
+
+	const int32 TargetSeat = CurrentTarget(*State);
+	const bool bSnatch = State->CardName == TEXT("Snatch");
+	if (FSGSStatus Status = Context.Runtime->RunEffectStep(
+		SGSStandardEffectSteps::MakeMoveCardsStep(
+			{ Chosen }, CardState->Zone, TargetSeat,
+			bSnatch ? SGSGameplayTags::CardZone_Hand.GetTag() : SGSGameplayTags::CardZone_DiscardPile.GetTag(),
+			bSnatch ? State->SourceSeat : INDEX_NONE,
+			{ bSnatch ? SGSCardMoveReasons::Gain() : SGSCardMoveReasons::Discard(), { TargetSeat } }),
+		Context.RuleInvocation.SourceCommandId);
+		Status.HasError())
+	{
+		return Status;
+	}
+	return AdvanceTarget(Context);
+}
+
 void SGSStandardTrickRules::Register(FSGSRuleRegistry& Registry)
 {
 	for (const FName CardName : {
@@ -629,4 +832,5 @@ void SGSStandardTrickRules::Register(FSGSRuleRegistry& Registry)
 	Registry.RegisterRule(MakeShared<FSGSTrickNullificationResponseRule>());
 	Registry.RegisterRule(MakeShared<FSGSTrickEffectPassRule>());
 	Registry.RegisterRule(MakeShared<FSGSTrickEffectResponseRule>());
+	Registry.RegisterRule(MakeShared<FSGSTrickCardChoiceRule>());
 }

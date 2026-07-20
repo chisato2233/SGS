@@ -213,6 +213,14 @@ FSGSStatus FSGSResolutionStack::ClearResponseWindowOnCurrent()
 		Frame.WindowName = NAME_None;
 		Frame.RequiredCardName = NAME_None;
 		Frame.AcceptedCardNames.Reset();
+		Frame.bIsCardChoice = false;
+		Frame.ChoiceName = NAME_None;
+		Frame.MinChoiceCount = 0;
+		Frame.MaxChoiceCount = 0;
+		Frame.CardChoiceOptions.Reset();
+		Frame.CandidateCardSelections.Reset();
+		Frame.bIsOptionChoice = false;
+		Frame.NamedOptions.Reset();
 	});
 }
 

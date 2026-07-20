@@ -4,6 +4,7 @@
 #include "Shared/Core/SGSError.h"
 #include "Shared/Core/SGSIds.h"
 #include "Shared/Core/SGSIndexedStore.h"
+#include "Shared/Decisions/SGSDecisionTypes.h"
 #include "StructUtils/InstancedStruct.h"
 
 namespace SGSResolutionContinuations
@@ -23,6 +24,14 @@ struct SGS_API FSGSResolutionFrame
 	FName WindowName = NAME_None;
 	FName RequiredCardName = NAME_None;
 	TArray<FName> AcceptedCardNames;
+	bool bIsCardChoice = false;
+	FName ChoiceName = NAME_None;
+	int32 MinChoiceCount = 0;
+	int32 MaxChoiceCount = 0;
+	TArray<FSGSDecisionCardChoiceOption> CardChoiceOptions;
+	TArray<TArray<int32>> CandidateCardSelections;
+	bool bIsOptionChoice = false;
+	TArray<FSGSDecisionNamedOption> NamedOptions;
 	int32 ProcessingCardId = INDEX_NONE;
 	int32 StackSequence = INDEX_NONE;
 	FName OnChildCompletedContinuation = NAME_None;

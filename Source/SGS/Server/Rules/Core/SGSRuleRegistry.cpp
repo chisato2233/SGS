@@ -4,6 +4,8 @@
 #include "Server/Rules/StandardCards/SGSEquipmentRules.h"
 #include "Server/Rules/StandardCards/SGSStandardTrickRules.h"
 #include "Server/Rules/StandardCards/SGSDelayedTrickRules.h"
+#include "Server/Rules/Phases/SGSDiscardPhaseRules.h"
+#include "Server/Rules/Phases/SGSGeneralSelectionRules.h"
 
 namespace
 {
@@ -158,6 +160,33 @@ TArray<FName> FSGSRuleRegistry::FindCandidateRuleNames(const FSGSRuleInvocation&
 	return Names;
 }
 
+TArray<FName> FSGSRuleRegistry::FindMatchingTriggerRuleNames(FSGSRuleExecutionContext& Context) const
+{
+	TArray<FName> Names;
+	if (Context.RuleInvocation.RuleKindTag != SGSRuleKinds::Trigger())
+	{
+		return Names;
+	}
+	for (const FSGSRuleEntry* Entry : FindCandidateEntries(Context.RuleInvocation))
+	{
+		if (Entry == nullptr)
+		{
+			continue;
+		}
+		const UScriptStruct* ExpectedPayloadStruct = Entry->Rule->GetExpectedPayloadStruct();
+		if (ExpectedPayloadStruct != nullptr
+			&& ExpectedPayloadStruct != Context.RuleInvocation.GetPayloadStruct())
+		{
+			continue;
+		}
+		if (Entry->Rule->CanHandle(Context))
+		{
+			Names.Add(Entry->Descriptor.RuleName);
+		}
+	}
+	return Names;
+}
+
 FSGSStatus FSGSRuleRegistry::Resolve(FSGSRuleExecutionContext& Context) const
 {
 	if (!Context.CheckInvariants())
@@ -298,6 +327,47 @@ FSGSStatus FSGSRuleRegistry::DispatchAll(FSGSRuleExecutionContext& Context) cons
 	}
 
 	return MakeValue();
+}
+
+FSGSStatus FSGSRuleRegistry::DispatchTriggerByName(
+	FSGSRuleExecutionContext& Context,
+	FName RuleName) const
+{
+	if (!Context.CheckInvariants()
+		|| Context.RuleInvocation.RuleKindTag != SGSRuleKinds::Trigger())
+	{
+		return MakeError(FSGSError::Make(
+			FName(TEXT("SGS.Rule.InvalidTriggerDispatch")),
+			TEXT("Named trigger dispatch requires a valid trigger execution context.")));
+	}
+	const FSGSStableHandle Handle = RulesByName.IsValid()
+		? RulesByName->Find(RuleName)
+		: FSGSStableHandle();
+	const FSGSRuleEntry* Entry = Rules.Find(Handle);
+	if (Entry == nullptr || !DescriptorMatchesInvocation(Entry->Descriptor, Context.RuleInvocation))
+	{
+		return MakeError(FSGSError::Make(
+			FName(TEXT("SGS.Rule.TriggerNotFound")),
+			FString::Printf(TEXT("Timing event trigger %s is no longer registered for this invocation."), *RuleName.ToString())));
+	}
+	const UScriptStruct* ExpectedPayloadStruct = Entry->Rule->GetExpectedPayloadStruct();
+	if (ExpectedPayloadStruct != nullptr
+		&& ExpectedPayloadStruct != Context.RuleInvocation.GetPayloadStruct())
+	{
+		return MakeError(FSGSError::Make(
+			FName(TEXT("SGS.Rule.PayloadTypeMismatch")),
+			FString::Printf(TEXT("Timing event trigger %s received payload %s."),
+				*RuleName.ToString(), *Context.RuleInvocation.GetPayloadTypeName())));
+	}
+	if (!Entry->Rule->CanHandle(Context))
+	{
+		return MakeValue();
+	}
+	if (FSGSStatus Status = Entry->Rule->Validate(Context); Status.HasError())
+	{
+		return Status;
+	}
+	return Entry->Rule->Execute(Context);
 }
 
 int32 FSGSRuleRegistry::ApplyNumericModifiers(
@@ -472,4 +542,6 @@ void SGSRules::RegisterDefaultRules(FSGSRuleRegistry& Registry)
 	SGSEquipmentRules::Register(Registry);
 	SGSStandardTrickRules::Register(Registry);
 	SGSDelayedTrickRules::Register(Registry);
+	SGSDiscardPhaseRules::Register(Registry);
+	SGSGeneralSelectionRules::Register(Registry);
 }

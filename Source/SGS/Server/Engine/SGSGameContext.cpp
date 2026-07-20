@@ -525,6 +525,24 @@ void USGSGameContext::EliminateSeat(int32 SeatIndex, int32 SourceSeat, FName Rea
 	SeatEliminatedDelegate.Broadcast(SeatIndex, SourceSeat, Reason);
 }
 
+bool USGSGameContext::AssignGeneral(int32 SeatIndex, FName GeneralId)
+{
+	USGSSeat* Seat = GetSeat(SeatIndex);
+	const FSGSGeneralDefinition* General = SGSStandardGenerals::Find(GeneralId);
+	if (Seat == nullptr || General == nullptr)
+	{
+		return false;
+	}
+	Seat->GeneralId = General->GeneralId;
+	Seat->Faction = General->Faction;
+	Seat->SkillNames = General->SkillNames;
+	Seat->MaxHealth = Seat->Identity.MatchesTagExact(SGSGameplayTags::Identity_Lord.GetTag())
+		? General->MaxHealth + 1
+		: General->MaxHealth;
+	Seat->Health = Seat->MaxHealth;
+	return true;
+}
+
 void USGSGameContext::EquipCard(int32 SeatIndex, USGSCard* Card, FSGSEquipSlot Slot)
 {
 	USGSSeat* Seat = GetSeat(SeatIndex);

@@ -42,6 +42,11 @@ namespace SGSStandardEffectSteps
 		int32 SeatIndex,
 		int32 Count,
 		FSGSCardMoveEventMetadata Metadata = {});
+	SGS_API FSGSEffectStep MakeRevealTopCardsStep(
+		int32 TemporarySeatIndex,
+		int32 Count,
+		TSharedRef<TArray<TObjectPtr<USGSCard>>> OutCards,
+		TArray<int32> RelatedTargetSeatIndices = {});
 	SGS_API FSGSEffectStep MakeDamageStep(int32 SourceSeat, int32 TargetSeat, int32 Amount);
 	SGS_API FSGSEffectStep MakeHealStep(int32 SeatIndex, int32 Amount);
 	SGS_API FSGSEffectStep MakeEquipCardStep(int32 SeatIndex, USGSCard* Card, FSGSEquipSlot Slot);
@@ -52,4 +57,5 @@ namespace SGSStandardEffectSteps
 	SGS_API FSGSEffectStep MakeJudgementPlaceholderStep(int32 SeatIndex, FName Reason);
 	SGS_API FSGSEffectStep MakeReactionWindowStep(int32 SeatIndex, FName WindowName);
 	SGS_API FSGSEffectStep MakeExpireActiveEffectStep(FSGSStableHandle EffectHandle, FName Reason);
+	SGS_API FSGSEffectStep MakeRuleOutcomeStep(FName EventName, FString Payload);
 }

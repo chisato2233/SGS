@@ -10,6 +10,7 @@
 
 namespace SGSTimingSteps
 {
+	inline FName Before() { return FName(TEXT("Before")); }
 	inline FName Begin() { return FName(TEXT("Begin")); }
 	inline FName Resolve() { return FName(TEXT("Resolve")); }
 	inline FName End() { return FName(TEXT("End")); }

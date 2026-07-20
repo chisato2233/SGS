@@ -13,7 +13,6 @@
 #include "Server/Engine/SGSGameContext.h"
 #include "Server/Players/SGSSeat.h"
 #include "Server/UI/SGSTableSnapshotBuilder.h"
-#include "Server/Content/SGSStandardGenerals.h"
 #include "Shared/Decisions/SGSDecisionAgent.h"
 #include "Shared/Game/SGSGameState.h"
 #include "Shared/Game/SGSPlayerState.h"
@@ -153,8 +152,8 @@ void ASGSGameMode::BeginPlay()
 	FSGSGameStartConfig Config;
 	Config.RandomSeed = static_cast<int32>(FPlatformTime::Cycles64());
 	Config.InitialDeck = SGSDeckDefinitions::MakeStandardIdentityDeck();
-	Config.GeneralIdsBySeat = SGSStandardGenerals::FirstIdentityRoster();
 	Config.bIdentityMode = true;
+	Config.bChooseGenerals = true;
 	GameDriver->StartGame(Agents, Config);
 
 	if (bUseLocalHuman && LocalHumanPlayerController != nullptr && LocalHumanAgent != nullptr)

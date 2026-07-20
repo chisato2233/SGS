@@ -9,6 +9,7 @@ struct SGS_API FSGSTableUIInteractionState
 	int32 SelectedCardId = INDEX_NONE;
 	TArray<int32> SelectedCardIds;
 	int32 SelectedTargetSeat = INDEX_NONE;
+	TArray<int32> SelectedTargetSeatIndices;
 	FName SelectedSkillName = NAME_None;
 };
 
@@ -92,6 +93,8 @@ private:
 	const FSGSDecisionSkillViewData* GetSelectedSkillOption() const;
 	TArray<int32> GetTargetsForCard(int32 CardId) const;
 	TArray<int32> GetTargetsForCurrentSelection() const;
+	int32 GetMinTargetCountForCurrentSelection() const;
+	int32 GetMaxTargetCountForCurrentSelection() const;
 	void ReconcileHandPresentation();
 	void NormalizeSelection();
 	void ReconcileMotionPresentation(const FSGSTableViewSnapshot& InSnapshot);

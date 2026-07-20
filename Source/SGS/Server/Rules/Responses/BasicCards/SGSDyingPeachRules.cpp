@@ -4,6 +4,7 @@
 #include "Server/Engine/SGSGameContext.h"
 #include "Server/Players/SGSSeat.h"
 #include "Server/Rules/BasicCards/SGSBasicCardRuleHelpers.h"
+#include "Server/Rules/Core/SGSRuleRegistry.h"
 
 namespace
 {
@@ -24,11 +25,27 @@ FSGSStatus ExecuteDyingHeal(
 	}
 
 	const int32 DyingSeatIndex = DyingState->DyingSeat;
+	FSGSNumericRuleQuery HealQuery;
+	HealQuery.QueryName = SGSRuleQueries::PeachHealAmount();
+	HealQuery.ActorSeat = Context.RuleInvocation.ActorSeat;
+	HealQuery.TargetSeat = DyingSeatIndex;
+	HealQuery.CardName = CardName;
+	HealQuery.BaseValue = 1;
+	FSGSRuleQueryContext QueryContext;
+	QueryContext.GameContext = Context.GameContext;
+	QueryContext.ActiveEffects = Context.ActiveEffects;
+	QueryContext.RuleRegistry = Context.RuleRegistry;
+	QueryContext.Phase = Context.TimingPoint.Phase;
+	QueryContext.ActorSeat = Context.RuleInvocation.ActorSeat;
+	const int32 HealAmount = Context.RuleRegistry != nullptr
+		? Context.RuleRegistry->ApplyNumericModifiers(QueryContext, HealQuery)
+		: 1;
 	if (FSGSStatus Status = SGSBasicCardRuleHelpers::ExecuteHealCard(
 		Context,
 		Payload.CardId,
 		CardName,
-		DyingSeatIndex);
+		DyingSeatIndex,
+		HealAmount);
 		Status.HasError())
 	{
 		return Status;

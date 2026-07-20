@@ -14,6 +14,7 @@ bool SameInteraction(const FSGSTableUIInteractionState& A, const FSGSTableUIInte
 	return A.SelectedCardId == B.SelectedCardId
 		&& A.SelectedCardIds == B.SelectedCardIds
 		&& A.SelectedTargetSeat == B.SelectedTargetSeat
+		&& A.SelectedTargetSeatIndices == B.SelectedTargetSeatIndices
 		&& A.SelectedSkillName == B.SelectedSkillName;
 }
 
@@ -167,19 +168,35 @@ bool FSGSTableUIStateStore::SelectCard(int32 CardId)
 		}
 		Next.SelectedCardId = Next.SelectedCardIds.IsEmpty() ? INDEX_NONE : Next.SelectedCardIds.Last();
 	}
+	else if (GetSnapshot().Prompt.bIsCardChoice)
+	{
+		if (Next.SelectedCardIds.Contains(CardId))
+		{
+			Next.SelectedCardIds.Remove(CardId);
+		}
+		else if (Next.SelectedCardIds.Num() < GetSnapshot().Prompt.MaxChoiceCount)
+		{
+			Next.SelectedCardIds.Add(CardId);
+		}
+		Next.SelectedCardId = Next.SelectedCardIds.IsEmpty() ? INDEX_NONE : Next.SelectedCardIds.Last();
+	}
 	else
 	{
 		Next.SelectedCardId = CardId;
 		Next.SelectedCardIds = { CardId };
 	}
 	const TArray<int32> Targets = GetTargetsForCard(CardId);
-	if (Targets.Num() == 1)
+	const FSGSCardTargetViewData* TargetOption = GetSnapshot().Prompt.TargetSeatOptions.FindByPredicate(
+		[CardId](const FSGSCardTargetViewData& Candidate) { return Candidate.CardId == CardId; });
+	if (Targets.Num() == 1 && TargetOption != nullptr && TargetOption->MinTargetCount == 1)
 	{
 		Next.SelectedTargetSeat = Targets[0];
+		Next.SelectedTargetSeatIndices = { Targets[0] };
 	}
-	else if (!Targets.Contains(Next.SelectedTargetSeat))
+	else
 	{
 		Next.SelectedTargetSeat = INDEX_NONE;
+		Next.SelectedTargetSeatIndices.Reset();
 	}
 	InteractionState.Set(MoveTemp(Next));
 	return true;
@@ -194,7 +211,25 @@ bool FSGSTableUIStateStore::SelectTarget(int32 TargetSeatIndex)
 		return false;
 	}
 
-	Next.SelectedTargetSeat = TargetSeatIndex;
+	const int32 MaxTargets = GetMaxTargetCountForCurrentSelection();
+	if (MaxTargets > 1)
+	{
+		if (Next.SelectedTargetSeatIndices.Contains(TargetSeatIndex))
+		{
+			Next.SelectedTargetSeatIndices.Remove(TargetSeatIndex);
+		}
+		else if (Next.SelectedTargetSeatIndices.Num() < MaxTargets)
+		{
+			Next.SelectedTargetSeatIndices.Add(TargetSeatIndex);
+		}
+	}
+	else
+	{
+		Next.SelectedTargetSeatIndices = { TargetSeatIndex };
+	}
+	Next.SelectedTargetSeat = Next.SelectedTargetSeatIndices.IsEmpty()
+		? INDEX_NONE
+		: Next.SelectedTargetSeatIndices.Last();
 	InteractionState.Set(MoveTemp(Next));
 	return true;
 }
@@ -216,6 +251,7 @@ bool FSGSTableUIStateStore::SelectSkill(FName SkillName)
 	Next.SelectedCardId = INDEX_NONE;
 	Next.SelectedCardIds.Reset();
 	Next.SelectedTargetSeat = INDEX_NONE;
+	Next.SelectedTargetSeatIndices.Reset();
 	FSGSUIStateBatch Batch;
 	InteractionState.Set(MoveTemp(Next));
 	NormalizeSelection();
@@ -262,15 +298,42 @@ bool FSGSTableUIStateStore::IsSelectionComplete() const
 			}
 		}
 	}
+	else if (GetSnapshot().Prompt.bIsCardChoice)
+	{
+		if (Interaction.SelectedCardIds.Num() < GetSnapshot().Prompt.MinChoiceCount
+			|| Interaction.SelectedCardIds.Num() > GetSnapshot().Prompt.MaxChoiceCount)
+		{
+			return false;
+		}
+		for (const int32 CardId : Interaction.SelectedCardIds)
+		{
+			if (!GetSnapshot().Prompt.SelectableCardIds.Contains(CardId))
+			{
+				return false;
+			}
+		}
+	}
 	else if (!GetSnapshot().Prompt.SelectableCardIds.Contains(Interaction.SelectedCardId))
 	{
 		return false;
 	}
 
 	const TArray<int32> Targets = GetTargetsForCurrentSelection();
-	return Targets.IsEmpty()
-		|| Targets.Num() == 1
-		|| Targets.Contains(Interaction.SelectedTargetSeat);
+	const int32 MinTargets = GetMinTargetCountForCurrentSelection();
+	const int32 MaxTargets = GetMaxTargetCountForCurrentSelection();
+	if (Interaction.SelectedTargetSeatIndices.Num() < MinTargets
+		|| Interaction.SelectedTargetSeatIndices.Num() > MaxTargets)
+	{
+		return false;
+	}
+	for (const int32 TargetSeat : Interaction.SelectedTargetSeatIndices)
+	{
+		if (!Targets.Contains(TargetSeat))
+		{
+			return false;
+		}
+	}
+	return true;
 }
 
 bool FSGSTableUIStateStore::ReorderHand(TConstArrayView<int32> OrderedCardIds)
@@ -367,6 +430,30 @@ TArray<int32> FSGSTableUIStateStore::GetTargetsForCurrentSelection() const
 	return GetTargetsForCard(InteractionState.Get().SelectedCardId);
 }
 
+int32 FSGSTableUIStateStore::GetMinTargetCountForCurrentSelection() const
+{
+	if (const FSGSDecisionSkillViewData* Skill = GetSelectedSkillOption())
+	{
+		return Skill->MinTargetCount;
+	}
+	const int32 CardId = InteractionState.Get().SelectedCardId;
+	const FSGSCardTargetViewData* Option = GetSnapshot().Prompt.TargetSeatOptions.FindByPredicate(
+		[CardId](const FSGSCardTargetViewData& Candidate) { return Candidate.CardId == CardId; });
+	return Option != nullptr ? Option->MinTargetCount : 0;
+}
+
+int32 FSGSTableUIStateStore::GetMaxTargetCountForCurrentSelection() const
+{
+	if (const FSGSDecisionSkillViewData* Skill = GetSelectedSkillOption())
+	{
+		return Skill->MaxTargetCount;
+	}
+	const int32 CardId = InteractionState.Get().SelectedCardId;
+	const FSGSCardTargetViewData* Option = GetSnapshot().Prompt.TargetSeatOptions.FindByPredicate(
+		[CardId](const FSGSCardTargetViewData& Candidate) { return Candidate.CardId == CardId; });
+	return Option != nullptr ? Option->MaxTargetCount : 0;
+}
+
 void FSGSTableUIStateStore::ReconcileHandPresentation()
 {
 	TSet<int32> SnapshotCardIds;
@@ -437,6 +524,19 @@ void FSGSTableUIStateStore::NormalizeSelection()
 		}
 		Next.SelectedCardId = Next.SelectedCardIds.IsEmpty() ? INDEX_NONE : Next.SelectedCardIds.Last();
 	}
+	else if (Snapshot.Prompt.bIsCardChoice)
+	{
+		Next.SelectedCardIds.RemoveAll(
+			[&Snapshot](int32 CardId)
+			{
+				return !Snapshot.Prompt.SelectableCardIds.Contains(CardId);
+			});
+		if (Next.SelectedCardIds.Num() > Snapshot.Prompt.MaxChoiceCount)
+		{
+			Next.SelectedCardIds.SetNum(Snapshot.Prompt.MaxChoiceCount);
+		}
+		Next.SelectedCardId = Next.SelectedCardIds.IsEmpty() ? INDEX_NONE : Next.SelectedCardIds.Last();
+	}
 	else if (!Snapshot.Prompt.SelectableCardIds.Contains(Next.SelectedCardId))
 	{
 		Next.SelectedCardId = INDEX_NONE;
@@ -456,10 +556,19 @@ void FSGSTableUIStateStore::NormalizeSelection()
 	if (Targets.Num() == 1)
 	{
 		Next.SelectedTargetSeat = Targets[0];
+		Next.SelectedTargetSeatIndices = { Targets[0] };
 	}
-	else if (!Targets.Contains(Next.SelectedTargetSeat))
+	else
 	{
-		Next.SelectedTargetSeat = INDEX_NONE;
+		Next.SelectedTargetSeatIndices.RemoveAll(
+			[&Targets](int32 SeatIndex) { return !Targets.Contains(SeatIndex); });
+		if (Next.SelectedTargetSeatIndices.Num() > GetMaxTargetCountForCurrentSelection())
+		{
+			Next.SelectedTargetSeatIndices.SetNum(GetMaxTargetCountForCurrentSelection());
+		}
+		Next.SelectedTargetSeat = Next.SelectedTargetSeatIndices.IsEmpty()
+			? INDEX_NONE
+			: Next.SelectedTargetSeatIndices.Last();
 	}
 	InteractionState.Set(MoveTemp(Next));
 }

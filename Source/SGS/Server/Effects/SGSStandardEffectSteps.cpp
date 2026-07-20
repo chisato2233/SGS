@@ -164,6 +164,53 @@ FSGSEffectStep SGSStandardEffectSteps::MakeDrawCardsStep(
 	return Step;
 }
 
+FSGSEffectStep SGSStandardEffectSteps::MakeRevealTopCardsStep(
+	int32 TemporarySeatIndex,
+	int32 Count,
+	TSharedRef<TArray<TObjectPtr<USGSCard>>> OutCards,
+	TArray<int32> RelatedTargetSeatIndices)
+{
+	FSGSEffectStep Step;
+	Step.StepName = FName(TEXT("SGS.Effect.RevealTopCards"));
+	Step.SourceName = FName(TEXT("StandardEffect.RevealTopCards"));
+	Step.Execute = [TemporarySeatIndex, Count, OutCards, RelatedTargetSeatIndices = MoveTemp(RelatedTargetSeatIndices)](
+		FSGSEffectContext& Context)
+	{
+		if (Context.GameContext == nullptr)
+		{
+			return FSGSEffectResult::Failure(FSGSError::Make(
+				FName(TEXT("SGS.Effect.MissingContext")),
+				TEXT("RevealTopCards step has no GameContext.")));
+		}
+		TArray<USGSCard*> Cards = Context.GameContext->DrawCards(TemporarySeatIndex, Count);
+		if (!Cards.IsEmpty())
+		{
+			Context.GameContext->MoveCards(
+				Cards,
+				SGSGameplayTags::CardZone_Hand.GetTag(),
+				TemporarySeatIndex,
+				SGSGameplayTags::CardZone_Processing.GetTag(),
+				INDEX_NONE);
+			AppendCardMoveEvent(
+				Context,
+				SGSCardMoveReasons::Draw(),
+				Cards,
+				SGSGameplayTags::CardZone_DrawPile.GetTag(),
+				INDEX_NONE,
+				SGSGameplayTags::CardZone_Processing.GetTag(),
+				INDEX_NONE,
+				RelatedTargetSeatIndices);
+		}
+		OutCards->Reset(Cards.Num());
+		for (USGSCard* Card : Cards)
+		{
+			OutCards->Add(Card);
+		}
+		return FSGSEffectResult::Success();
+	};
+	return Step;
+}
+
 FSGSEffectStep SGSStandardEffectSteps::MakeDamageStep(int32 SourceSeat, int32 TargetSeat, int32 Amount)
 {
 	FSGSEffectStep Step;
@@ -365,6 +412,19 @@ FSGSEffectStep SGSStandardEffectSteps::MakeExpireActiveEffectStep(FSGSStableHand
 			TEXT("Effect=%s Reason=%s"),
 			*EffectHandle.ToLogString(),
 			*Reason.ToString()));
+		return FSGSEffectResult::Success();
+	};
+	return Step;
+}
+
+FSGSEffectStep SGSStandardEffectSteps::MakeRuleOutcomeStep(FName EventName, FString Payload)
+{
+	FSGSEffectStep Step;
+	Step.StepName = FName(TEXT("SGS.Effect.RuleOutcome"));
+	Step.SourceName = EventName;
+	Step.Execute = [EventName, Payload = MoveTemp(Payload)](FSGSEffectContext& Context)
+	{
+		AppendStandardEvent(Context, EventName, Payload);
 		return FSGSEffectResult::Success();
 	};
 	return Step;

@@ -136,7 +136,11 @@ void ApplyPromptSnapshot(FSGSPlayerPrivateSnapshot& Snapshot, const USGSLocalHum
 		{
 			Snapshot.Prompt.SelectableCardIds.AddUnique(Option.CardId);
 			AddUniqueInts(Snapshot.Prompt.SelectableTargetSeatIndices, Option.TargetSeatIndices);
-			Snapshot.Prompt.SetTargetSeatIndicesForCard(Option.CardId, Option.TargetSeatIndices);
+			Snapshot.Prompt.SetTargetSeatIndicesForCard(
+				Option.CardId,
+				Option.TargetSeatIndices,
+				Option.MinTargetCount,
+				Option.MaxTargetCount);
 		}
 		for (const FSGSDecisionSkillOption& SkillOption : PlayRequest->SkillOptions)
 		{
@@ -160,7 +164,37 @@ void ApplyPromptSnapshot(FSGSPlayerPrivateSnapshot& Snapshot, const USGSLocalHum
 		Snapshot.Prompt.EffectSourceSeat = ResponseRequest->EffectSourceSeat;
 		Snapshot.Prompt.EffectTargetSeat = ResponseRequest->EffectTargetSeat;
 		Snapshot.Prompt.bAllowPass = ResponseRequest->bAllowPass;
+		Snapshot.Prompt.bIsCardChoice = ResponseRequest->bIsCardChoice;
+		Snapshot.Prompt.bIsOptionChoice = ResponseRequest->bIsOptionChoice;
+		Snapshot.Prompt.ChoiceName = ResponseRequest->ChoiceName;
+		Snapshot.Prompt.MinChoiceCount = ResponseRequest->MinChoiceCount;
+		Snapshot.Prompt.MaxChoiceCount = ResponseRequest->MaxChoiceCount;
+		for (const FSGSDecisionCardChoiceOption& Option : ResponseRequest->CardChoiceOptions)
+		{
+			FSGSCardViewData ChoiceCard;
+			ChoiceCard.CardId = Option.CardId;
+			ChoiceCard.CardName = Option.bFaceVisible ? Option.CardName : NAME_None;
+			ChoiceCard.Suit = Option.bFaceVisible ? Option.Suit : SGSGameplayTags::Suit_None.GetTag();
+			ChoiceCard.Number = Option.bFaceVisible ? Option.Number : 0;
+			ChoiceCard.DisplayText = Option.bFaceVisible ? Option.CardName.ToString() : TEXT("Hidden card");
+			ChoiceCard.bSelectable = true;
+			ChoiceCard.bFaceDown = !Option.bFaceVisible;
+			Snapshot.Prompt.ChoiceCards.Add(MoveTemp(ChoiceCard));
+		}
+		for (const FSGSDecisionNamedOption& Option : ResponseRequest->NamedOptions)
+		{
+			FSGSDecisionSkillViewData ChoiceView;
+			ChoiceView.SkillName = Option.OptionName;
+			ChoiceView.DisplayName = Option.DisplayName.IsNone()
+				? Option.OptionName.ToString()
+				: Option.DisplayName.ToString();
+			Snapshot.Prompt.SkillOptions.Add(MoveTemp(ChoiceView));
+		}
 		AddUniqueInts(Snapshot.Prompt.SelectableCardIds, ResponseRequest->ResponseCardIds);
+		for (const FSGSDecisionCardChoiceOption& Option : ResponseRequest->CardChoiceOptions)
+		{
+			Snapshot.Prompt.SelectableCardIds.AddUnique(Option.CardId);
+		}
 
 		TArray<int32> ResponseTargets;
 		if (ResponseRequest->EffectTargetSeat != INDEX_NONE)
@@ -264,6 +298,22 @@ FSGSTablePublicSnapshot FSGSTableSnapshotBuilder::BuildPublicSnapshot(const USGS
 			SeatView.Identity = Seat->Identity;
 		}
 		SeatView.HandCount = Context->GetCardsInZone(SGSGameplayTags::CardZone_Hand.GetTag(), SeatIndex).Num();
+		for (const USGSCard* Card : Context->GetCardsInZone(
+			SGSGameplayTags::CardZone_Equipment.GetTag(), SeatIndex))
+		{
+			if (Card != nullptr)
+			{
+				SeatView.EquipmentCards.Add(MakeCardView(*Card));
+			}
+		}
+		for (const USGSCard* Card : Context->GetCardsInZone(
+			SGSGameplayTags::CardZone_Judgement.GetTag(), SeatIndex))
+		{
+			if (Card != nullptr)
+			{
+				SeatView.JudgementCards.Add(MakeCardView(*Card));
+			}
+		}
 		Snapshot.Seats.Add(MoveTemp(SeatView));
 	}
 

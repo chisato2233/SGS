@@ -7,6 +7,7 @@
 #include "Server/Rules/Actions/BasicCards/SGSSlashRule.h"
 #include "Server/Rules/Responses/BasicCards/SGSDyingPeachRules.h"
 #include "Server/Rules/Core/SGSRuleRegistry.h"
+#include "Server/Rules/Resolution/SGSDamageResolution.h"
 
 namespace
 {
@@ -90,6 +91,17 @@ FName SGSBasicCardRuleHelpers::DyingPeachWindowName()
 {
 	return FName(TEXT("Dying.Peach"));
 }
+
+FName SGSBasicCardRuleHelpers::SlashDamageTriggerContinuation()
+{
+	return FName(TEXT("SGS.Resolution.Continuation.SlashAfterDamageTriggers"));
+}
+
+FName SGSBasicCardRuleHelpers::AxeWindowName() { return FName(TEXT("Slash.Axe")); }
+FName SGSBasicCardRuleHelpers::AxeChoiceName() { return FName(TEXT("Axe.Discard")); }
+FName SGSBasicCardRuleHelpers::BladeWindowName() { return FName(TEXT("Slash.Blade")); }
+FName SGSBasicCardRuleHelpers::KylinBowWindowName() { return FName(TEXT("Slash.KylinBow")); }
+FName SGSBasicCardRuleHelpers::KylinBowChoiceName() { return FName(TEXT("KylinBow.DiscardHorse")); }
 
 FSGSRuleDescriptor SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
 	FName RuleName,
@@ -302,7 +314,8 @@ FSGSStatus SGSBasicCardRuleHelpers::ExecuteHealCard(
 	FSGSRuleExecutionContext& Context,
 	int32 CardId,
 	FName CardName,
-	int32 HealTargetSeat)
+	int32 HealTargetSeat,
+	int32 HealAmount)
 {
 	USGSCard* Card = FindPayloadCard(Context, CardId);
 	if (Card == nullptr || Card->CardName != CardName || Context.GameContext->GetSeat(HealTargetSeat) == nullptr)
@@ -318,7 +331,7 @@ FSGSStatus SGSBasicCardRuleHelpers::ExecuteHealCard(
 	}
 
 	return Context.Runtime->RunEffectStep(
-		SGSStandardEffectSteps::MakeHealStep(HealTargetSeat, 1),
+		SGSStandardEffectSteps::MakeHealStep(HealTargetSeat, HealAmount),
 		GetCommandId(Context));
 }
 
@@ -400,9 +413,9 @@ FSGSStatus SGSBasicCardRuleHelpers::StartDyingPeachResolution(FSGSRuleExecutionC
 
 FSGSStatus SGSBasicCardRuleHelpers::ResolveSlashHit(FSGSRuleExecutionContext& Context)
 {
-	const FSGSResolutionFrame* SlashFrame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
-	const FSGSSlashResolutionState* SlashState = SlashFrame != nullptr
-		? SlashFrame->GetState<FSGSSlashResolutionState>()
+	FSGSResolutionFrame* SlashFrame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
+	FSGSSlashResolutionState* SlashState = SlashFrame != nullptr
+		? SlashFrame->GetMutableState<FSGSSlashResolutionState>()
 		: nullptr;
 	if (SlashState == nullptr)
 	{
@@ -411,46 +424,366 @@ FSGSStatus SGSBasicCardRuleHelpers::ResolveSlashHit(FSGSRuleExecutionContext& Co
 			TEXT("Slash hit requires the current Slash resolution state."));
 	}
 
-	const int32 SourceSeat = SlashState->SourceSeat;
-	const int32 TargetSeat = SlashState->TargetSeat;
+	return SGSDamageResolution::Start(
+		Context,
+		SlashState->SourceSeat,
+		SlashState->TargetSeat,
+		SlashState->DamageAmount,
+		SlashState->SlashCardId,
+		SlashDamageTriggerContinuation());
+}
+
+namespace
+{
+FSGSStatus DiscardSlashMaterials(FSGSRuleExecutionContext& Context)
+{
+	const FSGSResolutionFrame* Frame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
+	const FSGSSlashResolutionState* State = Frame != nullptr
+		? Frame->GetState<FSGSSlashResolutionState>()
+		: nullptr;
+	if (State == nullptr || State->MaterialCardIds.IsEmpty())
+	{
+		return SGSBasicCardRuleHelpers::DiscardProcessingCard(Context);
+	}
+	TArray<USGSCard*> Cards;
+	for (const int32 CardId : State->MaterialCardIds)
+	{
+		const FSGSCardState* CardState = Context.GameContext->FindCardStateById(CardId);
+		if (CardState != nullptr
+			&& CardState->Zone.MatchesTagExact(SGSGameplayTags::CardZone_Processing.GetTag()))
+		{
+			Cards.Add(CardState->Card.Get());
+		}
+	}
+	return Cards.IsEmpty()
+		? MakeValue()
+		: Context.Runtime->RunEffectStep(
+			SGSStandardEffectSteps::MakeMoveCardsStep(
+				Cards,
+				SGSGameplayTags::CardZone_Processing.GetTag(),
+				INDEX_NONE,
+				SGSGameplayTags::CardZone_DiscardPile.GetTag(),
+				INDEX_NONE,
+				{ SGSCardMoveReasons::Cleanup(), {} }),
+			Context.RuleInvocation.SourceCommandId);
+}
+
+FSGSStatus ContinueCurrentSlashTarget(FSGSRuleExecutionContext& Context);
+
+FSGSStatus AdvanceSlashTarget(FSGSRuleExecutionContext& Context, FName Reason)
+{
+	FSGSResolutionFrame* Frame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
+	FSGSSlashResolutionState* State = Frame != nullptr ? Frame->GetMutableState<FSGSSlashResolutionState>() : nullptr;
+	if (State == nullptr)
+	{
+		return SGSBasicCardRuleHelpers::MakeRuleError(
+			FName(TEXT("SGS.Rule.MissingSlashResolution")), TEXT("Slash target advance requires an active Slash."));
+	}
+	++State->TargetIndex;
+	if (!State->TargetSeatIndices.IsValidIndex(State->TargetIndex))
+	{
+		if (FSGSStatus Status = DiscardSlashMaterials(Context); Status.HasError())
+		{
+			return Status;
+		}
+		return SGSBasicCardRuleHelpers::CompleteCurrentFrame(Context, Reason);
+	}
+	State->TargetSeat = State->TargetSeatIndices[State->TargetIndex];
+	State->DodgeCount = 0;
+	State->bAxeOffered = false;
+	State->bBladeOffered = false;
+	State->bKylinBowOffered = false;
+	Frame->TargetSeat = State->TargetSeat;
+	return ContinueCurrentSlashTarget(Context);
+}
+
+FSGSStatus ContinueCurrentSlashTarget(FSGSRuleExecutionContext& Context)
+{
+	FSGSResolutionFrame* Frame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
+	FSGSSlashResolutionState* State = Frame != nullptr ? Frame->GetMutableState<FSGSSlashResolutionState>() : nullptr;
+	if (State == nullptr)
+	{
+		return SGSBasicCardRuleHelpers::MakeRuleError(
+			FName(TEXT("SGS.Rule.MissingSlashResolution")), TEXT("Slash target resolution requires an active Slash."));
+	}
+	const USGSSeat* Target = Context.GameContext->GetSeat(State->TargetSeat);
+	if (Target == nullptr || !Target->bIsAlive)
+	{
+		return AdvanceSlashTarget(Context, FName(TEXT("SGS.Resolution.SlashTargetsResolved")));
+	}
+	const USGSCard* Armor = Target->Equipment.FindRef(SGSGameplayTags::EquipSlot_Armor.GetTag()).Get();
+	const USGSCard* SlashCard = State->SlashCardId != INDEX_NONE
+		? Context.GameContext->FindCardById(State->SlashCardId)
+		: nullptr;
+	const bool bBlackSlash = SlashCard != nullptr
+		&& (SlashCard->Suit.MatchesTagExact(SGSGameplayTags::Suit_Spade.GetTag())
+			|| SlashCard->Suit.MatchesTagExact(SGSGameplayTags::Suit_Club.GetTag()));
+	if (!State->bIgnoreArmor && Armor != nullptr && Armor->CardName == TEXT("RenwangShield") && bBlackSlash)
+	{
+		return AdvanceSlashTarget(Context, FName(TEXT("SGS.Resolution.SlashTargetsResolved")));
+	}
+
+	FSGSRuleResponseWindowSpec Spec;
+	Spec.SeatIndex = State->TargetSeat;
+	Spec.WindowName = SGSBasicCardRuleHelpers::SlashDodgeWindowName();
+	Spec.RequiredCardName = FName(TEXT("Dodge"));
+	Spec.AcceptedCardNames.Add(FName(TEXT("Dodge")));
+	Spec.ContextName = FName(TEXT("Slash"));
+	Spec.EffectSourceSeat = State->SourceSeat;
+	Spec.EffectTargetSeat = State->TargetSeat;
+	return Context.Runtime->OpenResponseWindow(Spec)
+		? MakeValue()
+		: SGSBasicCardRuleHelpers::ResolveSlashHit(Context);
+}
+}
+
+FSGSStatus SGSBasicCardRuleHelpers::ContinueSlashAfterDamageTriggers(FSGSRuleExecutionContext& Context)
+{
+	FSGSResolutionFrame* SlashFrame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
+	FSGSSlashResolutionState* SlashState = SlashFrame != nullptr
+		? SlashFrame->GetMutableState<FSGSSlashResolutionState>()
+		: nullptr;
+	if (SlashState == nullptr)
+	{
+		return MakeRuleError(
+			FName(TEXT("SGS.Rule.MissingSlashResolution")),
+			TEXT("Slash damage continuation requires the current Slash resolution state."));
+	}
+
+	USGSSeat* Source = Context.GameContext->GetSeat(SlashState->SourceSeat);
+	USGSSeat* Target = Context.GameContext->GetSeat(SlashState->TargetSeat);
+	const USGSCard* Weapon = Source != nullptr
+		? Source->Equipment.FindRef(SGSGameplayTags::EquipSlot_Weapon.GetTag()).Get()
+		: nullptr;
+	if (!SlashState->bKylinBowOffered && Weapon != nullptr && Weapon->CardName == TEXT("KylinBow") && Target != nullptr)
+	{
+		TArray<USGSCard*> Horses;
+		for (const FGameplayTag Slot : {
+			SGSGameplayTags::EquipSlot_DefenseHorse.GetTag(),
+			SGSGameplayTags::EquipSlot_OffenseHorse.GetTag() })
+		{
+			if (USGSCard* Horse = Target->Equipment.FindRef(Slot).Get())
+			{
+				Horses.Add(Horse);
+			}
+		}
+		if (!Horses.IsEmpty())
+		{
+			SlashState->bKylinBowOffered = true;
+			FSGSRuleResponseWindowSpec Spec;
+			Spec.SeatIndex = SlashState->SourceSeat;
+			Spec.WindowName = KylinBowWindowName();
+			Spec.ContextName = FName(TEXT("KylinBow"));
+			Spec.EffectSourceSeat = SlashState->SourceSeat;
+			Spec.EffectTargetSeat = SlashState->TargetSeat;
+			Spec.bAllowPass = true;
+			Spec.bIsCardChoice = true;
+			Spec.ChoiceName = KylinBowChoiceName();
+			Spec.MinChoiceCount = 1;
+			Spec.MaxChoiceCount = 1;
+			for (const USGSCard* Horse : Horses)
+			{
+				Spec.CardChoiceOptions.Add({ Horse->CardId, Horse->CardName, Horse->Suit, Horse->Number, true });
+			}
+			if (Context.Runtime->OpenResponseWindow(Spec))
+			{
+				return MakeValue();
+			}
+		}
+	}
+
+	return AdvanceSlashTarget(Context, FName(TEXT("SGS.Resolution.SlashHitResolved")));
+}
+
+FSGSStatus SGSBasicCardRuleHelpers::ResolveSuccessfulSlashDodge(FSGSRuleExecutionContext& Context)
+{
+	FSGSResolutionFrame* SlashFrame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
+	FSGSSlashResolutionState* SlashState = SlashFrame != nullptr
+		? SlashFrame->GetMutableState<FSGSSlashResolutionState>()
+		: nullptr;
+	if (SlashState == nullptr)
+	{
+		return MakeRuleError(
+			FName(TEXT("SGS.Rule.MissingSlashResolution")),
+			TEXT("Successful Dodge requires the current Slash resolution state."));
+	}
+
+	++SlashState->DodgeCount;
+	if (SlashState->DodgeCount < SlashState->RequiredDodgeCount)
+	{
+		FSGSRuleResponseWindowSpec WindowSpec;
+		WindowSpec.SeatIndex = SlashState->TargetSeat;
+		WindowSpec.WindowName = SlashDodgeWindowName();
+		WindowSpec.RequiredCardName = FName(TEXT("Dodge"));
+		WindowSpec.AcceptedCardNames.Add(FName(TEXT("Dodge")));
+		WindowSpec.ContextName = FName(TEXT("Slash"));
+		WindowSpec.EffectSourceSeat = SlashState->SourceSeat;
+		WindowSpec.EffectTargetSeat = SlashState->TargetSeat;
+		if (Context.Runtime->OpenResponseWindow(WindowSpec))
+		{
+			return MakeValue();
+		}
+		return ResolveSlashHit(Context);
+	}
+
+	const USGSSeat* Source = Context.GameContext->GetSeat(SlashState->SourceSeat);
+	const USGSCard* Weapon = Source != nullptr
+		? Source->Equipment.FindRef(SGSGameplayTags::EquipSlot_Weapon.GetTag()).Get()
+		: nullptr;
+	if (!SlashState->bAxeOffered && Weapon != nullptr && Weapon->CardName == TEXT("Axe"))
+	{
+		TArray<USGSCard*> CostCards = Context.GameContext->GetCardsInZone(
+			SGSGameplayTags::CardZone_Hand.GetTag(), SlashState->SourceSeat);
+		CostCards.Append(Context.GameContext->GetCardsInZone(
+			SGSGameplayTags::CardZone_Equipment.GetTag(), SlashState->SourceSeat));
+		if (CostCards.Num() >= 2)
+		{
+			SlashState->bAxeOffered = true;
+			FSGSRuleResponseWindowSpec Spec;
+			Spec.SeatIndex = SlashState->SourceSeat;
+			Spec.WindowName = AxeWindowName();
+			Spec.ContextName = FName(TEXT("Axe"));
+			Spec.EffectSourceSeat = SlashState->SourceSeat;
+			Spec.EffectTargetSeat = SlashState->TargetSeat;
+			Spec.bAllowPass = true;
+			Spec.bIsCardChoice = true;
+			Spec.ChoiceName = AxeChoiceName();
+			Spec.MinChoiceCount = 2;
+			Spec.MaxChoiceCount = 2;
+			for (const USGSCard* Card : CostCards)
+			{
+				if (Card != nullptr)
+				{
+					Spec.CardChoiceOptions.Add({ Card->CardId, Card->CardName, Card->Suit, Card->Number, true });
+				}
+			}
+			if (Context.Runtime->OpenResponseWindow(Spec))
+			{
+				return MakeValue();
+			}
+		}
+	}
+	if (!SlashState->bBladeOffered && Weapon != nullptr && Weapon->CardName == TEXT("Blade"))
+	{
+		bool bCanContinue = Context.GameContext->GetCardsInZone(
+			SGSGameplayTags::CardZone_Hand.GetTag(), SlashState->SourceSeat).ContainsByPredicate(
+			[](const USGSCard* Card) { return Card != nullptr && Card->CardName == TEXT("Slash"); });
+		FSGSRuleResponseWindowSpec Spec;
+		Spec.SeatIndex = SlashState->SourceSeat;
+		Spec.WindowName = BladeWindowName();
+		Spec.RequiredCardName = FName(TEXT("Slash"));
+		Spec.AcceptedCardNames.Add(FName(TEXT("Slash")));
+		Spec.ContextName = FName(TEXT("Blade"));
+		Spec.EffectSourceSeat = SlashState->SourceSeat;
+		Spec.EffectTargetSeat = SlashState->TargetSeat;
+		Spec.bAllowPass = true;
+		if (!bCanContinue && Context.RuleRegistry != nullptr)
+		{
+			FSGSRuleQueryContext QueryContext;
+			QueryContext.GameContext = Context.GameContext;
+			QueryContext.ActiveEffects = Context.ActiveEffects;
+			QueryContext.RuleRegistry = Context.RuleRegistry;
+			QueryContext.Phase = Context.TimingPoint.Phase;
+			QueryContext.ActorSeat = SlashState->SourceSeat;
+			QueryContext.WindowName = BladeWindowName();
+			QueryContext.RequiredCardName = FName(TEXT("Slash"));
+			const TArray<FName> Accepted = { FName(TEXT("Slash")) };
+			QueryContext.AcceptedCardNames = Accepted;
+			FSGSSkillOptionQuery Query;
+			Query.QueryName = SGSRuleQueries::ResponseSkillOptions();
+			Query.ActorSeat = SlashState->SourceSeat;
+			Query.WindowName = BladeWindowName();
+			Query.RequiredCardName = FName(TEXT("Slash"));
+			Query.AcceptedCardNames = Accepted;
+			Spec.SkillOptions = Context.RuleRegistry->CollectSkillOptions(QueryContext, MoveTemp(Query));
+			bCanContinue = !Spec.SkillOptions.IsEmpty();
+		}
+		if (bCanContinue)
+		{
+			SlashState->bBladeOffered = true;
+			if (Context.Runtime->OpenResponseWindow(Spec))
+			{
+				return MakeValue();
+			}
+		}
+	}
+	return FinishDodgedSlash(Context);
+}
+
+FSGSStatus SGSBasicCardRuleHelpers::FinishDodgedSlash(FSGSRuleExecutionContext& Context)
+{
+	return AdvanceSlashTarget(Context, FName(TEXT("SGS.Resolution.SlashDodged")));
+}
+
+FSGSStatus SGSBasicCardRuleHelpers::RestartSlashAfterBlade(
+	FSGSRuleExecutionContext& Context,
+	TConstArrayView<int32> MaterialCardIds,
+	int32 SlashCardId,
+	bool bVirtualSlash)
+{
+	FSGSResolutionFrame* Frame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
+	FSGSSlashResolutionState* Previous = Frame != nullptr ? Frame->GetMutableState<FSGSSlashResolutionState>() : nullptr;
+	if (Previous == nullptr)
+	{
+		return MakeRuleError(FName(TEXT("SGS.Rule.MissingSlashResolution")), TEXT("Blade requires an active Slash."));
+	}
+	const int32 SourceSeat = Previous->SourceSeat;
+	const int32 TargetSeat = Previous->TargetSeat;
+	if (FSGSStatus Status = DiscardSlashMaterials(Context); Status.HasError())
+	{
+		return Status;
+	}
+	TArray<USGSCard*> Materials;
+	for (const int32 CardId : MaterialCardIds)
+	{
+		Materials.Add(Context.GameContext->FindCardById(CardId));
+	}
 	if (FSGSStatus Status = Context.Runtime->RunEffectStep(
-		SGSStandardEffectSteps::MakeDamageStep(SourceSeat, TargetSeat, SlashState->DamageAmount),
-		GetCommandId(Context));
+		SGSStandardEffectSteps::MakeMoveCardsStep(
+			Materials, SGSGameplayTags::CardZone_Hand.GetTag(), SourceSeat,
+			SGSGameplayTags::CardZone_Processing.GetTag(), INDEX_NONE,
+			{ SGSCardMoveReasons::Use(), { TargetSeat } }),
+		Context.RuleInvocation.SourceCommandId);
 		Status.HasError())
 	{
 		return Status;
 	}
 
-	FSGSRuleEventPayload DamageAfter;
-	DamageAfter.EventTag = SGSGameplayTags::GameEvent_DamageAfter.GetTag();
-	DamageAfter.EventName = FName(TEXT("DamageAfter"));
-	DamageAfter.SourceSeat = SourceSeat;
-	DamageAfter.TargetSeat = TargetSeat;
-	DamageAfter.SourceCommandId = GetCommandId(Context);
-	DamageAfter.TimingPoint = Context.TimingPoint;
-	DamageAfter.TimingPoint.Step = SGSTimingSteps::After();
-	DamageAfter.TimingPoint.SubOrder += 1;
-	FSGSDamageEventData DamageData;
-	DamageData.CardId = SlashState->SlashCardId;
-	DamageData.Amount = SlashState->DamageAmount;
-	DamageAfter.EventData = FInstancedStruct::Make(DamageData);
-	if (FSGSStatus Status = Context.Runtime->PublishTimingEvent(DamageAfter); Status.HasError())
-	{
-		return Status;
-	}
+	FSGSSlashResolutionState Next;
+	Next.SlashCardId = SlashCardId;
+	Next.bVirtualSlash = bVirtualSlash;
+	Next.MaterialCardIds.Append(MaterialCardIds.GetData(), MaterialCardIds.Num());
+	Next.SourceSeat = SourceSeat;
+	Next.TargetSeat = TargetSeat;
+	Next.TargetSeatIndices.Add(TargetSeat);
+	Next.DamageAmount = 1;
+	FSGSNumericRuleQuery CountQuery;
+	CountQuery.QueryName = SGSRuleQueries::RequiredResponseCount();
+	CountQuery.ActorSeat = SourceSeat;
+	CountQuery.TargetSeat = TargetSeat;
+	CountQuery.CardName = FName(TEXT("Dodge"));
+	CountQuery.BaseValue = 1;
+	FSGSRuleQueryContext QueryContext;
+	QueryContext.GameContext = Context.GameContext;
+	QueryContext.ActiveEffects = Context.ActiveEffects;
+	QueryContext.RuleRegistry = Context.RuleRegistry;
+	QueryContext.Phase = Context.TimingPoint.Phase;
+	QueryContext.ActorSeat = SourceSeat;
+	Next.RequiredDodgeCount = Context.RuleRegistry != nullptr
+		? Context.RuleRegistry->ApplyNumericModifiers(QueryContext, CountQuery)
+		: 1;
+	Frame->ProcessingCardId = SlashCardId;
+	Frame->FrameState = FInstancedStruct::Make(Next);
 
-	if (FSGSStatus Status = DiscardProcessingCard(Context); Status.HasError())
-	{
-		return Status;
-	}
-
-	const USGSSeat* DamagedSeat = Context.GameContext->GetSeat(TargetSeat);
-	if (DamagedSeat != nullptr && DamagedSeat->bIsAlive && DamagedSeat->Health <= 0)
-	{
-		return StartDyingPeachResolution(Context, TargetSeat);
-	}
-
-	return CompleteCurrentFrame(Context, FName(TEXT("SGS.Resolution.SlashHitResolved")));
+	FSGSRuleResponseWindowSpec Spec;
+	Spec.SeatIndex = TargetSeat;
+	Spec.WindowName = SlashDodgeWindowName();
+	Spec.RequiredCardName = FName(TEXT("Dodge"));
+	Spec.AcceptedCardNames.Add(FName(TEXT("Dodge")));
+	Spec.ContextName = FName(TEXT("Slash"));
+	Spec.EffectSourceSeat = SourceSeat;
+	Spec.EffectTargetSeat = TargetSeat;
+	return Context.Runtime->OpenResponseWindow(Spec) ? MakeValue() : ResolveSlashHit(Context);
 }
 
 FSGSStatus SGSBasicCardRuleHelpers::ValidateSlashUse(
@@ -458,31 +791,53 @@ FSGSStatus SGSBasicCardRuleHelpers::ValidateSlashUse(
 	USGSCard* MaterialCard,
 	TConstArrayView<int32> TargetSeatIndices)
 {
-	if (MaterialCard == nullptr || TargetSeatIndices.Num() != 1)
+	if (MaterialCard == nullptr)
 	{
-		return MakeRuleError(FName(TEXT("SGS.Rule.InvalidSlash")), TEXT("Slash requires one material card and one target."));
+		return MakeRuleError(FName(TEXT("SGS.Rule.InvalidSlash")), TEXT("Physical Slash requires one material card."));
 	}
+	return ValidateVirtualSlashUse(Context, GetCommandSeat(Context), TargetSeatIndices);
+}
 
-	const int32 SourceSeat = GetCommandSeat(Context);
-	const int32 TargetSeat = TargetSeatIndices[0];
-	const USGSSeat* Target = Context.GameContext->GetSeat(TargetSeat);
-	if (Target == nullptr || !Target->bIsAlive || TargetSeat == SourceSeat)
-	{
-		return MakeRuleError(FName(TEXT("SGS.Rule.InvalidTarget")), TEXT("Slash requires one living non-self target."));
-	}
-
-	FSGSNumericRuleQuery LimitQuery;
-	LimitQuery.QueryName = SGSRuleQueries::SlashUseLimit();
-	LimitQuery.ActorSeat = SourceSeat;
-	LimitQuery.TargetSeat = TargetSeat;
-	LimitQuery.CardName = FName(TEXT("Slash"));
-	LimitQuery.BaseValue = 1;
+FSGSStatus SGSBasicCardRuleHelpers::ValidateVirtualSlashUse(
+	FSGSRuleExecutionContext& Context,
+	int32 SourceSeat,
+	TConstArrayView<int32> TargetSeatIndices)
+{
+	FSGSNumericRuleQuery TargetCountQuery;
+	TargetCountQuery.QueryName = SGSRuleQueries::SlashTargetCount();
+	TargetCountQuery.ActorSeat = SourceSeat;
+	TargetCountQuery.CardName = FName(TEXT("Slash"));
+	TargetCountQuery.BaseValue = 1;
 	FSGSRuleQueryContext QueryContext;
 	QueryContext.GameContext = Context.GameContext;
 	QueryContext.ActiveEffects = Context.ActiveEffects;
 	QueryContext.RuleRegistry = Context.RuleRegistry;
 	QueryContext.Phase = Context.TimingPoint.Phase;
 	QueryContext.ActorSeat = SourceSeat;
+	const int32 MaxTargetCount = Context.RuleRegistry != nullptr
+		? Context.RuleRegistry->ApplyNumericModifiers(QueryContext, TargetCountQuery)
+		: 1;
+	if (TargetSeatIndices.IsEmpty() || TargetSeatIndices.Num() > MaxTargetCount)
+	{
+		return MakeRuleError(FName(TEXT("SGS.Rule.InvalidSlash")), TEXT("Slash target count is outside the current limit."));
+	}
+	TSet<int32> UniqueTargets;
+	for (const int32 TargetSeat : TargetSeatIndices)
+	{
+		const USGSSeat* Target = Context.GameContext->GetSeat(TargetSeat);
+		if (Target == nullptr || !Target->bIsAlive || TargetSeat == SourceSeat || UniqueTargets.Contains(TargetSeat))
+		{
+			return MakeRuleError(FName(TEXT("SGS.Rule.InvalidTarget")), TEXT("Slash targets must be distinct living non-self seats."));
+		}
+		UniqueTargets.Add(TargetSeat);
+	}
+
+	FSGSNumericRuleQuery LimitQuery;
+	LimitQuery.QueryName = SGSRuleQueries::SlashUseLimit();
+	LimitQuery.ActorSeat = SourceSeat;
+	LimitQuery.TargetSeat = TargetSeatIndices[0];
+	LimitQuery.CardName = FName(TEXT("Slash"));
+	LimitQuery.BaseValue = 1;
 	const int32 SlashLimit = Context.RuleRegistry != nullptr
 		? Context.RuleRegistry->ApplyNumericModifiers(QueryContext, LimitQuery)
 		: LimitQuery.BaseValue;
@@ -494,15 +849,18 @@ FSGSStatus SGSBasicCardRuleHelpers::ValidateSlashUse(
 	FSGSNumericRuleQuery DistanceQuery;
 	DistanceQuery.QueryName = SGSRuleQueries::SlashTargetDistance();
 	DistanceQuery.ActorSeat = SourceSeat;
-	DistanceQuery.TargetSeat = TargetSeat;
+	DistanceQuery.TargetSeat = TargetSeatIndices[0];
 	DistanceQuery.CardName = FName(TEXT("Slash"));
 	DistanceQuery.BaseValue = 1;
 	const int32 SlashDistance = Context.RuleRegistry != nullptr
 		? Context.RuleRegistry->ApplyNumericModifiers(QueryContext, DistanceQuery)
 		: DistanceQuery.BaseValue;
-	if (Context.GameContext->GetDistance(SourceSeat, TargetSeat) > SlashDistance)
+	for (const int32 TargetSeat : TargetSeatIndices)
 	{
-		return MakeRuleError(FName(TEXT("SGS.Rule.TargetOutOfDistance")), TEXT("Slash target is out of distance."));
+		if (Context.GameContext->GetDistance(SourceSeat, TargetSeat) > SlashDistance)
+		{
+			return MakeRuleError(FName(TEXT("SGS.Rule.TargetOutOfDistance")), TEXT("Slash target is out of distance."));
+		}
 	}
 
 	return MakeValue();
@@ -515,24 +873,119 @@ FSGSStatus SGSBasicCardRuleHelpers::ExecuteSlashUse(
 	FName SourceRuleName)
 {
 	const int32 SourceSeat = GetCommandSeat(Context);
-	const int32 TargetSeat = TargetSeatIndices[0];
 	if (FSGSStatus Status = Context.Runtime->RunEffectStep(SGSStandardEffectSteps::MakeMoveCardsStep(
 		TArray<USGSCard*>{ MaterialCard },
 		SGSGameplayTags::CardZone_Hand.GetTag(),
 		SourceSeat,
 		SGSGameplayTags::CardZone_Processing.GetTag(),
 		INDEX_NONE,
-		{ SGSCardMoveReasons::Use(), { TargetSeat } }),
+		{ SGSCardMoveReasons::Use(), TArray<int32>(TargetSeatIndices) }),
 		GetCommandId(Context));
 		Status.HasError())
 	{
 		return Status;
 	}
+	return StartSlashResolution(
+		Context,
+		SourceSeat,
+		TargetSeatIndices,
+		MaterialCard->CardId,
+		false,
+		SourceRuleName,
+		{ MaterialCard->CardId });
+}
 
+FSGSStatus SGSBasicCardRuleHelpers::ExecuteVirtualSlashUse(
+	FSGSRuleExecutionContext& Context,
+	TConstArrayView<int32> MaterialCardIds,
+	TConstArrayView<int32> TargetSeatIndices,
+	FName SourceRuleName)
+{
+	const int32 SourceSeat = GetCommandSeat(Context);
+	TArray<USGSCard*> Materials;
+	Materials.Reserve(MaterialCardIds.Num());
+	for (const int32 CardId : MaterialCardIds)
+	{
+		USGSCard* Card = Context.GameContext->FindCardById(CardId);
+		if (Card == nullptr)
+		{
+			return MakeRuleError(FName(TEXT("SGS.Rule.InvalidSlashMaterial")), TEXT("Virtual Slash material is missing."));
+		}
+		Materials.Add(Card);
+	}
+	if (!Materials.IsEmpty())
+	{
+		if (FSGSStatus Status = Context.Runtime->RunEffectStep(
+			SGSStandardEffectSteps::MakeMoveCardsStep(
+				Materials,
+				SGSGameplayTags::CardZone_Hand.GetTag(),
+				SourceSeat,
+				SGSGameplayTags::CardZone_Processing.GetTag(),
+				INDEX_NONE,
+				{ SGSCardMoveReasons::Use(), TArray<int32>(TargetSeatIndices) }),
+			GetCommandId(Context));
+			Status.HasError())
+		{
+			return Status;
+		}
+	}
+	return StartSlashResolution(
+		Context,
+		SourceSeat,
+		TargetSeatIndices,
+		INDEX_NONE,
+		true,
+		SourceRuleName,
+		MaterialCardIds);
+}
+
+FSGSStatus SGSBasicCardRuleHelpers::StartSlashResolution(
+	FSGSRuleExecutionContext& Context,
+	int32 SourceSeat,
+	int32 TargetSeat,
+	int32 SlashCardId,
+	bool bVirtualSlash,
+	FName SourceRuleName,
+	TConstArrayView<int32> MaterialCardIds)
+{
+	const TArray<int32> Targets = { TargetSeat };
+	return StartSlashResolution(
+		Context,
+		SourceSeat,
+		Targets,
+		SlashCardId,
+		bVirtualSlash,
+		SourceRuleName,
+		MaterialCardIds);
+}
+
+FSGSStatus SGSBasicCardRuleHelpers::StartSlashResolution(
+	FSGSRuleExecutionContext& Context,
+	int32 SourceSeat,
+	TConstArrayView<int32> TargetSeatIndices,
+	int32 SlashCardId,
+	bool bVirtualSlash,
+	FName SourceRuleName,
+	TConstArrayView<int32> MaterialCardIds)
+{
+	check(!TargetSeatIndices.IsEmpty());
+	const int32 TargetSeat = TargetSeatIndices[0];
 	FSGSSlashResolutionState SlashState;
-	SlashState.SlashCardId = MaterialCard->CardId;
+	SlashState.SlashCardId = SlashCardId;
+	SlashState.bVirtualSlash = bVirtualSlash;
+	SlashState.MaterialCardIds.Append(MaterialCardIds.GetData(), MaterialCardIds.Num());
+	if (!bVirtualSlash && SlashCardId != INDEX_NONE && SlashState.MaterialCardIds.IsEmpty())
+	{
+		SlashState.MaterialCardIds.Add(SlashCardId);
+	}
 	SlashState.SourceSeat = SourceSeat;
 	SlashState.TargetSeat = TargetSeat;
+	SlashState.TargetSeatIndices.Append(TargetSeatIndices.GetData(), TargetSeatIndices.Num());
+	const USGSSeat* Source = Context.GameContext->GetSeat(SourceSeat);
+	const USGSCard* Weapon = Source != nullptr
+		? Source->Equipment.FindRef(SGSGameplayTags::EquipSlot_Weapon.GetTag()).Get()
+		: nullptr;
+	SlashState.bIgnoreArmor = Weapon != nullptr && Weapon->CardName == TEXT("QinggangSword");
 	SlashState.DamageAmount = ConsumeStatus(Context, SourceSeat, SGSGameplayTags::Status_AnalepticBoost.GetTag()) ? 2 : 1;
 	FSGSNumericRuleQuery ResponseCountQuery;
 	ResponseCountQuery.QueryName = SGSRuleQueries::RequiredResponseCount();
@@ -562,23 +1015,9 @@ FSGSStatus SGSBasicCardRuleHelpers::ExecuteSlashUse(
 	Frame.ActorSeat = SourceSeat;
 	Frame.SourceSeat = SourceSeat;
 	Frame.TargetSeat = TargetSeat;
-	Frame.ProcessingCardId = MaterialCard->CardId;
+	Frame.ProcessingCardId = SlashCardId;
 	Frame.OnChildCompletedContinuation = SGSResolutionContinuations::FinishParentCardResolution();
 	Frame.FrameState = FInstancedStruct::Make(SlashState);
 	Context.Runtime->PushResolutionFrame(MoveTemp(Frame));
-
-	FSGSRuleResponseWindowSpec WindowSpec;
-	WindowSpec.SeatIndex = TargetSeat;
-	WindowSpec.WindowName = SlashDodgeWindowName();
-	WindowSpec.RequiredCardName = FName(TEXT("Dodge"));
-	WindowSpec.AcceptedCardNames.Add(FName(TEXT("Dodge")));
-	WindowSpec.ContextName = FName(TEXT("Slash"));
-	WindowSpec.EffectSourceSeat = SourceSeat;
-	WindowSpec.EffectTargetSeat = TargetSeat;
-	if (Context.Runtime->OpenResponseWindow(WindowSpec))
-	{
-		return MakeValue();
-	}
-
-	return ResolveSlashHit(Context);
+	return ContinueCurrentSlashTarget(Context);
 }

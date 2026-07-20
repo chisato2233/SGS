@@ -13,10 +13,25 @@ struct SGS_API FSGSSlashResolutionState
 	int32 SlashCardId = INDEX_NONE;
 
 	UPROPERTY()
+	bool bVirtualSlash = false;
+
+	UPROPERTY()
+	bool bIgnoreArmor = false;
+
+	UPROPERTY()
+	TArray<int32> MaterialCardIds;
+
+	UPROPERTY()
 	int32 SourceSeat = INDEX_NONE;
 
 	UPROPERTY()
 	int32 TargetSeat = INDEX_NONE;
+
+	UPROPERTY()
+	TArray<int32> TargetSeatIndices;
+
+	UPROPERTY()
+	int32 TargetIndex = 0;
 
 	UPROPERTY()
 	int32 DamageAmount = 1;
@@ -26,6 +41,15 @@ struct SGS_API FSGSSlashResolutionState
 
 	UPROPERTY()
 	int32 DodgeCount = 0;
+
+	UPROPERTY()
+	bool bAxeOffered = false;
+
+	UPROPERTY()
+	bool bBladeOffered = false;
+
+	UPROPERTY()
+	bool bKylinBowOffered = false;
 
 	FString ToLogString() const;
 	bool CheckInvariants() const;

@@ -1,6 +1,6 @@
 #pragma once
 
-// Event RuleInvocation payloads are the typed bridge for future TriggerRule dispatch.
+// Event RuleInvocation payloads are the typed bridge for controlled TriggerRule dispatch.
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
@@ -19,6 +19,21 @@ struct SGS_API FSGSDamageEventData
 
 	UPROPERTY()
 	int32 Amount = 0;
+};
+
+USTRUCT()
+struct SGS_API FSGSJudgementEventData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	int32 JudgedSeat = INDEX_NONE;
+
+	UPROPERTY()
+	FName ReasonName = NAME_None;
+
+	UPROPERTY()
+	int32 ResultCardId = INDEX_NONE;
 };
 
 USTRUCT()

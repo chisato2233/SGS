@@ -28,6 +28,9 @@ struct SGS_API FSGSCardViewData
 
 	UPROPERTY()
 	bool bSelectable = false;
+
+	UPROPERTY()
+	bool bFaceDown = false;
 };
 
 // 已经过观看者权限裁剪的表现提示。VisibleCards 为空而 CardCount > 0 时必须绘制牌背，
@@ -95,6 +98,12 @@ struct SGS_API FSGSSeatViewData
 	int32 HandCount = 0;
 
 	UPROPERTY()
+	TArray<FSGSCardViewData> EquipmentCards;
+
+	UPROPERTY()
+	TArray<FSGSCardViewData> JudgementCards;
+
+	UPROPERTY()
 	bool bIsAlive = false;
 
 	UPROPERTY()
@@ -117,6 +126,12 @@ struct SGS_API FSGSCardTargetViewData
 
 	UPROPERTY()
 	TArray<int32> TargetSeatIndices;
+
+	UPROPERTY()
+	int32 MinTargetCount = 0;
+
+	UPROPERTY()
+	int32 MaxTargetCount = 0;
 };
 
 USTRUCT(BlueprintType)
@@ -191,6 +206,24 @@ struct SGS_API FSGSDecisionPromptViewData
 	bool bAllowPass = true;
 
 	UPROPERTY()
+	bool bIsCardChoice = false;
+
+	UPROPERTY()
+	bool bIsOptionChoice = false;
+
+	UPROPERTY()
+	FName ChoiceName = NAME_None;
+
+	UPROPERTY()
+	int32 MinChoiceCount = 0;
+
+	UPROPERTY()
+	int32 MaxChoiceCount = 0;
+
+	UPROPERTY()
+	TArray<FSGSCardViewData> ChoiceCards;
+
+	UPROPERTY()
 	TArray<int32> SelectableCardIds;
 
 	UPROPERTY()
@@ -211,7 +244,11 @@ struct SGS_API FSGSDecisionPromptViewData
 			});
 	}
 
-	void SetTargetSeatIndicesForCard(int32 CardId, const TArray<int32>& TargetSeatIndices)
+	void SetTargetSeatIndicesForCard(
+		int32 CardId,
+		const TArray<int32>& TargetSeatIndices,
+		int32 MinTargetCount = 0,
+		int32 MaxTargetCount = 0)
 	{
 		FSGSCardTargetViewData* Existing = TargetSeatOptions.FindByPredicate(
 			[CardId](const FSGSCardTargetViewData& Candidate)
@@ -221,12 +258,16 @@ struct SGS_API FSGSDecisionPromptViewData
 		if (Existing != nullptr)
 		{
 			Existing->TargetSeatIndices = TargetSeatIndices;
+			Existing->MinTargetCount = MinTargetCount;
+			Existing->MaxTargetCount = MaxTargetCount;
 			return;
 		}
 
 		FSGSCardTargetViewData Option;
 		Option.CardId = CardId;
 		Option.TargetSeatIndices = TargetSeatIndices;
+		Option.MinTargetCount = MinTargetCount;
+		Option.MaxTargetCount = MaxTargetCount;
 		TargetSeatOptions.Add(MoveTemp(Option));
 	}
 

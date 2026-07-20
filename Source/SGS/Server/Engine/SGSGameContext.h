@@ -76,6 +76,7 @@ public:
 
 	int32 NumSeats() const { return Seats.Num(); }
 	USGSSeat* GetSeat(int32 Index) const;
+	bool AssignGeneral(int32 SeatIndex, FName GeneralId);
 	USGSCard* FindCardById(int32 CardId) const;
 	const FSGSCardState* FindCardStateById(int32 CardId) const;
 	TArray<USGSCard*> GetCardsInZone(FSGSCardZone Zone, int32 SeatIndex = INDEX_NONE) const;
@@ -101,7 +102,7 @@ public:
 	// 回复体力（不超过上限）。
 	void Heal(int32 SeatIndex, int32 Amount);
 
-	// 濒死求桃失败后的最小出局处理；完整胜负判定进入后续计划。
+	// 濒死求桃失败后的出局原语；身份奖惩与胜负裁决由 GameDriver 处理。
 	void EliminateSeat(int32 SeatIndex, int32 SourceSeat, FName Reason);
 
 	// 攻击者 FromSeat 到 ToSeat 的距离：存活座位环形最短 + 坐骑修正，最小为 1。

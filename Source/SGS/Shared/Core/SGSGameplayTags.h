@@ -52,6 +52,7 @@ namespace SGSGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_AnalepticUsed);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_AnalepticBoost);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_ZhihengUsed);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_JijiangFailed);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_SkipDrawPhase);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_SkipPlayPhase);
 
@@ -83,10 +84,13 @@ namespace SGSGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameEvent_PhaseEnd);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameEvent_PhaseAfter);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameEvent_DamageAfter);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameEvent_JudgementRevealed);
 
 	// Command / decision actions.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(PlayAction_Pass);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(PlayAction_UseCard);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(PlayAction_RespondCard);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(PlayAction_ActivateSkill);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(PlayAction_ChooseCards);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(PlayAction_ChooseOption);
 }

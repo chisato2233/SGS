@@ -25,6 +25,18 @@ struct FSGSRuleEventPayload;
 
 DECLARE_MULTICAST_DELEGATE(FSGSOnViewStateInvalidated);
 
+enum class ESGSPhaseProgress : uint8
+{
+	Before,
+	Begin,
+	BroadcastBegin,
+	Content,
+	End,
+	BroadcastEnd,
+	After,
+	Commit
+};
+
 struct SGS_API FSGSGameStartConfig
 {
 	int32 RandomSeed = 0;
@@ -37,6 +49,7 @@ struct SGS_API FSGSGameStartConfig
 	TArray<FName> GeneralIdsBySeat;
 	TArray<FGameplayTag> FactionsBySeat;
 	bool bIdentityMode = false;
+	bool bChooseGenerals = false;
 };
 
 // 服务器权威的对局驱动器：推进回合/阶段、在出牌阶段向决策代理请求动作。
@@ -81,8 +94,12 @@ private:
 
 	// 结束当前阶段并推进到下一阶段 / 下一回合 / 结束对局。
 	void AdvanceAfterPhase();
+	void CommitPhaseAdvance();
 
 	void BeginTurn();
+	void BeginGeneralSelection();
+	FSGSStatus ContinueGeneralSelection();
+	void CompleteInitialSetup();
 	void EndGame();
 	void HandleSeatEliminated(int32 SeatIndex, int32 SourceSeat, FName Reason);
 	void EvaluateIdentityVictory();
@@ -113,16 +130,25 @@ private:
 		int32 EffectSourceSeat,
 		int32 EffectTargetSeat,
 		TConstArrayView<FSGSDecisionSkillOption> SkillOptions = {},
-		TConstArrayView<FName> AcceptedCardNames = {});
+		TConstArrayView<FName> AcceptedCardNames = {},
+		bool bAllowPass = true);
 	void DeferResponseRequest(const FSGSResponseRequest& Request, const TScriptInterface<ISGSDecisionAgent>& Agent);
 	void DispatchDeferredResponseRequest();
 	FSGSStatus FinishCurrentResolution(FName Reason = FName(TEXT("SGS.Resolution.Complete")));
 	FSGSStatus ResumeResolutionParentAfterChild(const FSGSResolutionFrame& CompletedFrame);
+	FSGSStatus ResumeDamageAfterTriggers();
+	FSGSStatus ResumeJudgementAfterTriggers();
+	FSGSStatus ResumeGanglieAfterJudgement(int32 ResultCardId);
+	FSGSStatus ResumeBaguaAfterJudgement(int32 ResultCardId);
+	FSGSStatus ResumeDelayedTrickAfterJudgement(int32 ResultCardId);
+	FSGSStatus ResumeLordAssistParent(const struct FSGSLordAssistResolutionState& State);
+	FSGSStatus ResumeSlashAfterDamageTriggers();
 	FSGSStatus ResumeStandardTrickResolution();
 	bool OpenNextDyingPeachResponseWindow(FSGSResolutionFrame& DyingFrame);
 	FSGSStatus ContinueDyingPeachFrame(FSGSResolutionFrame& DyingFrame);
 	void ClearDeferredResponseRequest();
 	FSGSStatus PublishTimingEvent(const FSGSRuleEventPayload& Payload);
+	FSGSStatus ContinueTimingEventDispatch(bool bResumeParentOnComplete);
 	void ExecuteDrawPhaseThroughPipeline();
 	void ExecuteJudgementPhaseThroughRules();
 	bool ResolveJudgementCard(USGSCard* DelayedTrickCard);
@@ -151,11 +177,14 @@ private:
 	int32 CurrentMaxTurns = 8;
 	int32 CurrentStartingHandSize = 4;
 	bool bIdentityMode = false;
+	TArray<FSGSDeckCardSpec> PendingInitialDeck;
+	bool bPendingShuffleInitialDeck = true;
+	TMap<int32, int32> PendingInitialHealthBySeat;
 	FSGSGameResult GameResult;
 
 	bool bGameOver = false;
 	bool bWaitingForDecision = false;
-	bool bCurrentPhaseEntered = false;
+	ESGSPhaseProgress PhaseProgress = ESGSPhaseProgress::Before;
 	bool bResumeCurrentPhaseAfterResolution = false;
 
 	// 防止应答同步回调时重入 Pump（AI 立即应答的常见情形）。
