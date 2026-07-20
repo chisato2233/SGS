@@ -6,6 +6,42 @@
 
 ---
 
+## #30 — 2026-07-20 — 建立成熟规则、武将技能与 AI 长期路线并实施 M1
+
+**原话：**
+> 建立这样的长期计划，然后开始实现吧！注意：1. 不要为不存在的状态处理错误，少写测试开发代码 2. 注意代码的灵活性
+>
+> PLEASE IMPLEMENT THIS PLAN:
+> # 0017 — 成熟规则、武将技能与 AI 长期路线
+
+**要点拆解：**
+- 以可稳定游玩的标准身份局为长期目标，分阶段建设通用 AI、武将技能运行时、完整流程、标准内容和身份策略。
+- 首先实施信息安全的通用 AI 评价框架，让 AI 只消费服务器生成的合法候选与受限 WorldView。
+- 保留 SGS 的服务器权威、Command/Rule/Effect、确定性随机与回放体系，不照搬 NoName 的客户端动态脚本架构。
+- 不为当前不存在的状态增加恢复分支、测试夹具或日志；本阶段只做编译与 PIE 手工验证。
+
+**关联计划：** `0017-mature-rules-skills-ai-roadmap.md`、`0017-M1-information-safe-ai-evaluation.md`。
+
+---
+
+## #29 — 2026-07-20 — 对照 NoName 评估规则引擎与 AI 架构
+
+**原话：**
+> 探寻NoName的代码框架，主要注意有关规则引擎和AI方面的代码框架，然后判断我们目前的代码和他的相比有什么差距，开始！
+>
+> PLEASE IMPLEMENT THIS PLAN:
+> # NoName 规则引擎与 AI 架构对照评估
+
+**要点拆解：**
+- 以上游 NoName `master` 当前版本为基准，用本地 NoName 快照定位核心规则事件、选择、修正与 AI 评价源码。
+- 对照 SGS 的 Command、RuleRegistry、TimingEvent、ResolutionStack、EffectPipeline、DecisionAgent、随机审计与回放链路，区分成熟能力、已有地基和缺失能力。
+- 输出证据化差距矩阵与 P0-P3 路线图；保留 SGS 的服务器权威与强类型边界，优先建设通用 AI 评价框架。
+- 本轮只完成研究文档，不修改生产代码、不运行 UE 构建或自动化、不修改 NoName 参考仓库。
+
+**关联计划：** `0016-noname-rules-ai-gap-analysis.md`。
+
+---
+
 ## #28 — 2026-07-12 — 集中实现最小可玩八人身份 Demo
 
 **原话：**

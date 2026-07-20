@@ -5,16 +5,21 @@
 
 namespace
 {
-const TCHAR* GeneralPortraitIds[] = {
-	TEXT("caocao"),
-	TEXT("liubei"),
-	TEXT("sunquan"),
-	TEXT("guanyu"),
-	TEXT("zhangfei"),
-	TEXT("zhaoyun"),
-	TEXT("simayi"),
-	TEXT("diaochan"),
-};
+const FName FallbackGeneralId(TEXT("anjiang"));
+
+TSharedPtr<FDeferredCleanupSlateBrush> LoadGeneralPortraitBrush(FName GeneralId)
+{
+	const FString GeneralName = GeneralId.ToString();
+	const FString AssetPath = FString::Printf(
+		TEXT("/Game/ImportedAssets/QSanguosha/image/generals/card/%s.%s"),
+		*GeneralName,
+		*GeneralName);
+	if (UTexture2D* Texture = LoadObject<UTexture2D>(nullptr, *AssetPath))
+	{
+		return FDeferredCleanupSlateBrush::CreateBrush(Texture, FVector2D(200.0f, 290.0f));
+	}
+	return nullptr;
+}
 }
 
 FVector2D FSGSTableAssetCatalog::BackgroundImageSize()
@@ -36,26 +41,29 @@ const FSlateBrush* FSGSTableAssetCatalog::GetBackgroundBrush()
 	return FDeferredCleanupSlateBrush::TrySlateBrush(BackgroundBrush);
 }
 
-const FSlateBrush* FSGSTableAssetCatalog::GetSeatPortraitBrush(int32 SeatIndex)
+const FSlateBrush* FSGSTableAssetCatalog::GetGeneralPortraitBrush(FName GeneralId)
 {
-	if (SeatIndex == INDEX_NONE)
+	const FName RequestedId = GeneralId.IsNone() ? FallbackGeneralId : GeneralId;
+	if (const TSharedPtr<FDeferredCleanupSlateBrush>* Existing = GeneralPortraitBrushes.Find(RequestedId))
 	{
-		return nullptr;
+		return FDeferredCleanupSlateBrush::TrySlateBrush(*Existing);
 	}
 
-	const int32 PortraitIndex = FMath::Abs(SeatIndex) % UE_ARRAY_COUNT(GeneralPortraitIds);
-	TSharedPtr<FDeferredCleanupSlateBrush>& Brush = GeneralPortraitBrushes.FindOrAdd(PortraitIndex);
-	if (!Brush.IsValid())
+	TSharedPtr<FDeferredCleanupSlateBrush> Brush = LoadGeneralPortraitBrush(RequestedId);
+	if (!Brush.IsValid() && RequestedId != FallbackGeneralId)
 	{
-		const FString AssetPath = FString::Printf(
-			TEXT("/Game/ImportedAssets/QSanguosha/image/generals/card/%s.%s"),
-			GeneralPortraitIds[PortraitIndex],
-			GeneralPortraitIds[PortraitIndex]);
-		if (UTexture2D* Texture = LoadObject<UTexture2D>(nullptr, *AssetPath))
+		if (const TSharedPtr<FDeferredCleanupSlateBrush>* ExistingFallback =
+			GeneralPortraitBrushes.Find(FallbackGeneralId))
 		{
-			Brush = FDeferredCleanupSlateBrush::CreateBrush(Texture, FVector2D(200.0f, 290.0f));
+			Brush = *ExistingFallback;
+		}
+		else
+		{
+			Brush = LoadGeneralPortraitBrush(FallbackGeneralId);
+			GeneralPortraitBrushes.Add(FallbackGeneralId, Brush);
 		}
 	}
+	GeneralPortraitBrushes.Add(RequestedId, Brush);
 	return FDeferredCleanupSlateBrush::TrySlateBrush(Brush);
 }
 

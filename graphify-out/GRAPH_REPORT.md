@@ -1,16 +1,16 @@
-# Graph Report - SGS  (2026-07-12)
+# Graph Report - SGS  (2026-07-20)
 
 ## Corpus Check
-- 191 files · ~2,930,125 words
+- 198 files · ~2,933,489 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1826 nodes · 3364 edges · 283 communities (95 shown, 188 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 94 edges (avg confidence: 0.8)
+- 1952 nodes · 3595 edges · 281 communities (93 shown, 188 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 97 edges (avg confidence: 0.79)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1a780d3a`
+- Built from commit: `0b73199a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -285,15 +285,13 @@
 - [[_COMMUNITY_Community 274|Community 274]]
 - [[_COMMUNITY_Community 277|Community 277]]
 - [[_COMMUNITY_Community 278|Community 278]]
-- [[_COMMUNITY_Community 279|Community 279]]
-- [[_COMMUNITY_Community 282|Community 282]]
 - [[_COMMUNITY_Community 283|Community 283]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `FSGSTableHandWidgetModel` - 48 edges
 2. `6. 进度与决策记录` - 48 edges
-3. `FSGSHandCardEntry` - 30 edges
-4. `0000 — 原始需求档案` - 29 edges
+3. `0000 — 原始需求档案` - 31 edges
+4. `FSGSHandCardEntry` - 30 edges
 5. `FSGSCardDragDropOperation` - 21 edges
 6. `RunTest()` - 19 edges
 7. `2. 技术栈` - 16 edges
@@ -308,10 +306,10 @@
   Source/SGS/Server/Effects/SGSReplayLog.h → Source/Doc/Plan/Archive/0012-sgs-foundation-toolkit.md
 - `USGSGameContext()` --references--> `CardStore / CardsByPile Fact Source`  [INFERRED]
   Source/SGS/Server/Engine/SGSGameContext.h → Source/Doc/Plan/0004-card-and-board-model.md
-- `USGSGameDriver()` --references--> `Authoritative Async Decision Loop`  [INFERRED]
-  Source/SGS/Server/Engine/SGSGameDriver.h → Source/Doc/Plan/0003-authoritative-match-skeleton.md
 - `FSGSGASActiveEffectAdapter()` --references--> `GAS Timing Effect Bridge`  [INFERRED]
   Source/SGS/Server/Timing/SGSGASActiveEffectAdapter.h → Source/Doc/Plan/Archive/0012-sgs-foundation-toolkit.md
+- `SGS Startup Protocol` --references--> `Plan And Implementation Quality Gate`  [INFERRED]
+  AGENTS.md → Source/Doc/Rulers.md
 
 ## Import Cycles
 - None detected.
@@ -324,11 +322,11 @@
 - **Store Query Fact Source** — sgs_store_target_query, sgs_cardstore_fact_source, sgs_game_state_to_ui_intent_loop [EXTRACTED 1.00]
 - **GAS Timing Effect Bridge** — sgs_gas_boundary, sgs_gas_timing_effect_bridge, sgs_effect_pipeline [INFERRED 0.85]
 
-## Communities (283 total, 188 thin omitted)
+## Communities (281 total, 188 thin omitted)
 
 ### Community 0 - "Card Game Context"
-Cohesion: 0.17
-Nodes (24): FSGSTableViewSnapshot, AttachLocalHud(), AttachToMatch(), BindTableSnapshotSource(), BuildTableViewSnapshot(), ClientAttachLocalHud_Implementation(), EndPlay(), HandlePublicSnapshotChanged() (+16 more)
+Cohesion: 0.18
+Nodes (23): FSGSTableViewSnapshot, AttachLocalHud(), AttachToMatch(), BindTableSnapshotSource(), BuildTableViewSnapshot(), ClientAttachLocalHud_Implementation(), HandlePublicSnapshotChanged(), OnRep_PrivateSnapshot() (+15 more)
 
 ### Community 1 - "Command Replay Toolkit"
 Cohesion: 0.10
@@ -343,8 +341,8 @@ Cohesion: 0.06
 Nodes (35): 6. 进度与决策记录, bool, CardsByPile, Done, FGameplayTag, FSGSActiveEffectTimeline, FSGSCardState, FSGSCommand (+27 more)
 
 ### Community 7 - "Project Rules"
-Cohesion: 0.08
-Nodes (41): 0000 — 原始需求档案, #10 — 2026-06-24 — 纠偏 Plan 0012：基础工具库必须一步到位, #11 — 2026-06-24 — 纠偏 Plan 0012：所有 P0/P1 里程碑都按一步到位验收, #12 — 2026-06-28 — 创建 Plan0005 与 Plan0011-M1，强调长期项目质量门, #13 — 2026-07-01 — 构建 Command 到 Rule 到 Effect 的规则管线, #14 — 2026-07-03 — 创建 Rule 层长期重构计划, #15 — 2026-07-03 — 创建 0014 第二阶段执行计划，要求完全替代旧兼容层, #16 — 2026-07-03 — 执行 0014-M3：ResolutionStack Resume 与受控 TimingEvent 地基 (+33 more)
+Cohesion: 0.07
+Nodes (43): 0000 — 原始需求档案, #10 — 2026-06-24 — 纠偏 Plan 0012：基础工具库必须一步到位, #11 — 2026-06-24 — 纠偏 Plan 0012：所有 P0/P1 里程碑都按一步到位验收, #12 — 2026-06-28 — 创建 Plan0005 与 Plan0011-M1，强调长期项目质量门, #13 — 2026-07-01 — 构建 Command 到 Rule 到 Effect 的规则管线, #14 — 2026-07-03 — 创建 Rule 层长期重构计划, #15 — 2026-07-03 — 创建 0014 第二阶段执行计划，要求完全替代旧兼容层, #16 — 2026-07-03 — 执行 0014-M3：ResolutionStack Resume 与受控 TimingEvent 地基 (+35 more)
 
 ### Community 8 - "Card Game Context"
 Cohesion: 0.07
@@ -359,8 +357,8 @@ Cohesion: 0.15
 Nodes (12): FSGSCardPileKey(), GetTypeHash(), FSGSCommandId(), FSGSEffectStepId(), FSGSStableHandle(), GetTypeHash(), Invalid(), LexToString() (+4 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.08
-Nodes (43): BuildRuleInvocation(), CheckInvariants(), FindTypeSpec(), FormatPayloadForLog(), RecordLifecycle(), RegisterCommandType(), Reset(), SubmitCommand() (+35 more)
+Cohesion: 0.05
+Nodes (75): ToLogString(), ToLogString(), BuildRuleInvocation(), CheckInvariants(), FindTypeSpec(), FormatPayloadForLog(), RecordLifecycle(), RegisterCommandType() (+67 more)
 
 ### Community 12 - "Plan System"
 Cohesion: 0.24
@@ -376,7 +374,7 @@ Nodes (9): 1. 启动协议, 2. 文档分层, 3. 架构宪法, 4. 编码宪法, 5
 
 ### Community 16 - "Open Rule Tags"
 Cohesion: 0.08
-Nodes (16): SGSBasicCardRules(), SGSDeckDefinitions(), SGSCommandTypes(), SGSGameplayTags(), SGSRules(), namespace, Nativegameplaytags, SGSRulePayloadLog() (+8 more)
+Nodes (18): SGSAIActionKinds(), SGSAIDecisionKinds(), SGSBasicCardRuleHelpers(), SGSBasicCardRules(), SGSCommandTypes(), SGSGameplayTags(), SGSRules(), namespace (+10 more)
 
 ### Community 19 - "Project Rules"
 Cohesion: 0.17
@@ -407,16 +405,16 @@ Cohesion: 0.14
 Nodes (13): 0005 — 基础牌可玩规则纵切, 1. 目标, 2. 背景与约束, 3.1 数据入口, 3.2 Command 与动作类型, 3.3 决策请求, 3.4 规则服务与效果管线, 3.5 AI 与测试代理 (+5 more)
 
 ### Community 29 - "Command Replay Toolkit"
-Cohesion: 0.14
-Nodes (24): ReorderHand(), FSGSDecisionSkillViewData, FSGSTableUIInteractionState, FSGSTableUIStateStore(), ClearSelection(), GetSelectedSkillOption(), GetTargetsForCard(), GetTargetsForCurrentSelection() (+16 more)
+Cohesion: 0.07
+Nodes (28): 0016 — NoName 规则引擎与 AI 架构对照评估, 10. 进度与决策记录, 1. 目标与口径, 2.1 一句话结论, 2.2 各自优势, 2.3 核心风险, 2. 总体判断, 3.1 NoName 核心职责 (+20 more)
 
 ### Community 30 - "Command Replay Toolkit"
 Cohesion: 0.15
 Nodes (12): 0004 — 对局数据模型：卡牌、牌区、玩家状态与基础操作, 1. 目标, 2. 背景与约束, 3.1 卡牌, 3.2 玩家状态, 3.3 对局模型 + 原语（`USGSGameContext`）, 3.4 与驱动器集成, 3.5 有意延后（避免在无编译环境下写半成品） (+4 more)
 
 ### Community 32 - "Card Game Context"
-Cohesion: 0.15
-Nodes (34): AdvanceAfterPhase(), AllocateCommandId(), BeginTurn(), Broadcast(), BuildInitialDeck(), DiscardAllCards(), DispatchDeferredResponseRequest(), EndGame() (+26 more)
+Cohesion: 0.07
+Nodes (61): AppendEvent(), AdvanceAfterPhase(), AllocateCommandId(), BeginTurn(), Broadcast(), BuildInitialDeck(), ClearDeferredResponseRequest(), ContinueDyingPeachFrame() (+53 more)
 
 ### Community 33 - "GAS Timing Bridge"
 Cohesion: 0.38
@@ -456,11 +454,11 @@ Nodes (3): Graphify Workflow, Plan And Implementation Quality Gate, SGS Startup 
 
 ### Community 44 - "Modulemanager"
 Cohesion: 0.05
-Nodes (45): ToLogString(), ToLogString(), Confirm(), DisplayDecisionName(), FocusConfirmIfReady(), GetConfirmLabel(), GetPassLabel(), GetPromptContextText() (+37 more)
+Nodes (86): ReorderHand(), Initialize(), InitializeReplay(), SetCommandLog(), SetRandomLog(), ApplyDamage(), CanViewCardZone(), CheckInvariants() (+78 more)
 
 ### Community 45 - "Community 45"
-Cohesion: 0.11
-Nodes (34): RequestPlayPhaseAction(), BindToSeat(), CanRescue(), ChooseTarget(), GetTargetPriority(), RequestPlayPhaseAction(), RequestResponseAction(), SubmitUseCard() (+26 more)
+Cohesion: 0.08
+Nodes (34): RequestPlayPhaseAction(), RequestPlayPhaseAction(), EnqueueInvalidPlayCard(), EnqueuePlayCard(), EnqueuePlayPass(), EnqueueResponseCard(), EnqueueResponsePass(), MakeCardStep() (+26 more)
 
 ### Community 46 - "Community 46"
 Cohesion: 0.25
@@ -491,12 +489,12 @@ Cohesion: 0.40
 Nodes (4): Rules README — 按需规则路由, Token 节省规则（高优先级）, 规则文件写作约束, 读取路由
 
 ### Community 207 - "Community 207"
-Cohesion: 0.15
-Nodes (18): CanHandlePayload(), ExecutePayload(), GetDescriptor(), GetRuleName(), ValidatePayload(), CanHandlePayload(), ExecutePayload(), GetDescriptor() (+10 more)
+Cohesion: 0.08
+Nodes (40): AddCandidateForTargets(), Build(), BuildPlayCandidates(), BuildResponseCandidates(), DecidePlay(), DecideResponse(), FindOwnCard(), FindSeat() (+32 more)
 
 ### Community 208 - "Community 208"
-Cohesion: 0.14
-Nodes (12): FSGSReplayLog(), Command Random Replay Determinism, Data Driven Rules, EffectPipeline Rule Execution, SGS-GAS Boundary, GAS Timing Effect Bridge, Open Rule Identifiers Instead Of Closed Enums, QSanguosha License Boundary (+4 more)
+Cohesion: 0.11
+Nodes (14): FSGSEffectPipeline(), FSGSReplayLog(), Command Random Replay Determinism, Data Driven Rules, EffectPipeline Rule Execution, SGS-GAS Boundary, GAS Timing Effect Bridge, Open Rule Identifiers Instead Of Closed Enums (+6 more)
 
 ### Community 209 - "Community 209"
 Cohesion: 0.40
@@ -504,15 +502,15 @@ Nodes (4): 单反应公式, 反应规则, 属性类型, 术语
 
 ### Community 232 - "Community 232"
 Cohesion: 0.05
-Nodes (84): BackgroundImageSize(), GetBackgroundBrush(), GetCardFaceBrush(), GetSeatPortraitBrush(), SGSBasicCardRuleHelpers(), MakeBasicCard(), MakeMinimalIdentityDeck(), MakePlan0005SmokeDeck() (+76 more)
+Nodes (80): USGSCard(), MakeBasicCard(), MakeMinimalIdentityDeck(), MakePlan0005SmokeDeck(), RegisterDefaultCommandTypes(), SGSMatchesExactTag(), SGSSuitToColor(), FNativeGameplayTag (+72 more)
 
 ### Community 233 - "Community 233"
-Cohesion: 0.20
-Nodes (26): CanViewCardZone(), CheckInvariants(), CountCardsInPile(), CreateCard(), DiscardFromHand(), DrawCards(), FindCardById(), FindCardStateById() (+18 more)
+Cohesion: 0.11
+Nodes (16): FDelegateHandle, FOutputDevice, IModuleInterface, Modulemanager, Mpsc, FSGSEditorLogEntry, Category, Message (+8 more)
 
 ### Community 234 - "Community 234"
-Cohesion: 0.13
-Nodes (29): ESGSTableViewChange, FReply, FSGSCardViewData, FSGSSeatViewData, FSGSTableAssetCatalog, FSGSTableFeatureController, FSGSTableHandPresentationState, FSGSTableSeatProps (+21 more)
+Cohesion: 0.15
+Nodes (26): FSGSCardViewData, FSGSSeatViewData, FSGSTableAssetCatalog, FSGSTableFeatureController, FSGSTableSeatProps, FSGSTableShellProps, BuildContent(), Construct() (+18 more)
 
 ### Community 235 - "Community 235"
 Cohesion: 0.14
@@ -523,40 +521,40 @@ Cohesion: 0.14
 Nodes (13): 0011-M1 — 最小代码优先牌桌 UI 纵切, 1. 目标, 2. 背景与约束, 3.1 模块与挂载方式, 3.2 ViewModel, 3.3 本地真人决策桥, 3.4 Widget 组成, 3.5 与 0005 的接入 (+5 more)
 
 ### Community 237 - "Community 237"
-Cohesion: 0.20
-Nodes (11): USGSGameContext(), USGSGameDriver(), Async Nonblocking Settlement, Authoritative Async Decision Loop, CardStore / CardsByPile Fact Source, Unified Decision Agent Interface, Game State To UI Intent Loop, Native Code-first UI (+3 more)
+Cohesion: 0.22
+Nodes (15): BuildRuleInvocation(), FormatPayloadSummary(), FSGSCommandExecutionContext(), Validate(), CheckInvariants(), Contains(), Find(), GetName() (+7 more)
 
 ### Community 238 - "Community 238"
-Cohesion: 0.15
-Nodes (26): ApplyRenderTransform(), BasePositionForIndex(), EnsureMotionTimer(), FinishDrag(), HandleCardDragDetected(), HandleCardHoverChanged(), HandleDragMoved(), HandleDragOperationEnded() (+18 more)
+Cohesion: 0.21
+Nodes (17): ApplyRenderTransform(), BasePositionForIndex(), EnsureMotionTimer(), FinishDrag(), HandleCardDragDetected(), HandleCardHoverChanged(), HandleDragMoved(), HandleDragOperationEnded() (+9 more)
 
 ### Community 239 - "Community 239"
 Cohesion: 0.07
 Nodes (28): 0011-M2 — React-inspired、业务无关的 UI 组件框架, 10. 风险与控制, 11. 进度与决策记录, 1. 目标, 2.1 保留的高价值方向, 2.2 原计划中需要降级或删除的部分, 2.3 已有 Table UI State Store 的定位修正, 2. 资深工程审查结论 (+20 more)
 
 ### Community 240 - "Community 240"
-Cohesion: 0.19
-Nodes (28): AddStatus(), CompleteCurrentFrame(), ConsumeStatus(), ContinueDyingPeachOrEliminate(), DiscardHandCard(), DiscardProcessingCard(), DyingPeachWindowName(), EliminateDyingSeatAndFinish() (+20 more)
+Cohesion: 0.06
+Nodes (80): RequestResponseAction(), CanHandlePayload(), ExecutePayload(), GetDescriptor(), GetRuleName(), ValidatePayload(), AddStatus(), CompleteCurrentFrame() (+72 more)
 
 ### Community 241 - "Community 241"
 Cohesion: 0.16
 Nodes (25): AllocateStepId(), AppendStepEvent(), Enqueue(), EnqueueFront(), EnqueueManyFront(), Failure(), PopFront(), Resume() (+17 more)
 
 ### Community 242 - "Community 242"
-Cohesion: 0.10
-Nodes (28): IsWindow(), SlashDodgeWindowName(), CanHandlePayload(), ExecutePayload(), GetDescriptor(), GetRuleName(), ValidatePayload(), CanHandlePayload() (+20 more)
+Cohesion: 0.17
+Nodes (21): FSGSDecisionSkillViewData, FSGSTableHandPresentationState, FSGSTableUIInteractionState, FSGSTableUIStateStore(), ClearSelection(), GetSelectedSkillOption(), GetTargetsForCard(), GetTargetsForCurrentSelection() (+13 more)
 
 ### Community 243 - "Community 243"
-Cohesion: 0.12
-Nodes (12): USGSCard(), Object, USGSSeat(), Scriptinterface, Sgsautopassagent, Sgsdecisionagent, Sgsgamedriver, Sgsgameevents (+4 more)
+Cohesion: 0.13
+Nodes (10): SGSDeckDefinitions(), GetContext(), Object, USGSSeat(), Scriptinterface, Sgsdecisionagent, Sgsgamedriver, Sgsgameevents (+2 more)
 
 ### Community 244 - "Community 244"
-Cohesion: 0.21
-Nodes (16): AppendEvent(), FSGSActiveEffectTimeline, FSGSCommandId, FSGSEffectStepId, FSGSReplayLog, FSGSTimingPoint, ISGSRuleRuntime, MakePlan0014CommandBuildRequest() (+8 more)
+Cohesion: 0.19
+Nodes (13): Add(), Reset(), FSGSUILifetimeScope(), FSGSUISubscription(), FSGSUIStateBatch(), Enqueue(), FBatchState, bFlushing (+5 more)
 
 ### Community 245 - "Community 245"
-Cohesion: 0.09
-Nodes (17): ClearDeferredResponseRequest(), ContinueDyingPeachFrame(), FinishCurrentResolution(), FSGSDriverRuleRuntime, MakeResponseRequest(), OpenNextDyingPeachResponseWindow(), ResumeResolutionParentAfterChild(), FSGSDecisionSkillOption (+9 more)
+Cohesion: 0.24
+Nodes (10): CardTint(), Construct(), Slot, Props, SameCardProps(), SameHandProps(), SetProps(), FSGSTableCardProps (+2 more)
 
 ### Community 251 - "Community 251"
 Cohesion: 0.22
@@ -599,89 +597,81 @@ Cohesion: 0.50
 Nodes (3): Authoring Rules README, 扩展标准, 读取路由
 
 ### Community 262 - "Community 262"
-Cohesion: 0.11
-Nodes (26): ButtonTint(), Construct(), HandleClicked(), RebuildDecisionBar(), RebuildHand(), RebuildSeats(), RebuildShell(), SetProps() (+18 more)
+Cohesion: 0.17
+Nodes (11): 0017 — 成熟规则、武将技能与 AI 长期路线, 1. 目标, 2. 约束与取舍, 3. 里程碑, 4. 工程质量门, 5. 当前进度, M1 — 信息安全的通用 AI 评价, M2 — 武将技能运行时 (+3 more)
 
 ### Community 263 - "Community 263"
 Cohesion: 0.16
 Nodes (13): explicit, FCallback, FSGSUILifetimeScope, PayloadType, Publish(), Subscribe(), TSGSUITypedSignal(), FSGSUIStateBatch() (+5 more)
 
 ### Community 264 - "Community 264"
-Cohesion: 0.20
-Nodes (11): FMargin, FSGSTableLayoutMetrics(), ActionButtonMinSize(), ButtonGapPadding(), CardButtonSize(), CardPadding(), ItemPadding(), PromptGapPadding() (+3 more)
+Cohesion: 0.05
+Nodes (51): Construct(), RebuildDecisionBar(), RebuildHand(), RebuildSeats(), RebuildShell(), SetProps(), Construct(), Construct() (+43 more)
 
 ### Community 265 - "Community 265"
-Cohesion: 0.05
-Nodes (65): CheckInvariants(), DescriptorMatchesInvocation(), DispatchAll(), FindCandidateEntries(), FindCandidateRuleNames(), FormatExpectedPayloadStructs(), InitializeStore(), JoinRuleNames() (+57 more)
+Cohesion: 0.19
+Nodes (18): Clear(), ClearResponseWindowOnCurrent(), CompleteCurrentFrame(), FindFrame(), FindLatestEffectSourceSeat(), FindLatestEffectTargetSeat(), FindLatestProcessingCardId(), FSGSResolutionStack() (+10 more)
 
 ### Community 266 - "Community 266"
-Cohesion: 0.19
-Nodes (13): Add(), Reset(), FSGSUILifetimeScope(), FSGSUISubscription(), FSGSUIStateBatch(), Enqueue(), FBatchState, bFlushing (+5 more)
+Cohesion: 0.22
+Nodes (10): USGSGameContext(), Async Nonblocking Settlement, Authoritative Async Decision Loop, CardStore / CardsByPile Fact Source, Unified Decision Agent Interface, Game State To UI Intent Loop, Native Code-first UI, No Wallclock Settlement (+2 more)
 
 ### Community 267 - "Community 267"
-Cohesion: 0.48
-Nodes (11): int32, FSGSDurationSpec(), FSGSTimingPoint(), GetTypeHash(), Manual(), NextEvents(), TargetNextTurn(), ThisPhase() (+3 more)
+Cohesion: 0.39
+Nodes (7): BackgroundImageSize(), GetBackgroundBrush(), GetCardFaceBrush(), GetGeneralPortraitBrush(), LoadGeneralPortraitBrush(), FDeferredCleanupSlateBrush, FSlateBrush
 
 ### Community 268 - "Community 268"
 Cohesion: 0.22
 Nodes (8): 0011-M4 — 统一响应与技能询问 UI, 1. 目标, 2. NoName 参考与约束, 3. 方案设计, 4. 工程质量门, 5. 任务拆解, 6. 验收标准, 7. 进度与决策记录
 
 ### Community 269 - "Community 269"
-Cohesion: 0.20
-Nodes (5): ISGSRuleRuntime(), ISGSDecisionAgent(), Interface, Sgsdecisiontypes, Sgseffectpipeline
+Cohesion: 0.12
+Nodes (4): ISGSAIActionEvaluator(), ISGSDecisionAgent(), Interface, Sgsdecisiontypes
 
 ### Community 270 - "Community 270"
-Cohesion: 0.11
-Nodes (18): FSGSCardDragDropOperation, bDroppedInHand, CardId, DecoratorCard, DecoratorWidget, Owner, Props, StartReturnCurve() (+10 more)
+Cohesion: 0.18
+Nodes (12): FSGSCardDragDropOperation, bDroppedInHand, CardId, DecoratorCard, DecoratorWidget, Owner, StartReturnCurve(), FGameDragDropOperation (+4 more)
 
 ### Community 271 - "Community 271"
 Cohesion: 0.15
 Nodes (12): 0011-M3 — 高性能手牌交互与弹性动画, 1. 目标, 2. 背景与约束, 3.1 本地展示状态与单向数据流, 3.2 稳定组件树与原生拖拽, 3.3 动画与性能模型, 3.4 失败路径与快照竞争, 3. 方案设计 (+4 more)
 
 ### Community 273 - "Community 273"
-Cohesion: 0.22
-Nodes (9): ApplyDamage(), EliminateSeat(), GetSeat(), Heal(), Initialize(), RebuildSeatIndexes(), RegisterCardIndexes(), FSGSCardZoneTypeKey (+1 more)
+Cohesion: 0.43
+Nodes (8): OnDragDetected(), OnMouseButtonDown(), OnMouseButtonUp(), OnMouseEnter(), OnMouseLeave(), FGeometry, FPointerEvent, FReply
 
 ### Community 274 - "Community 274"
-Cohesion: 0.28
-Nodes (6): AGameModeBase(), BeginPlay(), RefreshViewSnapshots(), SpawnDevelopmentTableScene(), Gamemodebase, Sgsgamemode
+Cohesion: 0.25
+Nodes (7): 0017-M1 — 信息安全的通用 AI 评价框架, 1. 目标, 2. 方案, 3. 真实评分语义, 4. 任务拆解, 5. 验收标准, 6. 进度与决策记录
 
 ### Community 277 - "Community 277"
-Cohesion: 0.36
-Nodes (8): CardTint(), Construct(), Slot, SameCardProps(), SameHandProps(), SetProps(), FSGSTableCardProps, FSGSTableHandProps
+Cohesion: 0.33
+Nodes (5): EndPlay(), RejectHandReorder(), ReorderHand(), TCHAR, Type
 
 ### Community 278 - "Community 278"
 Cohesion: 0.25
 Nodes (7): 0015 — 最小可玩八人身份 Demo, 1. 目标, 2. 本轮硬约束, 3. 实现切片, 4. 关键规则, 5. 验收标准, 6. 进度与决策记录
 
-### Community 279 - "Community 279"
-Cohesion: 0.40
-Nodes (5): GetDistance(), MakeSeatHandle(), QuerySeats(), FSGSSeatQuery, FSGSSeatQueryResult
-
-### Community 282 - "Community 282"
-Cohesion: 0.18
-Nodes (6): FSGSEffectPipeline(), SetCommandLog(), SetRandomLog(), FSGSCommandLogEntry, Sgsactiveeffecttimeline, Sgsreplaylog
-
 ### Community 283 - "Community 283"
-Cohesion: 0.09
-Nodes (8): SGSCommandLifecycle(), SGSRuleKinds(), Gameplayeffecttypes, Randomstream, Sgscommand, Sgserror, Sgsids, FSGSCommandRouter()
+Cohesion: 0.08
+Nodes (10): SGSCommandLifecycle(), SGSRuleKinds(), ISGSRuleRuntime(), Gameplayeffecttypes, Randomstream, Sgscommand, Sgseffectpipeline, Sgserror (+2 more)
 
 ## Knowledge Gaps
-- **590 isolated node(s):** `Category`, `Verbosity`, `Message`, `PendingEntries`, `OutputDevice` (+585 more)
+- **628 isolated node(s):** `Category`, `Verbosity`, `Message`, `PendingEntries`, `OutputDevice` (+623 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **188 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `FSGSTableHandWidgetModel` connect `Community 257` to `Community 258`, `Community 262`, `Community 232`, `Community 265`, `Community 267`, `Community 238`, `Community 270`, `Community 277`?**
-  _High betweenness centrality (0.054) - this node is a cross-community bridge._
-- **Why does `FSGSHandCardEntry` connect `Community 258` to `Community 257`, `Community 232`, `Community 238`, `Community 270`, `Community 277`?**
-  _High betweenness centrality (0.018) - this node is a cross-community bridge._
-- **Why does `FSGSEditorLogEntry` connect `Modulemanager` to `Community 242`?**
-  _High betweenness centrality (0.015) - this node is a cross-community bridge._
+- **Why does `FSGSTableHandWidgetModel` connect `Community 257` to `Community 258`, `Community 232`, `Community 264`, `Modulemanager`, `Community 238`, `Community 270`, `Community 245`?**
+  _High betweenness centrality (0.048) - this node is a cross-community bridge._
+- **Why does `FSGSHandCardEntry` connect `Community 258` to `Community 257`, `Community 232`, `Community 238`, `Community 270`, `Community 245`?**
+  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+- **Why does `MakeCardProps()` connect `Community 234` to `Community 240`, `Community 232`, `Modulemanager`, `Community 245`?**
+  _High betweenness centrality (0.012) - this node is a cross-community bridge._
 - **What connects `Category`, `Verbosity`, `Message` to the rest of the system?**
-  _592 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _630 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Command Replay Toolkit` be split into smaller, more focused modules?**
   _Cohesion score 0.1 - nodes in this community are weakly interconnected._
 - **Should `Project Rules` be split into smaller, more focused modules?**

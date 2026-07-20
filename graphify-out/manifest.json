@@ -1,9 +1,4 @@
 {
-  ".codex/hooks.json": {
-    "mtime": 1781875919.2907403,
-    "ast_hash": "534cfc1efe46c326a94e2dad642d9d6f",
-    "semantic_hash": "534cfc1efe46c326a94e2dad642d9d6f"
-  },
   ".githooks/post-checkout": {
     "mtime": 1782153706.3816721,
     "ast_hash": "ef678df1e004da305e21cdeead47876f",
@@ -35,14 +30,14 @@
     "semantic_hash": "fd4b178fe22b12642af2ef07ef64474b"
   },
   ".vscode/launch.json": {
-    "mtime": 1781876898.3139076,
-    "ast_hash": "fadb2c2ed637bbcdd68a505eea5f5f2e",
-    "semantic_hash": "fadb2c2ed637bbcdd68a505eea5f5f2e"
+    "mtime": 1784478558.1322508,
+    "ast_hash": "37ef926453a8760a9999c6aea851fed3",
+    "semantic_hash": ""
   },
   ".vscode/tasks.json": {
-    "mtime": 1782495998.1881814,
-    "ast_hash": "8dd332748be6a402b6d117cedaade6c2",
-    "semantic_hash": "8dd332748be6a402b6d117cedaade6c2"
+    "mtime": 1784478558.135777,
+    "ast_hash": "a7a8b8222325bdbd221670f7ad1a2272",
+    "semantic_hash": ""
   },
   "Source/SGS.Target.cs": {
     "mtime": 1781850116.3795443,
@@ -75,9 +70,9 @@
     "semantic_hash": "3f316ba9be49eadf5aa84ea1bc0afeac"
   },
   "Tools/Unreal.ps1": {
-    "mtime": 1782494694.1689234,
-    "ast_hash": "2a94d85007910829ed85ca6dcc3e7de8",
-    "semantic_hash": "2a94d85007910829ed85ca6dcc3e7de8"
+    "mtime": 1784478558.1367795,
+    "ast_hash": "d032233df913ceb6abc3b06ac06c30a4",
+    "semantic_hash": ""
   },
   "AGENTS.md": {
     "mtime": 1783066162.2232316,
@@ -85,13 +80,13 @@
     "semantic_hash": ""
   },
   "ProjectBrief.md": {
-    "mtime": 1783860858.3381963,
-    "ast_hash": "8d9ed50092aa0386fab65a231fd5fcc9",
+    "mtime": 1784481559.549088,
+    "ast_hash": "87c3a1c9851f33e8ced93c01318ed00a",
     "semantic_hash": ""
   },
   "Source/Doc/Plan/0000-RawRequirements.md": {
-    "mtime": 1783859550.2373927,
-    "ast_hash": "3e93ed48135db8e7712e456cbb0c8bf4",
+    "mtime": 1784481153.6604774,
+    "ast_hash": "b76d4089e7b9beecc185112d1a8ad53c",
     "semantic_hash": ""
   },
   "Source/Doc/Plan/0011-native-code-first-ui.md": {
@@ -10770,18 +10765,18 @@
     "semantic_hash": ""
   },
   "Source/SGS/Client/UI/Theme/SGSUITheme.cpp": {
-    "mtime": 1783780207.5234015,
-    "ast_hash": "8bc6a96bc3e4766a88bba9f7302b3bee",
+    "mtime": 1784480170.4030156,
+    "ast_hash": "387ffc7a3a84d52015aac8489ec565b3",
     "semantic_hash": ""
   },
   "Source/SGS/Client/UI/Theme/SGSUITheme.h": {
-    "mtime": 1783762336.1064787,
-    "ast_hash": "b31c2986e72a0e5cf51de8f8d1284f3a",
+    "mtime": 1784480170.4020028,
+    "ast_hash": "f94aecbd9cbe77a0c4056319bbd9898c",
     "semantic_hash": ""
   },
   "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.cpp": {
-    "mtime": 1783860562.9004898,
-    "ast_hash": "a51fecc2b3e8fa62614178155ea4891e",
+    "mtime": 1784480240.1577544,
+    "ast_hash": "91340d942b3cd7eaf2174149432e1cc8",
     "semantic_hash": ""
   },
   "Source/SGS/Client/UI/Widgets/SGSTableHudWidget.h": {
@@ -10800,13 +10795,13 @@
     "semantic_hash": ""
   },
   "Source/SGS/Server/AI/SGSBasicAIAgent.cpp": {
-    "mtime": 1783860664.6702826,
-    "ast_hash": "100276274dde45fac52d9d115f994421",
+    "mtime": 1784481327.7190292,
+    "ast_hash": "6dab62c84e16b086ae9b4a3115cd71fa",
     "semantic_hash": ""
   },
   "Source/SGS/Server/AI/SGSBasicAIAgent.h": {
-    "mtime": 1783860135.875379,
-    "ast_hash": "b65cd910a92cf70f17cedb21476f011a",
+    "mtime": 1784481327.7149057,
+    "ast_hash": "8dfd28182c386d4579bc1e1b86239e69",
     "semantic_hash": ""
   },
   "Source/SGS/Server/AI/SGSScriptedDecisionAgent.cpp": {
@@ -10900,23 +10895,23 @@
     "semantic_hash": ""
   },
   "Source/SGS/Server/Engine/SGSGameContext.cpp": {
-    "mtime": 1783859502.7826145,
-    "ast_hash": "6b88ad14c892a938a552f07381193c53",
+    "mtime": 1784480019.7719965,
+    "ast_hash": "687c59239901762d406a8d1a51f02cd2",
     "semantic_hash": ""
   },
   "Source/SGS/Server/Engine/SGSGameContext.h": {
-    "mtime": 1783859502.781106,
-    "ast_hash": "14343ee7272b36023a8d484c8f2b5ac3",
+    "mtime": 1784480019.7705085,
+    "ast_hash": "1a769264ee192e815f22d8d1b0a5b8e8",
     "semantic_hash": ""
   },
   "Source/SGS/Server/Engine/SGSGameDriver.cpp": {
-    "mtime": 1783860731.517187,
-    "ast_hash": "4fff8aeea866157c8c3648c10521f4dd",
+    "mtime": 1784481327.721101,
+    "ast_hash": "5e62594351bd46c60431edbc99f7ceb3",
     "semantic_hash": ""
   },
   "Source/SGS/Server/Engine/SGSGameDriver.h": {
-    "mtime": 1783860200.221928,
-    "ast_hash": "99fe37e9d6b20de49ccdd72a7495653f",
+    "mtime": 1784481327.720068,
+    "ast_hash": "37d2faa0199d87602ed0113be5d19a8e",
     "semantic_hash": ""
   },
   "Source/SGS/Server/Engine/SGSGameEvents.h": {
@@ -10925,8 +10920,8 @@
     "semantic_hash": ""
   },
   "Source/SGS/Server/Game/SGSGameMode.cpp": {
-    "mtime": 1783860187.508963,
-    "ast_hash": "60ff37e34dd3ffeeee2e5c88cbb8190b",
+    "mtime": 1784480019.7730918,
+    "ast_hash": "fe3b8639c98b4958cc1aae629d66ee0b",
     "semantic_hash": ""
   },
   "Source/SGS/Server/Game/SGSGameMode.h": {
@@ -10935,8 +10930,8 @@
     "semantic_hash": ""
   },
   "Source/SGS/Server/Players/SGSSeat.h": {
-    "mtime": 1783859502.7805805,
-    "ast_hash": "db9ff8fff456ecb5a409443e0e294cad",
+    "mtime": 1784480019.7740946,
+    "ast_hash": "d15dfe49a80cc99828c855f9686f1ff5",
     "semantic_hash": ""
   },
   "Source/SGS/Server/Timing/SGSActiveEffectTimeline.cpp": {
@@ -11075,8 +11070,8 @@
     "semantic_hash": ""
   },
   "Source/SGS/Server/UI/SGSTableSnapshotBuilder.cpp": {
-    "mtime": 1783860357.9241462,
-    "ast_hash": "e1a50d570076cbc45ab2e5dca1dc3755",
+    "mtime": 1784480500.819632,
+    "ast_hash": "9882db9bd36e42d583dcb85fd72919a6",
     "semantic_hash": ""
   },
   "Source/SGS/Server/UI/SGSTableSnapshotBuilder.h": {
@@ -11085,8 +11080,8 @@
     "semantic_hash": ""
   },
   "Source/SGS/Shared/UI/SGSTableViewTypes.h": {
-    "mtime": 1783860077.2721226,
-    "ast_hash": "190431e380802353ee3471f0d0d8ac47",
+    "mtime": 1784480019.7754705,
+    "ast_hash": "a40c986ae9a9b42ee93d5250cf79c1a3",
     "semantic_hash": ""
   },
   "Source/SGS/Shared/Game/SGSGameState.cpp": {
@@ -11345,23 +11340,23 @@
     "semantic_hash": ""
   },
   "Source/SGS/Client/UI/Features/Table/Assets/SGSTableAssetCatalog.cpp": {
-    "mtime": 1783860562.483047,
-    "ast_hash": "7c87cc2d7ca7431aac4f2bacb7db1829",
+    "mtime": 1784480019.7805998,
+    "ast_hash": "48ffdb0e767028d951651b3c002292a8",
     "semantic_hash": ""
   },
   "Source/SGS/Client/UI/Features/Table/Assets/SGSTableAssetCatalog.h": {
-    "mtime": 1783757395.5784533,
-    "ast_hash": "e50d8532931f8cff8c13c71acaf68ab5",
+    "mtime": 1784480019.7790468,
+    "ast_hash": "7d9082fca39f21db1b021db3ebc30fa2",
     "semantic_hash": ""
   },
   "Source/SGS/Client/UI/Features/Table/Components/SGSTableComponents.cpp": {
-    "mtime": 1783838649.9969852,
-    "ast_hash": "d63ebd363fc847ba7c6db68a31e04a44",
+    "mtime": 1784480514.4386578,
+    "ast_hash": "c878a6db7b82055cd3a89747b4d2dfea",
     "semantic_hash": ""
   },
   "Source/SGS/Client/UI/Features/Table/Components/SGSTableComponents.h": {
-    "mtime": 1783860070.5610678,
-    "ast_hash": "44d917d41e0b0f42d475bed16140e8b6",
+    "mtime": 1784480170.3998253,
+    "ast_hash": "385afb65f37ece0169caac44e54e5865",
     "semantic_hash": ""
   },
   "Source/SGS/Client/UI/Features/Table/State/SGSTableUIStateStore.cpp": {
@@ -11497,6 +11492,46 @@
   "Source/Doc/Plan/0015-minimal-playable-identity-demo.md": {
     "mtime": 1783860857.9276736,
     "ast_hash": "1185d6366b3e4487001b3d21cd26141e",
+    "semantic_hash": ""
+  },
+  ".vscode/settings.example.json": {
+    "mtime": 1784478558.1322508,
+    "ast_hash": "98ce7d1fdea1ea3f6ec8e4b1d58855b6",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Features/Table/Components/SGSTableSeatWidget.cpp": {
+    "mtime": 1784480266.8178282,
+    "ast_hash": "f6595af8e0ab1dc3c5a72ca4df6e0ab9",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Client/UI/Features/Table/Components/SGSTableSeatWidget.h": {
+    "mtime": 1784480621.587091,
+    "ast_hash": "adb44e33892d0415e3ca53ea5aa98e80",
+    "semantic_hash": ""
+  },
+  "Source/Doc/Plan/Archive/0016-noname-rules-ai-gap-analysis.md": {
+    "mtime": 1784479681.8829927,
+    "ast_hash": "01ed868b988dd417d5867b93184e0ec9",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Server/AI/SGSAIEvaluation.cpp": {
+    "mtime": 1784481507.180788,
+    "ast_hash": "616d190d2dd727d5338bb1bb6cf05533",
+    "semantic_hash": ""
+  },
+  "Source/SGS/Server/AI/SGSAIEvaluation.h": {
+    "mtime": 1784481507.1694992,
+    "ast_hash": "b476c8cc36266726b8a9e78d6a5283e7",
+    "semantic_hash": ""
+  },
+  "Source/Doc/Plan/0017-M1-information-safe-ai-evaluation.md": {
+    "mtime": 1784481559.5479314,
+    "ast_hash": "e8061c1b925af7d0cf29f534065fc807",
+    "semantic_hash": ""
+  },
+  "Source/Doc/Plan/0017-mature-rules-skills-ai-roadmap.md": {
+    "mtime": 1784481559.5464334,
+    "ast_hash": "d11becc2b5b2ffa7b3a62562d3e0ba4e",
     "semantic_hash": ""
   }
 }

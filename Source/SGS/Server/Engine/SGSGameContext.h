@@ -67,7 +67,11 @@ class SGS_API USGSGameContext : public UObject
 
 public:
 	// 建座位（与决策代理一一对应）、空牌堆、随机流。
-	void Initialize(const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents, int32 RandomSeed, bool bIdentityMode = false);
+	void Initialize(
+		const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents,
+		int32 RandomSeed,
+		bool bIdentityMode = false,
+		TConstArrayView<FName> GeneralIdsBySeat = TConstArrayView<FName>());
 
 	int32 NumSeats() const { return Seats.Num(); }
 	USGSSeat* GetSeat(int32 Index) const;

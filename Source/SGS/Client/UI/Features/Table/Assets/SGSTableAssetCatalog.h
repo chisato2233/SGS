@@ -12,11 +12,11 @@ public:
 	static FVector2D BackgroundImageSize();
 
 	const FSlateBrush* GetBackgroundBrush();
-	const FSlateBrush* GetSeatPortraitBrush(int32 SeatIndex);
+	const FSlateBrush* GetGeneralPortraitBrush(FName GeneralId);
 	const FSlateBrush* GetCardFaceBrush(FName CardName);
 
 private:
 	TSharedPtr<FDeferredCleanupSlateBrush> BackgroundBrush;
-	TMap<int32, TSharedPtr<FDeferredCleanupSlateBrush>> GeneralPortraitBrushes;
+	TMap<FName, TSharedPtr<FDeferredCleanupSlateBrush>> GeneralPortraitBrushes;
 	TMap<FName, TSharedPtr<FDeferredCleanupSlateBrush>> CardFaceBrushes;
 };

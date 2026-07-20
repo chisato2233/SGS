@@ -2,124 +2,13 @@
 
 #include "Client/UI/Features/Table/Components/SGSTableDecisionPanelWidget.h"
 #include "Client/UI/Features/Table/Components/SGSTableHandWidget.h"
-#include "Client/UI/Theme/SGSUITheme.h"
 #include "Styling/CoreStyle.h"
 #include "Widgets/Images/SImage.h"
-#include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Layout/SConstraintCanvas.h"
 #include "Widgets/Layout/SScaleBox.h"
-#include "Widgets/SBoxPanel.h"
 #include "Widgets/SOverlay.h"
-#include "Widgets/Text/STextBlock.h"
-
-namespace
-{
-FSlateColor ButtonTint(bool bSelected, bool bAvailable, bool bCurrent)
-{
-	if (bSelected)
-	{
-		return FSGSUITheme::ControlTint(ESGSUIControlTone::Selected);
-	}
-	if (bAvailable)
-	{
-		return FSGSUITheme::ControlTint(ESGSUIControlTone::Available);
-	}
-	if (bCurrent)
-	{
-		return FSGSUITheme::ControlTint(ESGSUIControlTone::Current);
-	}
-	return FSGSUITheme::ControlTint(ESGSUIControlTone::Normal);
-}
-}
-
-void SSGSTableSeatWidget::Construct(const FArguments& InArgs)
-{
-	const FSGSTableSeatProps& Props = InArgs._Props;
-	SeatIndex = Props.SeatIndex;
-	OnSeatClicked = InArgs._OnSeatClicked;
-
-	TSharedRef<SOverlay> PlayerPanel = SNew(SOverlay)
-		.Clipping(EWidgetClipping::ClipToBounds);
-	PlayerPanel->AddSlot()
-	[
-		SNew(SBorder)
-			.BorderImage(FCoreStyle::Get().GetBrush(TEXT("WhiteBrush")))
-			.BorderBackgroundColor(FLinearColor(0.035f, 0.045f, 0.055f, 1.0f))
-	];
-
-	if (Props.PortraitBrush != nullptr)
-	{
-		PlayerPanel->AddSlot()
-		[
-			SNew(SScaleBox)
-				.Stretch(EStretch::ScaleToFill)
-				.StretchDirection(EStretchDirection::Both)
-				.Clipping(EWidgetClipping::ClipToBounds)
-			[
-				SNew(SImage)
-					.Image(Props.PortraitBrush)
-					.ColorAndOpacity(Props.bAlive
-						? FLinearColor::White
-						: FLinearColor(0.32f, 0.32f, 0.32f, 0.82f))
-			]
-		];
-	}
-
-	PlayerPanel->AddSlot()
-	.HAlign(HAlign_Fill)
-	.VAlign(VAlign_Top)
-	[
-		SNew(SBorder)
-			.BorderImage(FCoreStyle::Get().GetBrush(TEXT("WhiteBrush")))
-			.BorderBackgroundColor(FLinearColor(0.015f, 0.02f, 0.025f, 0.82f))
-			.Padding(FMargin(5.0f, 3.0f))
-		[
-			SNew(STextBlock)
-				.Text(Props.NameText)
-				.ColorAndOpacity(FLinearColor::White)
-				.ShadowOffset(FVector2D(1.0f, 1.0f))
-		]
-	];
-
-	PlayerPanel->AddSlot()
-	.HAlign(HAlign_Fill)
-	.VAlign(VAlign_Bottom)
-	[
-		SNew(SBorder)
-			.BorderImage(FCoreStyle::Get().GetBrush(TEXT("WhiteBrush")))
-			.BorderBackgroundColor(FLinearColor(0.015f, 0.02f, 0.025f, 0.88f))
-			.Padding(FMargin(4.0f, 3.0f))
-		[
-			SNew(STextBlock)
-				.Text(Props.StatusText)
-				.Justification(ETextJustify::Center)
-				.ColorAndOpacity(FLinearColor(0.95f, 0.89f, 0.72f, 1.0f))
-		]
-	];
-
-	ChildSlot
-	[
-		SNew(SBox)
-			.WidthOverride(Props.Size.X)
-			.HeightOverride(Props.Size.Y)
-		[
-			SNew(SButton)
-				.ButtonColorAndOpacity(ButtonTint(Props.bSelected, Props.bSelectable, Props.bCurrent))
-				.ContentPadding(FMargin(Props.bViewer ? 2.0f : 3.0f))
-				.OnClicked(this, &SSGSTableSeatWidget::HandleClicked)
-			[
-				PlayerPanel
-			]
-		]
-	];
-}
-
-FReply SSGSTableSeatWidget::HandleClicked() const
-{
-	return OnSeatClicked.IsBound() ? OnSeatClicked.Execute(SeatIndex) : FReply::Unhandled();
-}
 
 void SSGSTableShellWidget::Construct(const FArguments& InArgs)
 {
@@ -167,6 +56,7 @@ void SSGSTableShellWidget::SetProps(FSGSTableShellProps InProps, ESGSTableViewCh
 void SSGSTableShellWidget::RebuildShell()
 {
 	SeatHosts.Reset();
+	SeatWidgets.Reset();
 	TSharedRef<SConstraintCanvas> Canvas = SNew(SConstraintCanvas)
 		.Clipping(EWidgetClipping::ClipToBounds);
 
@@ -246,7 +136,7 @@ void SSGSTableShellWidget::RebuildShell()
 
 void SSGSTableShellWidget::RebuildSeats()
 {
-	if (SeatHosts.Num() != Props.Seats.Num())
+	if (SeatHosts.Num() != Props.Seats.Num() || SeatWidgets.Num() > Props.Seats.Num())
 	{
 		RebuildShell();
 		return;
@@ -259,10 +149,19 @@ void SSGSTableShellWidget::RebuildSeats()
 			RebuildShell();
 			return;
 		}
-		(*SeatHost)->SetContent(
-			SNew(SSGSTableSeatWidget)
-				.Props(PositionedSeat.Seat)
-				.OnSeatClicked(OnSeatClicked));
+		if (TSharedPtr<SSGSTableSeatWidget>* ExistingWidget =
+			SeatWidgets.Find(PositionedSeat.Seat.SeatIndex))
+		{
+			(*ExistingWidget)->SetProps(PositionedSeat.Seat);
+			continue;
+		}
+
+		TSharedPtr<SSGSTableSeatWidget> SeatWidget;
+		SAssignNew(SeatWidget, SSGSTableSeatWidget)
+			.Props(PositionedSeat.Seat)
+			.OnSeatClicked(OnSeatClicked);
+		(*SeatHost)->SetContent(SeatWidget.ToSharedRef());
+		SeatWidgets.Add(PositionedSeat.Seat.SeatIndex, MoveTemp(SeatWidget));
 	}
 }
 

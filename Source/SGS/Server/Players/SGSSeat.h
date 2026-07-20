@@ -25,6 +25,9 @@ public:
 	UPROPERTY()
 	FString DisplayName;
 
+	UPROPERTY()
+	FName GeneralId = NAME_None;
+
 	UPROPERTY(meta = (Categories = "SGS.Faction"))
 	FGameplayTag Faction;
 

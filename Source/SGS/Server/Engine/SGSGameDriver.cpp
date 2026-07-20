@@ -112,7 +112,7 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents, const FSGSGameStartConfig& Config)
 {
 	Context = NewObject<USGSGameContext>(this);
-	Context->Initialize(InAgents, Config.RandomSeed, Config.bIdentityMode);
+	Context->Initialize(InAgents, Config.RandomSeed, Config.bIdentityMode, Config.GeneralIdsBySeat);
 
 	if (Context->NumSeats() == 0)
 	{
@@ -127,6 +127,7 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 	GameResult = FSGSGameResult();
 	TurnsPlayed = 0;
 	CurrentSeatIndex = 0;
+	TurnSeatIndex = INDEX_NONE;
 	PendingRequestId = 0;
 	PendingCommandId = FSGSCommandId();
 	NextCommandIdValue = 0;
@@ -137,6 +138,8 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 	CurrentMaxTurns = bIdentityMode ? 0 : FMath::Max(Config.MaxTurns, 1);
 	CurrentStartingHandSize = FMath::Max(Config.StartingHandSize, 0);
 	CommandRouter.Reset();
+	AIEvaluatorRegistry.Reset();
+	SGSBasicAIEvaluators::Register(AIEvaluatorRegistry);
 	RuleRegistry.Reset();
 	ResolutionStack.Reset();
 	EffectPipeline.Reset();
@@ -148,7 +151,7 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 		USGSSeat* Seat = Context->GetSeat(SeatIndex);
 		if (USGSBasicAIAgent* Agent = Cast<USGSBasicAIAgent>(Seat->DecisionAgent.GetObject()))
 		{
-			Agent->BindToSeat(Context, SeatIndex);
+			Agent->BindToSeat(Context, SeatIndex, &AIEvaluatorRegistry);
 		}
 	}
 
@@ -195,6 +198,7 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 
 void USGSGameDriver::BeginTurn()
 {
+	TurnSeatIndex = CurrentSeatIndex;
 	CurrentPhase = SGSGameplayTags::Phase_RoundStart.GetTag();
 	UE_LOG(LogSGSTurn, Log, TEXT("Turn %d begins for seat %d."), TurnsPlayed, CurrentSeatIndex);
 	Broadcast(SGSGameplayTags::GameEvent_TurnBegan.GetTag());
@@ -1095,6 +1099,7 @@ void USGSGameDriver::EndGame()
 	}
 	bGameOver = true;
 	bWaitingForDecision = false;
+	TurnSeatIndex = INDEX_NONE;
 	UE_LOG(LogSGSTurn, Log, TEXT("Game over after %d turns."), TurnsPlayed);
 	Broadcast(SGSGameplayTags::GameEvent_GameEnded.GetTag());
 }

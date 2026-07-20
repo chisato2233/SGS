@@ -60,3 +60,68 @@ FSlateColor FSGSUITheme::ControlTint(ESGSUIControlTone Tone)
 		return FSlateColor(FLinearColor(0.10f, 0.11f, 0.12f, 0.85f));
 	}
 }
+
+FLinearColor FSGSUITheme::SeatCurrentGlowColor()
+{
+	return FLinearColor::FromSRGBColor(FColor(217, 152, 62));
+}
+
+float FSGSUITheme::SeatCurrentGlowOuterWidth()
+{
+	return 3.0f;
+}
+
+float FSGSUITheme::SeatCurrentGlowInnerWidth()
+{
+	return 1.0f;
+}
+
+float FSGSUITheme::SeatCurrentGlowOuterOpacity()
+{
+	return 0.32f;
+}
+
+float FSGSUITheme::SeatCurrentGlowInnerOpacity()
+{
+	return 0.95f;
+}
+
+float FSGSUITheme::SeatHealthPipSize()
+{
+	return 10.0f;
+}
+
+float FSGSUITheme::SeatHealthPipGap()
+{
+	return 2.0f;
+}
+
+float FSGSUITheme::SeatHealthRightInset()
+{
+	return 7.0f;
+}
+
+float FSGSUITheme::SeatHealthBottomInset()
+{
+	return 28.0f;
+}
+
+FLinearColor FSGSUITheme::SeatHealthHighColor()
+{
+	return FLinearColor(0.26f, 0.74f, 0.31f, 1.0f);
+}
+
+FLinearColor FSGSUITheme::SeatHealthMidColor()
+{
+	return FLinearColor(0.92f, 0.68f, 0.12f, 1.0f);
+}
+
+FLinearColor FSGSUITheme::SeatHealthLowColor()
+{
+	return FLinearColor(0.82f, 0.14f, 0.12f, 1.0f);
+}
+
+FLinearColor FSGSUITheme::SeatHealthLostColor()
+{
+	return FLinearColor(0.12f, 0.12f, 0.12f, 0.72f);
+}

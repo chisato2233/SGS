@@ -7,6 +7,7 @@
 #include "Shared/Core/SGSTypes.h"
 #include "Shared/Cards/SGSDeckTypes.h"
 #include "Server/Commands/SGSCommandRouter.h"
+#include "Server/AI/SGSAIEvaluation.h"
 #include "Server/Effects/SGSEffectPipeline.h"
 #include "Server/Engine/SGSGameEvents.h"
 #include "Server/Rules/Core/SGSRuleRegistry.h"
@@ -29,6 +30,7 @@ struct SGS_API FSGSGameStartConfig
 	int32 StartingHandSize = 4;
 	int32 MaxTurns = 8;
 	TMap<int32, int32> InitialHealthBySeat;
+	TArray<FName> GeneralIdsBySeat;
 	bool bIdentityMode = false;
 };
 
@@ -54,6 +56,7 @@ public:
 
 	USGSGameContext* GetContext() const { return Context; }
 	int32 GetCurrentSeatIndex() const { return CurrentSeatIndex; }
+	int32 GetTurnSeatIndex() const { return TurnSeatIndex; }
 	FSGSPhase GetCurrentPhase() const { return CurrentPhase; }
 
 	bool IsGameOver() const { return bGameOver; }
@@ -122,6 +125,7 @@ private:
 	TObjectPtr<USGSGameContext> Context;
 
 	int32 CurrentSeatIndex = INDEX_NONE;
+	int32 TurnSeatIndex = INDEX_NONE;
 	FSGSPhase CurrentPhase = SGSGameplayTags::Phase_None.GetTag();
 	int32 TurnsPlayed = 0;
 	int32 PendingRequestId = 0;
@@ -144,6 +148,7 @@ private:
 
 	FSGSOnGameEvent GameEventDelegate;
 	FSGSCommandRouter CommandRouter;
+	FSGSAIEvaluatorRegistry AIEvaluatorRegistry;
 	FSGSRuleRegistry RuleRegistry;
 	FSGSResolutionStack ResolutionStack;
 	FSGSEffectPipeline EffectPipeline;

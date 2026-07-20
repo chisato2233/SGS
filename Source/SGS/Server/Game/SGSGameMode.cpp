@@ -120,6 +120,16 @@ void ASGSGameMode::BeginPlay()
 	FSGSGameStartConfig Config;
 	Config.RandomSeed = static_cast<int32>(FPlatformTime::Cycles64());
 	Config.InitialDeck = SGSDeckDefinitions::MakeMinimalIdentityDeck();
+	Config.GeneralIdsBySeat = {
+		TEXT("caocao"),
+		TEXT("liubei"),
+		TEXT("sunquan"),
+		TEXT("guanyu"),
+		TEXT("zhangfei"),
+		TEXT("zhaoyun"),
+		TEXT("simayi"),
+		TEXT("diaochan"),
+	};
 	Config.bIdentityMode = true;
 	GameDriver->StartGame(Agents, Config);
 

@@ -44,6 +44,7 @@ FString IdentityDisplayName(const FGameplayTag& Identity)
 FSGSTableSeatProps MakeSeatProps(
 	const FSGSSeatViewData& Seat,
 	FVector2D Size,
+	float LayoutScale,
 	int32 ViewerSeat,
 	int32 SelectedTargetSeat,
 	bool bSelectable,
@@ -56,18 +57,15 @@ FSGSTableSeatProps MakeSeatProps(
 		? FString()
 		: FString::Printf(TEXT("[%s] "), *IdentityName);
 	Props.NameText = FText::FromString(FString::Printf(
-		TEXT("%s%s%s"),
-		Seat.bIsCurrent ? TEXT("[TURN] ") : TEXT(""),
+		TEXT("%s%s"),
 		*IdentityPrefix,
 		*Seat.DisplayName));
-	Props.StatusText = FText::FromString(FString::Printf(
-		TEXT("HP %d/%d  |  Hand %d%s"),
-		Seat.Health,
-		Seat.MaxHealth,
-		Seat.HandCount,
-		Seat.bIsAlive ? TEXT("") : TEXT("  |  OUT")));
 	Props.Size = Size;
-	Props.PortraitBrush = Assets.GetSeatPortraitBrush(Seat.SeatIndex);
+	Props.PortraitBrush = Assets.GetGeneralPortraitBrush(Seat.GeneralId);
+	Props.Health = Seat.Health;
+	Props.MaxHealth = Seat.MaxHealth;
+	Props.HandCount = Seat.HandCount;
+	Props.LayoutScale = LayoutScale;
 	Props.bAlive = Seat.bIsAlive;
 	Props.bSelectable = bSelectable;
 	Props.bSelected = Seat.SeatIndex == SelectedTargetSeat;
@@ -132,6 +130,7 @@ FSGSTableShellProps MakeShellProps(
 		PositionedSeat.Seat = MakeSeatProps(
 			Seat,
 			SeatLayout->Size,
+			Layout.LayoutScale,
 			Snapshot.ViewerSeat,
 			Interaction.SelectedTargetSeat,
 			!bGameFinished && Controller.IsTargetSelectable(Seat.SeatIndex),

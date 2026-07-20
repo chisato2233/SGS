@@ -42,6 +42,9 @@ struct SGS_API FSGSSeatViewData
 	FString DisplayName;
 
 	UPROPERTY()
+	FName GeneralId = NAME_None;
+
+	UPROPERTY()
 	int32 Health = 0;
 
 	UPROPERTY()

@@ -119,7 +119,7 @@ FSGSTablePublicSnapshot FSGSTableSnapshotBuilder::BuildPublicSnapshot(const USGS
 	}
 
 	USGSGameContext* Context = Driver->GetContext();
-	Snapshot.CurrentSeatIndex = Driver->GetCurrentSeatIndex();
+	Snapshot.CurrentSeatIndex = Driver->GetTurnSeatIndex();
 	Snapshot.CurrentPhase = Driver->GetCurrentPhase();
 	Snapshot.bGameOver = Driver->IsGameOver();
 	Snapshot.GameResult = Driver->GetGameResult();
@@ -145,10 +145,11 @@ FSGSTablePublicSnapshot FSGSTableSnapshotBuilder::BuildPublicSnapshot(const USGS
 		SeatView.DisplayName = Seat->DisplayName.IsEmpty()
 			? FString::Printf(TEXT("Seat %d"), SeatIndex)
 			: Seat->DisplayName;
+		SeatView.GeneralId = Seat->GeneralId;
 		SeatView.Health = Seat->Health;
 		SeatView.MaxHealth = Seat->MaxHealth;
 		SeatView.bIsAlive = Seat->bIsAlive;
-		SeatView.bIsCurrent = SeatIndex == Snapshot.CurrentSeatIndex;
+		SeatView.bIsCurrent = !Snapshot.bGameOver && SeatIndex == Snapshot.CurrentSeatIndex;
 		if (Seat->Identity == SGSGameplayTags::Identity_Lord.GetTag()
 			|| !Seat->bIsAlive
 			|| Snapshot.bGameOver)

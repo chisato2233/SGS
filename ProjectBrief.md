@@ -50,11 +50,14 @@
 ### 已完成基线
 
 - `0001` 素材导入、`0002` 核心逻辑路线、`0003` 权威对局骨架、`0004` 对局数据模型、`0005` 基础牌可玩规则、`0012` 基础工具库、`0013` Command -> Rule -> Effect 管线、`0014` Rule 层骨架长期重构均已完成并归档到 `Source/Doc/Plan/Archive/`。
+- `0016` 已完成 NoName 规则引擎与 AI 架构对照并归档：SGS 保留服务器权威、强类型、RandomAudit 与 ReplayLog 优势；后续优先建设信息安全的通用 AI 评价框架，再补通用 Trigger/Modifier 能力与身份认知。
 - `0003` 已通过命令行 smoke，`0004` 已通过自动化验收 `SGS.Plan0004.GameContextPrimitives`。
 - 规则层已有核心地基：Command、RuleRegistry、RandomAudit、IndexedStore/TargetQuery、Timing/ActiveEffect、EffectPipeline、ReplayLog、`USGSGameContext`、`USGSGameDriver`。Plan 0005 已补齐杀 / 闪 / 桃与濒死求桃的最小可玩规则纵切；Plan 0013 已将基础牌结算迁移到 `Command -> Rule -> EffectPipeline` 单一管线。代码细节不要在本文件展开，使用 graphify 查询。
 
 ### 当前工作面
 
+- `Source/Doc/Plan/0017-mature-rules-skills-ai-roadmap.md` — `In Progress`。以标准身份局为闭环，分 M1 通用 AI、M2 技能运行时、M3 完整流程、M4 标准内容、M5 身份策略推进；当前正在实施 M1。
+- `Source/Doc/Plan/0017-M1-information-safe-ai-evaluation.md` — `In Progress`。生产实现已完成：BasicAI 已迁移到只消费合法候选和受限 WorldView 的组合评分框架，基础牌评价器、评分明细与稳定决胜已接入，隐藏身份不进入 AI 视图；Development Editor 编译通过，等待 PIE 手工玩法验收。
 - `Source/Doc/Plan/0015-minimal-playable-identity-demo.md` — `In Progress`。固定 `1 真人 + 7 AI` 八人身份局的生产实现已完成：随机座次/身份、身份胜负、完整最小回合、杀闪桃酒、身份 AI 与复用现有 UI 的终局展示已接通，Development Editor 编译通过；按用户要求未新增或运行测试，未新增日志代码，等待 PIE 整局手工验收。
 - `Source/Doc/Plan/0011-native-code-first-ui.md` — `Ready`。UI 长期技术路线父计划。
 - `Source/Doc/Plan/0011-M1-minimal-code-first-table-ui.md` — `In Progress`。最小代码优先牌桌 UI 纵切代码已实现，PIE 默认进入 8 人 Nova 牌桌；摄像机、全视口背景、武将面板和压叠手牌底栏已按 NoName 布局纠偏，1280x720 离屏 UI 截图通过人工检查；`SGS.Plan0011M1.LocalUI.DecisionBridge` 自动化通过，等待 PIE / Standalone 真实点击与主观视觉验收。
@@ -67,6 +70,7 @@
 
 ### 下一步建议
 
+- 完成 `0017-M1` 的通用 AI 评价框架并用 PIE 验收信息隔离与基础牌路径；通过后再建立由真实技能驱动的 M2 子计划。
 - 在 PIE 中完成 `0015` 的一名真人加七名 AI 整局手工验收：优先检查随机座次/身份数量、连续出牌与自动弃牌、酒杀两点伤害、淘汰奖惩和三类终局。验收通过后将 0015 标记 Done/归档。
 - 在 PIE / Standalone 中验收 `0011-M1` 的 8 人 Nova HUD、窗口缩放与 Slash / Dodge / Peach / Pass 点击操作；通过后将 `0011-M1` 按流程归档或推进父计划 0011 的下一阶段。
 - 由独立测试模型验收 `0011-M2` 的 observable/batch/selector、lifetime teardown、typed signal、Table 真实操作链和多 LocalPlayer 隔离；通过后再将 M2 标记 Done。Motion 等两个真实消费者出现后再提炼，CommonUI / 菜单栈按明确需求另立计划。
@@ -121,4 +125,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\GraphifyVisualFilter
 - 每次完成实质性 Plan 或改变项目阶段时，更新第 4 节；不要把 Plan README 变成索引表。
 - 如果内容开始像“所有 Agent 必须遵守的规则”，移到 `Rulers.md`；如果内容只服务某个领域，移到 `Source/Doc/Rules/*`；如果内容是一次开发的方案或验收，留在对应 Plan。
 
-Last reviewed: 2026-07-12
+Last reviewed: 2026-07-20
