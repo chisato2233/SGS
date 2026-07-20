@@ -93,6 +93,7 @@ public:
 
 	// 弃牌：座位手牌 → 弃牌堆。
 	void DiscardFromHand(int32 SeatIndex, const TArray<USGSCard*>& Cards);
+	void EquipCard(int32 SeatIndex, USGSCard* Card, FSGSEquipSlot Slot);
 
 	// 伤害：扣体力 + 广播。濒死/求桃在 Plan 0005；此处仅在体力归零时广播 OnSeatDying。
 	void ApplyDamage(int32 SourceSeat, int32 TargetSeat, int32 Amount);

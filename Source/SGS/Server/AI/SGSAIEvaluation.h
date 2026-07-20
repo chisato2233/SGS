@@ -10,6 +10,9 @@ struct SGS_API FSGSAICardView
 {
 	int32 CardId = INDEX_NONE;
 	FName CardName = NAME_None;
+	FGameplayTag Suit;
+	int32 Number = 0;
+	FGameplayTag CardType;
 };
 
 struct SGS_API FSGSAISeatView
@@ -22,6 +25,42 @@ struct SGS_API FSGSAISeatView
 	bool bIsAlive = false;
 	bool bIdentityKnown = false;
 	FGameplayTag Identity;
+	double HostilityToLord = 0.0;
+};
+
+namespace SGSAIEffectAttitudes
+{
+	SGS_API FName Neutral();
+	SGS_API FName Helpful();
+	SGS_API FName Harmful();
+}
+
+struct SGS_API FSGSAIBehaviorSemantics
+{
+	double Order = 0.0;
+	double Usefulness = 0.0;
+	double Effect = 0.0;
+	double Threat = 0.0;
+	FName TargetAttitude = NAME_None;
+};
+
+struct SGS_API FSGSAIPublicActionObservation
+{
+	int32 ActorSeat = INDEX_NONE;
+	TArray<int32> TargetSeatIndices;
+	FName TargetAttitude = NAME_None;
+	double Strength = 0.0;
+};
+
+class SGS_API FSGSAIBeliefModel
+{
+public:
+	void Reset(int32 SeatCount);
+	void Observe(const FSGSAIPublicActionObservation& Observation, int32 PublicLordSeat);
+	double GetHostilityToLord(int32 SeatIndex) const;
+
+private:
+	TArray<double> HostilityToLordBySeat;
 };
 
 // AI 的只读信息边界。权威隐藏身份和其他玩家手牌不会进入本结构。
@@ -48,6 +87,7 @@ namespace SGSAIActionKinds
 	SGS_API FName UseCard();
 	SGS_API FName RespondCard();
 	SGS_API FName RespondSkill();
+	SGS_API FName ActivateSkill();
 }
 
 struct SGS_API FSGSAIActionCandidate
@@ -56,6 +96,8 @@ struct SGS_API FSGSAIActionCandidate
 	int32 CardId = INDEX_NONE;
 	FName CardName = NAME_None;
 	FName SkillName = NAME_None;
+	FName RuleKindTag = NAME_None;
+	TArray<int32> SelectedCardIds;
 	TArray<int32> TargetSeatIndices;
 	int32 StableOrder = 0;
 	bool bPass = false;
@@ -107,18 +149,27 @@ public:
 	void RegisterGlobal(TSharedRef<ISGSAIActionEvaluator> Evaluator);
 	void RegisterCard(FName CardName, TSharedRef<ISGSAIActionEvaluator> Evaluator);
 	void RegisterSkill(FName SkillName, TSharedRef<ISGSAIActionEvaluator> Evaluator);
+	void RegisterCardSemantics(FName CardName, FSGSAIBehaviorSemantics Semantics);
+	void RegisterSkillSemantics(FName SkillName, FSGSAIBehaviorSemantics Semantics);
+	const FSGSAIBehaviorSemantics* FindSemantics(const FSGSAIActionCandidate& Candidate) const;
 	void GatherEvaluators(const FSGSAIActionCandidate& Candidate, TArray<TSharedRef<ISGSAIActionEvaluator>>& OutEvaluators) const;
 
 private:
 	TArray<TSharedRef<ISGSAIActionEvaluator>> GlobalEvaluators;
 	TMap<FName, TArray<TSharedRef<ISGSAIActionEvaluator>>> CardEvaluators;
 	TMap<FName, TArray<TSharedRef<ISGSAIActionEvaluator>>> SkillEvaluators;
+	TMap<FName, FSGSAIBehaviorSemantics> CardSemantics;
+	TMap<FName, FSGSAIBehaviorSemantics> SkillSemantics;
 };
 
 class SGS_API FSGSAIWorldViewBuilder
 {
 public:
-	static FSGSAIWorldView Build(const USGSGameContext& Context, int32 ObserverSeat, FSGSPhase Phase);
+	static FSGSAIWorldView Build(
+		const USGSGameContext& Context,
+		int32 ObserverSeat,
+		FSGSPhase Phase,
+		const FSGSAIBeliefModel* Beliefs = nullptr);
 };
 
 class SGS_API FSGSAIDecisionEngine
@@ -138,6 +189,11 @@ public:
 };
 
 namespace SGSBasicAIEvaluators
+{
+	SGS_API void Register(FSGSAIEvaluatorRegistry& Registry);
+}
+
+namespace SGSStandardAISemantics
 {
 	SGS_API void Register(FSGSAIEvaluatorRegistry& Registry);
 }

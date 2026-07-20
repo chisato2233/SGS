@@ -10,6 +10,18 @@
 #include "SGSRuleEventPayloads.generated.h"
 
 USTRUCT()
+struct SGS_API FSGSDamageEventData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	int32 CardId = INDEX_NONE;
+
+	UPROPERTY()
+	int32 Amount = 0;
+};
+
+USTRUCT()
 struct SGS_API FSGSRuleEventPayload
 {
 	GENERATED_BODY()

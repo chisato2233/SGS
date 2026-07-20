@@ -134,6 +134,24 @@ struct SGS_API FSGSDecisionSkillViewData
 	bool bRequiresCard = false;
 
 	UPROPERTY()
+	FName RuleKindTag = NAME_None;
+
+	UPROPERTY()
+	FName ResultCardName = NAME_None;
+
+	UPROPERTY()
+	int32 MinCardCount = 0;
+
+	UPROPERTY()
+	int32 MaxCardCount = 0;
+
+	UPROPERTY()
+	int32 MinTargetCount = 0;
+
+	UPROPERTY()
+	int32 MaxTargetCount = 0;
+
+	UPROPERTY()
 	TArray<int32> SelectableCardIds;
 
 	UPROPERTY()

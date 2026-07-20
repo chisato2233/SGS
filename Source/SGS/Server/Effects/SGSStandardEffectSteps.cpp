@@ -2,6 +2,7 @@
 
 #include "Shared/Cards/SGSCard.h"
 #include "Server/Engine/SGSGameContext.h"
+#include "Server/Players/SGSSeat.h"
 
 namespace
 {
@@ -66,6 +67,7 @@ FName SGSCardMoveReasons::Use() { return FName(TEXT("SGS.CardMove.Use")); }
 FName SGSCardMoveReasons::Respond() { return FName(TEXT("SGS.CardMove.Respond")); }
 FName SGSCardMoveReasons::Discard() { return FName(TEXT("SGS.CardMove.Discard")); }
 FName SGSCardMoveReasons::Cleanup() { return FName(TEXT("SGS.CardMove.Cleanup")); }
+FName SGSCardMoveReasons::Gain() { return FName(TEXT("SGS.CardMove.Gain")); }
 
 FSGSEffectStep SGSStandardEffectSteps::MakeMoveCardsStep(
 	TArray<USGSCard*> Cards,
@@ -206,6 +208,78 @@ FSGSEffectStep SGSStandardEffectSteps::MakeHealStep(int32 SeatIndex, int32 Amoun
 			TEXT("Seat=%d Amount=%d"),
 			SeatIndex,
 			Amount));
+		return FSGSEffectResult::Success();
+	};
+	return Step;
+}
+
+FSGSEffectStep SGSStandardEffectSteps::MakeEquipCardStep(int32 SeatIndex, USGSCard* Card, FSGSEquipSlot Slot)
+{
+	FSGSEffectStep Step;
+	Step.StepName = FName(TEXT("SGS.Effect.EquipCard"));
+	Step.SourceName = FName(TEXT("StandardEffect.EquipCard"));
+	Step.Execute = [SeatIndex, Card = TObjectPtr<USGSCard>(Card), Slot](FSGSEffectContext& Context)
+	{
+		USGSSeat* Seat = Context.GameContext->GetSeat(SeatIndex);
+		USGSCard* ReplacedCard = Seat != nullptr ? Seat->Equipment.FindRef(Slot).Get() : nullptr;
+		Context.GameContext->EquipCard(SeatIndex, Card.Get(), Slot);
+		if (ReplacedCard != nullptr)
+		{
+			AppendCardMoveEvent(
+				Context,
+				SGSCardMoveReasons::Cleanup(),
+				{ ReplacedCard },
+				SGSGameplayTags::CardZone_Equipment.GetTag(),
+				SeatIndex,
+				SGSGameplayTags::CardZone_DiscardPile.GetTag(),
+				INDEX_NONE,
+				{});
+		}
+		AppendCardMoveEvent(
+			Context,
+			SGSCardMoveReasons::Use(),
+			{ Card.Get() },
+			SGSGameplayTags::CardZone_Hand.GetTag(),
+			SeatIndex,
+			SGSGameplayTags::CardZone_Equipment.GetTag(),
+			SeatIndex,
+			{});
+		return FSGSEffectResult::Success();
+	};
+	return Step;
+}
+
+FSGSEffectStep SGSStandardEffectSteps::MakeJudgementDrawStep(
+	int32 SeatIndex,
+	TSharedRef<TObjectPtr<USGSCard>> OutJudgementCard)
+{
+	FSGSEffectStep Step;
+	Step.StepName = FName(TEXT("SGS.Effect.JudgementDraw"));
+	Step.SourceName = FName(TEXT("StandardEffect.JudgementDraw"));
+	Step.Execute = [SeatIndex, OutJudgementCard](FSGSEffectContext& Context)
+	{
+		TArray<USGSCard*> Cards = Context.GameContext->DrawCards(SeatIndex, 1);
+		if (Cards.IsEmpty())
+		{
+			return FSGSEffectResult::Success();
+		}
+		USGSCard* Card = Cards[0];
+		Context.GameContext->MoveCards(
+			{ Card },
+			SGSGameplayTags::CardZone_Hand.GetTag(),
+			SeatIndex,
+			SGSGameplayTags::CardZone_Processing.GetTag(),
+			INDEX_NONE);
+		OutJudgementCard.Get() = Card;
+		AppendCardMoveEvent(
+			Context,
+			SGSCardMoveReasons::Draw(),
+			{ Card },
+			SGSGameplayTags::CardZone_DrawPile.GetTag(),
+			INDEX_NONE,
+			SGSGameplayTags::CardZone_Processing.GetTag(),
+			INDEX_NONE,
+			{ SeatIndex });
 		return FSGSEffectResult::Success();
 	};
 	return Step;

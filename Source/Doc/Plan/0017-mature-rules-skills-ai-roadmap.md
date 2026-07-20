@@ -4,7 +4,7 @@
 |---|---|
 | 状态 | `In Progress` |
 | 创建日期 | 2026-07-20 |
-| 最近更新 | 2026-07-20 |
+| 最近更新 | 2026-07-21 |
 | 关联需求 | `0000-RawRequirements.md` 中的第 30 条 |
 | 关联代码 | `Source/SGS/Server/AI/`、`Source/SGS/Server/Rules/`、`Source/SGS/Server/Engine/` |
 
@@ -66,3 +66,4 @@
 
 - 2026-07-20：路线确定，以标准身份局为内容闭环；开始实施 `0017-M1-information-safe-ai-evaluation.md`。
 - 2026-07-20：M1 生产代码与 Development Editor 编译完成，等待 PIE 手工玩法验收后关闭子计划。
+- 2026-07-21：用户要求连续完成 M1—M5；开始实施 `0017-M2-standard-skill-runtime.md`，不新增或运行测试代码。

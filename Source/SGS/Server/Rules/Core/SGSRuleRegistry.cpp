@@ -1,6 +1,9 @@
 #include "Server/Rules/Core/SGSRuleRegistry.h"
 
 #include "Server/Rules/BasicCards/SGSBasicCardRules.h"
+#include "Server/Rules/StandardCards/SGSEquipmentRules.h"
+#include "Server/Rules/StandardCards/SGSStandardTrickRules.h"
+#include "Server/Rules/StandardCards/SGSDelayedTrickRules.h"
 
 namespace
 {
@@ -297,6 +300,33 @@ FSGSStatus FSGSRuleRegistry::DispatchAll(FSGSRuleExecutionContext& Context) cons
 	return MakeValue();
 }
 
+int32 FSGSRuleRegistry::ApplyNumericModifiers(
+	const FSGSRuleQueryContext& Context,
+	FSGSNumericRuleQuery Query) const
+{
+	Query.Value = Query.BaseValue;
+	for (const FSGSRuleEntry* Entry : FindQueryEntries(SGSRuleKinds::Modifier(), Query.QueryName))
+	{
+		Entry->Rule->ModifyNumericQuery(Context, Query);
+	}
+	return Query.Value;
+}
+
+TArray<FSGSDecisionSkillOption> FSGSRuleRegistry::CollectSkillOptions(
+	const FSGSRuleQueryContext& Context,
+	FSGSSkillOptionQuery Query) const
+{
+	for (const FSGSRuleEntry* Entry : FindQueryEntries(SGSRuleKinds::ViewAs(), NAME_None))
+	{
+		Entry->Rule->CollectSkillOptions(Context, Query);
+	}
+	for (const FSGSRuleEntry* Entry : FindQueryEntries(SGSRuleKinds::Action(), NAME_None))
+	{
+		Entry->Rule->CollectSkillOptions(Context, Query);
+	}
+	return MoveTemp(Query.Options);
+}
+
 bool FSGSRuleRegistry::CheckInvariants() const
 {
 	bool bOk = true;
@@ -405,7 +435,41 @@ TArray<const FSGSRuleEntry*> FSGSRuleRegistry::FindCandidateEntries(const FSGSRu
 	return Entries;
 }
 
+TArray<const FSGSRuleEntry*> FSGSRuleRegistry::FindQueryEntries(FName RuleKindTag, FName SubjectName) const
+{
+	TArray<const FSGSRuleEntry*> Entries;
+	if (!RulesByKind.IsValid())
+	{
+		return Entries;
+	}
+
+	for (const FSGSStableHandle& Handle : RulesByKind->FindCopy(RuleKindTag))
+	{
+		const FSGSRuleEntry* Entry = Rules.Find(Handle);
+		if (Entry != nullptr
+			&& (SubjectName.IsNone()
+				|| Entry->Descriptor.bWildcardSubject
+				|| Entry->Descriptor.SubjectName == SubjectName))
+		{
+			Entries.Add(Entry);
+		}
+	}
+
+	Entries.Sort([](const FSGSRuleEntry& Left, const FSGSRuleEntry& Right)
+	{
+		if (Left.Descriptor.Priority != Right.Descriptor.Priority)
+		{
+			return Left.Descriptor.Priority > Right.Descriptor.Priority;
+		}
+		return Left.RegistrationOrder < Right.RegistrationOrder;
+	});
+	return Entries;
+}
+
 void SGSRules::RegisterDefaultRules(FSGSRuleRegistry& Registry)
 {
 	SGSBasicCardRules::Register(Registry);
+	SGSEquipmentRules::Register(Registry);
+	SGSStandardTrickRules::Register(Registry);
+	SGSDelayedTrickRules::Register(Registry);
 }

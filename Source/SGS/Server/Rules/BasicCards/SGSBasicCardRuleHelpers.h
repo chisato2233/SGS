@@ -31,6 +31,7 @@ namespace SGSBasicCardRuleHelpers
 	int32 GetCommandSeat(const FSGSRuleExecutionContext& Context);
 	FSGSCommandId GetCommandId(const FSGSRuleExecutionContext& Context);
 	bool HasStatus(const FSGSRuleExecutionContext& Context, int32 SeatIndex, FGameplayTag StatusTag);
+	int32 CountStatus(const FSGSRuleExecutionContext& Context, int32 SeatIndex, FGameplayTag StatusTag);
 	void AddStatus(
 		FSGSRuleExecutionContext& Context,
 		int32 SeatIndex,
@@ -48,4 +49,13 @@ namespace SGSBasicCardRuleHelpers
 	FSGSStatus ContinueDyingPeachOrEliminate(FSGSRuleExecutionContext& Context);
 	FSGSStatus StartDyingPeachResolution(FSGSRuleExecutionContext& Context, int32 DyingSeatIndex);
 	FSGSStatus ResolveSlashHit(FSGSRuleExecutionContext& Context);
+	FSGSStatus ValidateSlashUse(
+		FSGSRuleExecutionContext& Context,
+		USGSCard* MaterialCard,
+		TConstArrayView<int32> TargetSeatIndices);
+	FSGSStatus ExecuteSlashUse(
+		FSGSRuleExecutionContext& Context,
+		USGSCard* MaterialCard,
+		TConstArrayView<int32> TargetSeatIndices,
+		FName SourceRuleName);
 }

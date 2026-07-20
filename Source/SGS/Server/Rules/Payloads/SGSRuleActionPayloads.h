@@ -37,3 +37,31 @@ struct SGS_API FSGSUseCardRulePayload
 			EffectTargetSeat);
 	}
 };
+
+USTRUCT()
+struct SGS_API FSGSActivateSkillRulePayload
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FName SkillName = NAME_None;
+
+	UPROPERTY()
+	FName ResultCardName = NAME_None;
+
+	UPROPERTY()
+	TArray<int32> SelectedCardIds;
+
+	UPROPERTY()
+	TArray<int32> TargetSeatIndices;
+
+	FString ToPayloadLogString() const
+	{
+		return FString::Printf(
+			TEXT("ActivateSkill Skill=%s ResultCard=%s Cards=[%s] Targets=[%s]"),
+			*SkillName.ToString(),
+			*ResultCardName.ToString(),
+			*SGSRulePayloadLog::JoinIntArray(SelectedCardIds),
+			*SGSRulePayloadLog::JoinIntArray(TargetSeatIndices));
+	}
+};

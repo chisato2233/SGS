@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
 #include "Shared/Decisions/SGSDecisionAgent.h"
+#include "Server/AI/SGSAIEvaluation.h"
 #include "SGSBasicAIAgent.generated.h"
 
 class USGSGameContext;
@@ -23,10 +24,12 @@ public:
 
 	virtual void RequestPlayPhaseAction(const FSGSPlayPhaseRequest& Request, FSGSPlayPhaseDecisionDelegate OnDecided) override;
 	virtual void RequestResponseAction(const FSGSResponseRequest& Request, FSGSResponseDecisionDelegate OnDecided) override;
+	void ObservePublicAction(const FSGSAIPublicActionObservation& Observation, int32 PublicLordSeat);
 
 private:
 	TWeakObjectPtr<USGSGameContext> Context;
 	const FSGSAIEvaluatorRegistry* EvaluatorRegistry = nullptr;
 	int32 SeatIndex = INDEX_NONE;
 	float ThinkDelaySeconds = 0.45f;
+	FSGSAIBeliefModel BeliefModel;
 };

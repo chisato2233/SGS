@@ -100,8 +100,14 @@ bool FSGSTableFeatureController::Confirm()
 				Interaction.SelectedCardId,
 				Interaction.SelectedTargetSeat,
 				Interaction.SelectedSkillName)
-		: Bindings.SubmitUseCard
-			&& Bindings.SubmitUseCard(Interaction.SelectedCardId, Interaction.SelectedTargetSeat);
+		: !Interaction.SelectedSkillName.IsNone()
+			? Bindings.SubmitSkill
+				&& Bindings.SubmitSkill(
+					Interaction.SelectedSkillName,
+					Interaction.SelectedCardIds,
+					Interaction.SelectedTargetSeat)
+			: Bindings.SubmitUseCard
+				&& Bindings.SubmitUseCard(Interaction.SelectedCardId, Interaction.SelectedTargetSeat);
 	if (!bSubmitted)
 	{
 		PublishToast(FText::FromString(TEXT("The action was rejected.")), false);

@@ -99,6 +99,25 @@ void AddUniqueInts(TArray<int32>& Target, const TArray<int32>& Source)
 	}
 }
 
+FSGSDecisionSkillViewData MakeSkillView(const FSGSDecisionSkillOption& SkillOption)
+{
+	FSGSDecisionSkillViewData SkillView;
+	SkillView.SkillName = SkillOption.SkillName;
+	SkillView.DisplayName = SkillOption.DisplayName.IsNone()
+		? SkillOption.SkillName.ToString()
+		: SkillOption.DisplayName.ToString();
+	SkillView.bRequiresCard = SkillOption.RequiresCard();
+	SkillView.RuleKindTag = SkillOption.RuleKindTag;
+	SkillView.ResultCardName = SkillOption.ResultCardName;
+	SkillView.MinCardCount = SkillOption.MinCardCount;
+	SkillView.MaxCardCount = SkillOption.MaxCardCount;
+	SkillView.MinTargetCount = SkillOption.MinTargetCount;
+	SkillView.MaxTargetCount = SkillOption.MaxTargetCount;
+	SkillView.SelectableCardIds = SkillOption.SelectableCardIds;
+	SkillView.SelectableTargetSeatIndices = SkillOption.TargetSeatIndices;
+	return SkillView;
+}
+
 void ApplyPromptSnapshot(FSGSPlayerPrivateSnapshot& Snapshot, const USGSLocalHumanDecisionAgent* DecisionAgent)
 {
 	Snapshot.Prompt = FSGSDecisionPromptViewData();
@@ -118,6 +137,16 @@ void ApplyPromptSnapshot(FSGSPlayerPrivateSnapshot& Snapshot, const USGSLocalHum
 			Snapshot.Prompt.SelectableCardIds.AddUnique(Option.CardId);
 			AddUniqueInts(Snapshot.Prompt.SelectableTargetSeatIndices, Option.TargetSeatIndices);
 			Snapshot.Prompt.SetTargetSeatIndicesForCard(Option.CardId, Option.TargetSeatIndices);
+		}
+		for (const FSGSDecisionSkillOption& SkillOption : PlayRequest->SkillOptions)
+		{
+			if (SkillOption.SkillName.IsNone())
+			{
+				continue;
+			}
+			FSGSDecisionSkillViewData SkillView = MakeSkillView(SkillOption);
+			AddUniqueInts(Snapshot.Prompt.SelectableTargetSeatIndices, SkillView.SelectableTargetSeatIndices);
+			Snapshot.Prompt.SkillOptions.Add(MoveTemp(SkillView));
 		}
 	}
 	else if (const FSGSResponseRequest* ResponseRequest = DecisionAgent->GetPendingResponseRequest())
@@ -152,14 +181,7 @@ void ApplyPromptSnapshot(FSGSPlayerPrivateSnapshot& Snapshot, const USGSLocalHum
 				continue;
 			}
 
-			FSGSDecisionSkillViewData SkillView;
-			SkillView.SkillName = SkillOption.SkillName;
-			SkillView.DisplayName = SkillOption.DisplayName.IsNone()
-				? SkillOption.SkillName.ToString()
-				: SkillOption.DisplayName.ToString();
-			SkillView.bRequiresCard = SkillOption.bRequiresCard;
-			SkillView.SelectableCardIds = SkillOption.SelectableCardIds;
-			SkillView.SelectableTargetSeatIndices = SkillOption.TargetSeatIndices;
+			FSGSDecisionSkillViewData SkillView = MakeSkillView(SkillOption);
 			if (SkillView.SelectableTargetSeatIndices.IsEmpty()
 				&& ResponseRequest->EffectTargetSeat != INDEX_NONE)
 			{

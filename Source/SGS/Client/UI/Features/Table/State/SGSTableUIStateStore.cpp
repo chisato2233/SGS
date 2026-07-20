@@ -12,6 +12,7 @@ bool SameSnapshotRevision(const FSGSTableViewSnapshot& A, const FSGSTableViewSna
 bool SameInteraction(const FSGSTableUIInteractionState& A, const FSGSTableUIInteractionState& B)
 {
 	return A.SelectedCardId == B.SelectedCardId
+		&& A.SelectedCardIds == B.SelectedCardIds
 		&& A.SelectedTargetSeat == B.SelectedTargetSeat
 		&& A.SelectedSkillName == B.SelectedSkillName;
 }
@@ -147,7 +148,30 @@ bool FSGSTableUIStateStore::SelectCard(int32 CardId)
 	}
 
 	FSGSTableUIInteractionState Next = InteractionState.Get();
-	Next.SelectedCardId = CardId;
+	if (const FSGSDecisionSkillViewData* Skill = GetSelectedSkillOption())
+	{
+		if (Skill->MaxCardCount > 1)
+		{
+			if (Next.SelectedCardIds.Contains(CardId))
+			{
+				Next.SelectedCardIds.Remove(CardId);
+			}
+			else if (Next.SelectedCardIds.Num() < Skill->MaxCardCount)
+			{
+				Next.SelectedCardIds.Add(CardId);
+			}
+		}
+		else
+		{
+			Next.SelectedCardIds = { CardId };
+		}
+		Next.SelectedCardId = Next.SelectedCardIds.IsEmpty() ? INDEX_NONE : Next.SelectedCardIds.Last();
+	}
+	else
+	{
+		Next.SelectedCardId = CardId;
+		Next.SelectedCardIds = { CardId };
+	}
 	const TArray<int32> Targets = GetTargetsForCard(CardId);
 	if (Targets.Num() == 1)
 	{
@@ -177,7 +201,7 @@ bool FSGSTableUIStateStore::SelectTarget(int32 TargetSeatIndex)
 
 bool FSGSTableUIStateStore::SelectSkill(FName SkillName)
 {
-	if (!bHasSnapshot || !GetSnapshot().Prompt.bHasPrompt || !GetSnapshot().Prompt.bIsResponse)
+	if (!bHasSnapshot || !GetSnapshot().Prompt.bHasPrompt)
 	{
 		return false;
 	}
@@ -190,6 +214,7 @@ bool FSGSTableUIStateStore::SelectSkill(FName SkillName)
 	FSGSTableUIInteractionState Next = InteractionState.Get();
 	Next.SelectedSkillName = Next.SelectedSkillName == SkillName ? NAME_None : SkillName;
 	Next.SelectedCardId = INDEX_NONE;
+	Next.SelectedCardIds.Reset();
 	Next.SelectedTargetSeat = INDEX_NONE;
 	FSGSUIStateBatch Batch;
 	InteractionState.Set(MoveTemp(Next));
@@ -224,9 +249,17 @@ bool FSGSTableUIStateStore::IsSelectionComplete() const
 	const FSGSTableUIInteractionState& Interaction = GetInteractionState();
 	if (const FSGSDecisionSkillViewData* Skill = GetSelectedSkillOption())
 	{
-		if (Skill->bRequiresCard && !Skill->SelectableCardIds.Contains(Interaction.SelectedCardId))
+		if (Interaction.SelectedCardIds.Num() < Skill->MinCardCount
+			|| Interaction.SelectedCardIds.Num() > Skill->MaxCardCount)
 		{
 			return false;
+		}
+		for (const int32 CardId : Interaction.SelectedCardIds)
+		{
+			if (!Skill->SelectableCardIds.Contains(CardId))
+			{
+				return false;
+			}
 		}
 	}
 	else if (!GetSnapshot().Prompt.SelectableCardIds.Contains(Interaction.SelectedCardId))
@@ -389,14 +422,25 @@ void FSGSTableUIStateStore::NormalizeSelection()
 	}
 	else if (Skill != nullptr)
 	{
-		if (!Skill->bRequiresCard || !Skill->SelectableCardIds.Contains(Next.SelectedCardId))
+		Next.SelectedCardIds.RemoveAll(
+			[Skill](int32 CardId)
+			{
+				return !Skill->SelectableCardIds.Contains(CardId);
+			});
+		if (Next.SelectedCardIds.Num() > Skill->MaxCardCount)
 		{
-			Next.SelectedCardId = INDEX_NONE;
+			Next.SelectedCardIds.SetNum(Skill->MaxCardCount);
 		}
+		if (!Skill->bRequiresCard)
+		{
+			Next.SelectedCardIds.Reset();
+		}
+		Next.SelectedCardId = Next.SelectedCardIds.IsEmpty() ? INDEX_NONE : Next.SelectedCardIds.Last();
 	}
 	else if (!Snapshot.Prompt.SelectableCardIds.Contains(Next.SelectedCardId))
 	{
 		Next.SelectedCardId = INDEX_NONE;
+		Next.SelectedCardIds.Reset();
 	}
 
 	TArray<int32> Targets;

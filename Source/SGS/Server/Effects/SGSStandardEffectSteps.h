@@ -19,6 +19,7 @@ namespace SGSCardMoveReasons
 	SGS_API FName Respond();
 	SGS_API FName Discard();
 	SGS_API FName Cleanup();
+	SGS_API FName Gain();
 }
 
 struct SGS_API FSGSCardMoveEventMetadata
@@ -43,6 +44,10 @@ namespace SGSStandardEffectSteps
 		FSGSCardMoveEventMetadata Metadata = {});
 	SGS_API FSGSEffectStep MakeDamageStep(int32 SourceSeat, int32 TargetSeat, int32 Amount);
 	SGS_API FSGSEffectStep MakeHealStep(int32 SeatIndex, int32 Amount);
+	SGS_API FSGSEffectStep MakeEquipCardStep(int32 SeatIndex, USGSCard* Card, FSGSEquipSlot Slot);
+	SGS_API FSGSEffectStep MakeJudgementDrawStep(
+		int32 SeatIndex,
+		TSharedRef<TObjectPtr<USGSCard>> OutJudgementCard);
 	SGS_API FSGSEffectStep MakeEliminateSeatStep(int32 SeatIndex, int32 SourceSeat, FName Reason);
 	SGS_API FSGSEffectStep MakeJudgementPlaceholderStep(int32 SeatIndex, FName Reason);
 	SGS_API FSGSEffectStep MakeReactionWindowStep(int32 SeatIndex, FName WindowName);

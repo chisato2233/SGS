@@ -90,6 +90,7 @@ private:
 	void ExecuteDiscardPhase();
 	void ExpireStatusEffects(int32 SeatIndex, FGameplayTag StatusTag);
 	void Broadcast(FSGSGameEvent Event);
+	FSGSStatus PublishPhaseTiming(FGameplayTag EventTag, FName Step);
 
 	// 出牌阶段动作的应答回调（可能同步或跨帧触发）。
 	void OnPlayActionDecided(const FSGSPlayPhaseDecision& Decision);
@@ -117,13 +118,18 @@ private:
 	void DispatchDeferredResponseRequest();
 	FSGSStatus FinishCurrentResolution(FName Reason = FName(TEXT("SGS.Resolution.Complete")));
 	FSGSStatus ResumeResolutionParentAfterChild(const FSGSResolutionFrame& CompletedFrame);
+	FSGSStatus ResumeStandardTrickResolution();
 	bool OpenNextDyingPeachResponseWindow(FSGSResolutionFrame& DyingFrame);
 	FSGSStatus ContinueDyingPeachFrame(FSGSResolutionFrame& DyingFrame);
 	void ClearDeferredResponseRequest();
 	FSGSStatus PublishTimingEvent(const FSGSRuleEventPayload& Payload);
 	void ExecuteDrawPhaseThroughPipeline();
+	void ExecuteJudgementPhaseThroughRules();
+	bool ResolveJudgementCard(USGSCard* DelayedTrickCard);
+	bool HasStatusEffect(int32 SeatIndex, FGameplayTag StatusTag) const;
 	FSGSStatus RunEffectStep(FSGSEffectStep Step, FSGSCommandId CommandId = FSGSCommandId());
 	void SyncReplayLog();
+	void PublishAIObservation(const FSGSRuleInvocation& Invocation);
 
 	static FSGSPhase NextPhase(FSGSPhase Phase);
 	FSGSCommandId AllocateCommandId();
@@ -149,6 +155,8 @@ private:
 
 	bool bGameOver = false;
 	bool bWaitingForDecision = false;
+	bool bCurrentPhaseEntered = false;
+	bool bResumeCurrentPhaseAfterResolution = false;
 
 	// 防止应答同步回调时重入 Pump（AI 立即应答的常见情形）。
 	bool bPumping = false;

@@ -18,6 +18,12 @@ struct SGS_API FSGSRespondCardRulePayload
 	FName CardName = NAME_None;
 
 	UPROPERTY()
+	FName MaterialCardName = NAME_None;
+
+	UPROPERTY()
+	FName SkillName = NAME_None;
+
+	UPROPERTY()
 	TArray<int32> TargetSeatIndices;
 
 	UPROPERTY()

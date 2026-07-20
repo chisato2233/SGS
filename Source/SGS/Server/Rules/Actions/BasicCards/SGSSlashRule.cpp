@@ -45,97 +45,19 @@ bool FSGSSlashRule::CanHandlePayload(const FSGSRuleExecutionContext& Context, co
 
 FSGSStatus FSGSSlashRule::ValidatePayload(FSGSRuleExecutionContext& Context, const FSGSUseCardRulePayload& Payload) const
 {
-	if (Payload.TargetSeatIndices.Num() != 1)
-	{
-		return SGSBasicCardRuleHelpers::MakeRuleError(
-			FName(TEXT("SGS.Rule.InvalidTarget")),
-			TEXT("Slash requires exactly one target."));
-	}
-
-	const int32 SourceSeat = SGSBasicCardRuleHelpers::GetCommandSeat(Context);
-	const int32 TargetSeat = Payload.TargetSeatIndices[0];
-	if (SGSBasicCardRuleHelpers::HasStatus(Context, SourceSeat, SGSGameplayTags::Status_SlashUsed.GetTag()))
-	{
-		return SGSBasicCardRuleHelpers::MakeRuleError(
-			FName(TEXT("SGS.Rule.SlashAlreadyUsed")),
-			TEXT("Slash can only be used once per play phase."));
-	}
-
 	USGSCard* SlashCard = SGSBasicCardRuleHelpers::FindPayloadCard(Context, Payload.CardId);
-	if (SlashCard == nullptr || SlashCard->CardName != TEXT("Slash") || Context.GameContext->GetSeat(TargetSeat) == nullptr || TargetSeat == SourceSeat)
+	if (SlashCard == nullptr || SlashCard->CardName != TEXT("Slash"))
 	{
 		return SGSBasicCardRuleHelpers::MakeRuleError(
 			FName(TEXT("SGS.Rule.InvalidSlash")),
 			TEXT("Slash requires a Slash card and a valid non-self target."));
 	}
 
-	if (Context.GameContext->GetDistance(SourceSeat, TargetSeat) > 1)
-	{
-		return SGSBasicCardRuleHelpers::MakeRuleError(
-			FName(TEXT("SGS.Rule.TargetOutOfDistance")),
-			TEXT("Slash target is out of distance."));
-	}
-
-	return MakeValue();
+	return SGSBasicCardRuleHelpers::ValidateSlashUse(Context, SlashCard, Payload.TargetSeatIndices);
 }
 
 FSGSStatus FSGSSlashRule::ExecutePayload(FSGSRuleExecutionContext& Context, const FSGSUseCardRulePayload& Payload) const
 {
 	USGSCard* SlashCard = SGSBasicCardRuleHelpers::FindPayloadCard(Context, Payload.CardId);
-	const int32 SourceSeat = SGSBasicCardRuleHelpers::GetCommandSeat(Context);
-	const int32 TargetSeat = Payload.TargetSeatIndices[0];
-
-	if (FSGSStatus Status = Context.Runtime->RunEffectStep(SGSStandardEffectSteps::MakeMoveCardsStep(
-		TArray<USGSCard*>{ SlashCard },
-		SGSGameplayTags::CardZone_Hand.GetTag(),
-		SourceSeat,
-		SGSGameplayTags::CardZone_Processing.GetTag(),
-		INDEX_NONE,
-		{ SGSCardMoveReasons::Use(), { TargetSeat } }),
-		SGSBasicCardRuleHelpers::GetCommandId(Context));
-		Status.HasError())
-	{
-		return Status;
-	}
-
-	FSGSSlashResolutionState SlashState;
-	SlashState.SlashCardId = SlashCard->CardId;
-	SlashState.SourceSeat = SourceSeat;
-	SlashState.TargetSeat = TargetSeat;
-	SlashState.DamageAmount = SGSBasicCardRuleHelpers::ConsumeStatus(
-		Context,
-		SourceSeat,
-		SGSGameplayTags::Status_AnalepticBoost.GetTag()) ? 2 : 1;
-	SGSBasicCardRuleHelpers::AddStatus(
-		Context,
-		SourceSeat,
-		FName(TEXT("SGS.ActiveEffect.SlashUsed")),
-		SGSGameplayTags::Status_SlashUsed.GetTag(),
-		FSGSDurationSpec::ThisPhase(SourceSeat, Context.TimingPoint));
-
-	FSGSResolutionFrame Frame;
-	Frame.SourceRuleName = GetRuleName();
-	Frame.SourceCommandId = SGSBasicCardRuleHelpers::GetCommandId(Context);
-	Frame.ActorSeat = SourceSeat;
-	Frame.SourceSeat = SourceSeat;
-	Frame.TargetSeat = TargetSeat;
-	Frame.ProcessingCardId = SlashCard->CardId;
-	Frame.OnChildCompletedContinuation = SGSResolutionContinuations::FinishParentCardResolution();
-	Frame.FrameState = FInstancedStruct::Make(SlashState);
-	Context.Runtime->PushResolutionFrame(MoveTemp(Frame));
-
-	FSGSRuleResponseWindowSpec WindowSpec;
-	WindowSpec.SeatIndex = TargetSeat;
-	WindowSpec.WindowName = SGSBasicCardRuleHelpers::SlashDodgeWindowName();
-	WindowSpec.RequiredCardName = FName(TEXT("Dodge"));
-	WindowSpec.AcceptedCardNames.Add(FName(TEXT("Dodge")));
-	WindowSpec.ContextName = FName(TEXT("Slash"));
-	WindowSpec.EffectSourceSeat = SourceSeat;
-	WindowSpec.EffectTargetSeat = TargetSeat;
-	if (Context.Runtime->OpenResponseWindow(WindowSpec))
-	{
-		return MakeValue();
-	}
-
-	return SGSBasicCardRuleHelpers::ResolveSlashHit(Context);
+	return SGSBasicCardRuleHelpers::ExecuteSlashUse(Context, SlashCard, Payload.TargetSeatIndices, GetRuleName());
 }

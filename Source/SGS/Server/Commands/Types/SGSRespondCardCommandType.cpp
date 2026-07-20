@@ -51,21 +51,28 @@ FSGSStatus FSGSRespondCardCommandType::ValidateTyped(
 	}
 
 	const FSGSCardState* State = FindRespondCardHandCardStateById(Payload.CardId, Command, Context);
-	if (State == nullptr)
+	if (Payload.SkillName.IsNone() && State == nullptr)
 	{
 		return MakeError(FSGSError::Make(
 			FName(TEXT("SGS.Command.InvalidCard")),
 			TEXT("RespondCard requires exactly one card currently in the responding seat's hand.")));
 	}
+	if (!Payload.SkillName.IsNone() && Payload.ResultCardName.IsNone())
+	{
+		return MakeError(FSGSError::Make(
+			FName(TEXT("SGS.Command.InvalidSkillResponse")),
+			TEXT("A skill response requires its server-listed result card name.")));
+	}
 
+	const FName EffectiveCardName = Payload.SkillName.IsNone() ? State->CardName : Payload.ResultCardName;
 	const bool bCardNameAccepted = Context.AcceptedCardNames.IsEmpty()
-		? Context.RequiredCardName.IsNone() || State->CardName == Context.RequiredCardName
-		: Context.AcceptedCardNames.Contains(State->CardName);
+		? Context.RequiredCardName.IsNone() || EffectiveCardName == Context.RequiredCardName
+		: Context.AcceptedCardNames.Contains(EffectiveCardName);
 	if (!bCardNameAccepted)
 	{
 		return MakeError(FSGSError::Make(
 			FName(TEXT("SGS.Command.CardNameMismatch")),
-			FString::Printf(TEXT("Required=%s Actual=%s"), *Context.RequiredCardName.ToString(), *State->CardName.ToString())));
+			FString::Printf(TEXT("Required=%s Actual=%s"), *Context.RequiredCardName.ToString(), *EffectiveCardName.ToString())));
 	}
 
 	return MakeValue();
@@ -77,7 +84,7 @@ TSGSResult<FSGSRuleInvocation> FSGSRespondCardCommandType::BuildRuleInvocationTy
 	const FSGSCommandExecutionContext& Context) const
 {
 	const FSGSCardState* State = FindRespondCardHandCardStateById(Payload.CardId, Command, Context);
-	if (State == nullptr)
+	if (Payload.SkillName.IsNone() && State == nullptr)
 	{
 		return MakeError(FSGSError::Make(
 			FName(TEXT("SGS.Command.InvalidCard")),
@@ -86,7 +93,9 @@ TSGSResult<FSGSRuleInvocation> FSGSRespondCardCommandType::BuildRuleInvocationTy
 
 	FSGSRespondCardRulePayload RulePayload;
 	RulePayload.CardId = Payload.CardId;
-	RulePayload.CardName = State->CardName;
+	RulePayload.CardName = Payload.SkillName.IsNone() ? State->CardName : Payload.ResultCardName;
+	RulePayload.MaterialCardName = State != nullptr ? State->CardName : NAME_None;
+	RulePayload.SkillName = Payload.SkillName;
 	RulePayload.TargetSeatIndices = Payload.TargetSeatIndices;
 	RulePayload.WindowName = Payload.WindowName;
 	RulePayload.RequiredCardName = Context.RequiredCardName;
@@ -97,7 +106,7 @@ TSGSResult<FSGSRuleInvocation> FSGSRespondCardCommandType::BuildRuleInvocationTy
 	FSGSRuleInvocation Invocation;
 	Invocation.RuleKindTag = SGSRuleKinds::Response();
 	Invocation.IntentTag = Command.Type;
-	Invocation.SubjectName = State->CardName;
+	Invocation.SubjectName = RulePayload.CardName;
 	Invocation.ActorSeat = Command.SeatIndex;
 	Invocation.WindowName = Payload.WindowName;
 	Invocation.SourceCommandId = Command.CommandId;

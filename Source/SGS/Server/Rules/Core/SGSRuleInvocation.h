@@ -67,6 +67,10 @@ struct SGS_API FSGSRuleInvocation
 		{
 			return UseCardPayload->ToPayloadLogString();
 		}
+		if (const FSGSActivateSkillRulePayload* SkillPayload = GetPayload<FSGSActivateSkillRulePayload>())
+		{
+			return SkillPayload->ToPayloadLogString();
+		}
 		if (const FSGSRespondCardRulePayload* RespondCardPayload = GetPayload<FSGSRespondCardRulePayload>())
 		{
 			return RespondCardPayload->ToPayloadLogString();
@@ -74,6 +78,10 @@ struct SGS_API FSGSRuleInvocation
 		if (const FSGSRuleEventPayload* EventPayload = GetPayload<FSGSRuleEventPayload>())
 		{
 			return EventPayload->ToPayloadLogString();
+		}
+		if (const FSGSJudgementRulePayload* JudgementPayload = GetPayload<FSGSJudgementRulePayload>())
+		{
+			return JudgementPayload->ToPayloadLogString();
 		}
 
 		return HasPayload()

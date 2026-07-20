@@ -82,7 +82,7 @@ FSGSTableSeatProps MakeSeatProps(
 FSGSTableCardProps MakeCardProps(
 	const FSGSCardViewData& Card,
 	FVector2D Size,
-	int32 SelectedCardId,
+	TConstArrayView<int32> SelectedCardIds,
 	bool bSelectable,
 	bool bDimmed,
 	FSGSTableAssetCatalog& Assets)
@@ -100,7 +100,7 @@ FSGSTableCardProps MakeCardProps(
 	Props.Size = Size;
 	Props.FaceBrush = Assets.GetCardFaceBrush(Card.CardName);
 	Props.bSelectable = bSelectable;
-	Props.bSelected = Card.CardId == SelectedCardId;
+	Props.bSelected = SelectedCardIds.Contains(Card.CardId);
 	Props.bDimmed = bDimmed;
 	return Props;
 }
@@ -236,7 +236,7 @@ FSGSTableShellProps MakeShellProps(
 			Props.Hand.Cards.Add(MakeCardProps(
 				**Card,
 				Layout.HandCardSize,
-				Interaction.SelectedCardId,
+				Interaction.SelectedCardIds,
 				!bGameFinished && Controller.IsCardSelectable(CardId),
 				Snapshot.Prompt.bHasPrompt && !Controller.IsCardSelectable(CardId),
 				Assets));
@@ -252,7 +252,7 @@ FSGSTableShellProps MakeShellProps(
 			Props.Hand.Cards.Add(MakeCardProps(
 				Card,
 				Layout.HandCardSize,
-				Interaction.SelectedCardId,
+				Interaction.SelectedCardIds,
 				!bGameFinished && Controller.IsCardSelectable(Card.CardId),
 				Snapshot.Prompt.bHasPrompt && !Controller.IsCardSelectable(Card.CardId),
 				Assets));

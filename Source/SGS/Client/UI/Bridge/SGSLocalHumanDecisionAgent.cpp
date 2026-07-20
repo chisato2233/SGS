@@ -99,6 +99,64 @@ bool USGSLocalHumanDecisionAgent::SubmitUseCard(int32 CardId, int32 TargetSeatIn
 	return true;
 }
 
+bool USGSLocalHumanDecisionAgent::SubmitSkill(
+	FName SkillName,
+	TArray<int32> SelectedCardIds,
+	int32 TargetSeatIndex)
+{
+	if (!HasPendingPlayRequest())
+	{
+		return false;
+	}
+
+	const FSGSDecisionSkillOption* Option = PendingPlayRequest.SkillOptions.FindByPredicate(
+		[SkillName](const FSGSDecisionSkillOption& Candidate)
+		{
+			return Candidate.SkillName == SkillName;
+		});
+	if (Option == nullptr
+		|| SelectedCardIds.Num() < Option->MinCardCount
+		|| SelectedCardIds.Num() > Option->MaxCardCount)
+	{
+		return false;
+	}
+	for (const int32 CardId : SelectedCardIds)
+	{
+		if (!Option->SelectableCardIds.Contains(CardId))
+		{
+			return false;
+		}
+	}
+
+	TArray<int32> Targets;
+	if (Option->MinTargetCount > 0)
+	{
+		if (!Option->TargetSeatIndices.Contains(TargetSeatIndex))
+		{
+			return false;
+		}
+		Targets.Add(TargetSeatIndex);
+	}
+
+	const FSGSPlayPhaseRequest Request = PendingPlayRequest;
+	const FName RuleKindTag = Option->RuleKindTag;
+	const FName ResultCardName = Option->ResultCardName;
+	FSGSPlayPhaseDecisionDelegate Delegate = MoveTemp(PendingPlayDecisionDelegate);
+	ClearPrompt(true);
+
+	FSGSPlayPhaseDecision Decision;
+	Decision.Command = FSGSCommandFactory::Make(
+		FSGSCommandBuildRequest::FromDecisionRequest(Request, FName(TEXT("LocalUI")), SkillName),
+		FSGSActivateSkillCommandPayload(
+			SkillName,
+			RuleKindTag,
+			ResultCardName,
+			MoveTemp(SelectedCardIds),
+			MoveTemp(Targets)));
+	Delegate.ExecuteIfBound(Decision);
+	return true;
+}
+
 bool USGSLocalHumanDecisionAgent::SubmitResponseCard(
 	int32 CardId,
 	int32 TargetSeatIndex,
@@ -128,13 +186,13 @@ bool USGSLocalHumanDecisionAgent::SubmitResponseCard(
 		return false;
 	}
 	if (SkillOption != nullptr
-		&& SkillOption->bRequiresCard
+		&& SkillOption->RequiresCard()
 		&& !SkillOption->SelectableCardIds.Contains(CardId))
 	{
 		UE_LOG(LogSGSUI, Warning, TEXT("SubmitResponseCard rejected: card %d is not a legal cost for skill %s."), CardId, *SkillName.ToString());
 		return false;
 	}
-	if (SkillOption != nullptr && !SkillOption->bRequiresCard)
+	if (SkillOption != nullptr && !SkillOption->RequiresCard())
 	{
 		CardId = INDEX_NONE;
 	}
@@ -165,6 +223,7 @@ bool USGSLocalHumanDecisionAgent::SubmitResponseCard(
 	}
 
 	const FSGSResponseRequest Request = PendingResponseRequest;
+	const FName ResultCardName = SkillOption != nullptr ? SkillOption->ResultCardName : NAME_None;
 	FSGSResponseDecisionDelegate Delegate = MoveTemp(PendingResponseDecisionDelegate);
 	ClearPrompt(true);
 
@@ -174,7 +233,7 @@ bool USGSLocalHumanDecisionAgent::SubmitResponseCard(
 			Request,
 			FName(TEXT("LocalUI")),
 			SkillName.IsNone() ? Request.RequiredCardName : SkillName),
-		FSGSRespondCardCommandPayload(CardId, MoveTemp(Targets), Request.WindowName, SkillName));
+		FSGSRespondCardCommandPayload(CardId, MoveTemp(Targets), Request.WindowName, SkillName, ResultCardName));
 
 	UE_LOG(LogSGSUI, Log, TEXT("LocalUI submitted response command: CardId=%d Skill=%s Window=%s."),
 		CardId,

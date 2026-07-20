@@ -1,6 +1,7 @@
 #include "Server/Engine/SGSGameDriver.h"
 
 #include "Shared/Cards/SGSCard.h"
+#include "Shared/Cards/SGSStandardCardDefinitions.h"
 #include "Shared/Commands/SGSCommandFactory.h"
 #include "Shared/Commands/SGSCommandPayloads.h"
 #include "Server/Engine/SGSGameContext.h"
@@ -9,6 +10,8 @@
 #include "Shared/Core/SGSLogChannels.h"
 #include "Server/Effects/SGSStandardEffectSteps.h"
 #include "Server/Rules/Responses/BasicCards/SGSDyingPeachRules.h"
+#include "Server/Rules/StandardCards/SGSStandardTrickRules.h"
+#include "Server/Skills/SGSSkillDefinition.h"
 
 class FSGSDriverRuleRuntime final : public ISGSRuleRuntime
 {
@@ -98,6 +101,11 @@ public:
 		return Driver.PublishTimingEvent(Payload);
 	}
 
+	virtual void RequestCurrentPhaseResume() override
+	{
+		Driver.bResumeCurrentPhaseAfterResolution = true;
+	}
+
 private:
 	USGSGameDriver& Driver;
 };
@@ -130,6 +138,8 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 
 	bGameOver = false;
 	bWaitingForDecision = false;
+	bCurrentPhaseEntered = false;
+	bResumeCurrentPhaseAfterResolution = false;
 	bIdentityMode = Config.bIdentityMode;
 	GameResult = FSGSGameResult();
 	TurnsPlayed = 0;
@@ -147,7 +157,9 @@ void USGSGameDriver::StartGame(const TArray<TScriptInterface<ISGSDecisionAgent>>
 	CommandRouter.Reset();
 	AIEvaluatorRegistry.Reset();
 	SGSBasicAIEvaluators::Register(AIEvaluatorRegistry);
+	SGSStandardAISemantics::Register(AIEvaluatorRegistry);
 	RuleRegistry.Reset();
+	SGSStandardSkills::Register(RuleRegistry, AIEvaluatorRegistry);
 	ResolutionStack.Reset();
 	EffectPipeline.Reset();
 	ActiveEffectTimeline.Reset();
@@ -208,6 +220,7 @@ void USGSGameDriver::BeginTurn()
 {
 	TurnSeatIndex = CurrentSeatIndex;
 	CurrentPhase = SGSGameplayTags::Phase_RoundStart.GetTag();
+	bCurrentPhaseEntered = false;
 	UE_LOG(LogSGSTurn, Log, TEXT("Turn %d begins for seat %d."), TurnsPlayed, CurrentSeatIndex);
 	Broadcast(SGSGameplayTags::GameEvent_TurnBegan.GetTag());
 }
@@ -231,10 +244,22 @@ void USGSGameDriver::Pump()
 
 void USGSGameDriver::EnterCurrentPhase()
 {
-	Broadcast(SGSGameplayTags::GameEvent_PhaseBegan.GetTag());
+	if (!bCurrentPhaseEntered)
+	{
+		PublishPhaseTiming(SGSGameplayTags::GameEvent_PhaseBefore.GetTag(), FName(TEXT("Before")));
+		PublishPhaseTiming(SGSGameplayTags::GameEvent_PhaseBegin.GetTag(), SGSTimingSteps::Begin());
+		Broadcast(SGSGameplayTags::GameEvent_PhaseBegan.GetTag());
+		bCurrentPhaseEntered = true;
+	}
 
 	if (SGSMatchesExactTag(CurrentPhase, SGSGameplayTags::Phase_Draw))
 	{
+		if (HasStatusEffect(CurrentSeatIndex, SGSGameplayTags::Status_SkipDrawPhase.GetTag()))
+		{
+			ExpireStatusEffects(CurrentSeatIndex, SGSGameplayTags::Status_SkipDrawPhase.GetTag());
+			AdvanceAfterPhase();
+			return;
+		}
 		ExecuteDrawPhaseThroughPipeline();
 		AdvanceAfterPhase();
 		return;
@@ -242,6 +267,12 @@ void USGSGameDriver::EnterCurrentPhase()
 
 	if (SGSMatchesExactTag(CurrentPhase, SGSGameplayTags::Phase_Play))
 	{
+		if (HasStatusEffect(CurrentSeatIndex, SGSGameplayTags::Status_SkipPlayPhase.GetTag()))
+		{
+			ExpireStatusEffects(CurrentSeatIndex, SGSGameplayTags::Status_SkipPlayPhase.GetTag());
+			AdvanceAfterPhase();
+			return;
+		}
 		FSGSPlayPhaseRequest Request = MakePlayPhaseRequest();
 		PendingCommandId = Request.CommandId;
 		ResolutionStack.Reset();
@@ -273,6 +304,12 @@ void USGSGameDriver::EnterCurrentPhase()
 
 		// 异步：代理可能同步（AI）或跨帧（真人）回调 OnPlayActionDecided。
 		Agent->RequestPlayPhaseAction(Request, OnDecided);
+		return;
+	}
+
+	if (SGSMatchesExactTag(CurrentPhase, SGSGameplayTags::Phase_Judge))
+	{
+		ExecuteJudgementPhaseThroughRules();
 		return;
 	}
 
@@ -361,6 +398,7 @@ bool USGSGameDriver::ResolveCommandThroughRules(const FSGSCommand& Command)
 	RuleContext.TimingPoint = MakeCurrentTimingPoint(SGSTimingSteps::Resolve());
 	RuleContext.RuleInvocation = RuleInvocationResult.GetValue();
 	RuleContext.Runtime = &Runtime;
+	RuleContext.RuleRegistry = &RuleRegistry;
 
 	if (FSGSStatus Status = RuleRegistry.Resolve(RuleContext); Status.HasError())
 	{
@@ -373,6 +411,7 @@ bool USGSGameDriver::ResolveCommandThroughRules(const FSGSCommand& Command)
 		SyncReplayLog();
 		return false;
 	}
+	PublishAIObservation(RuleContext.RuleInvocation);
 
 	CommandRouter.RecordLifecycle(
 		ValidatedCommand,
@@ -503,12 +542,22 @@ FSGSPlayPhaseRequest USGSGameDriver::MakePlayPhaseRequest()
 	HandQuery.Zone = SGSGameplayTags::CardZone_Hand.GetTag();
 	HandQuery.SeatIndex = CurrentSeatIndex;
 	HandQuery.ViewerSeatIndex = CurrentSeatIndex;
-	HandQuery.RequiredCardType = SGSGameplayTags::CardType_Basic.GetTag();
 	const FSGSCardQueryResult HandCards = Context->QueryCards(HandQuery);
 
 	FSGSSeatQuery SlashTargetQuery;
 	SlashTargetQuery.SourceSeat = CurrentSeatIndex;
-	SlashTargetQuery.MaxDistance = 1;
+	FSGSRuleQueryContext RuleQueryContext;
+	RuleQueryContext.GameContext = Context;
+	RuleQueryContext.ActiveEffects = &ActiveEffectTimeline;
+	RuleQueryContext.RuleRegistry = &RuleRegistry;
+	RuleQueryContext.Phase = CurrentPhase;
+	RuleQueryContext.ActorSeat = CurrentSeatIndex;
+	FSGSNumericRuleQuery SlashDistanceQuery;
+	SlashDistanceQuery.QueryName = SGSRuleQueries::SlashTargetDistance();
+	SlashDistanceQuery.ActorSeat = CurrentSeatIndex;
+	SlashDistanceQuery.CardName = FName(TEXT("Slash"));
+	SlashDistanceQuery.BaseValue = 1;
+	SlashTargetQuery.MaxDistance = RuleRegistry.ApplyNumericModifiers(RuleQueryContext, SlashDistanceQuery);
 	const FSGSSeatQueryResult SlashTargets = Context->QuerySeats(SlashTargetQuery);
 	auto HasStatus = [this](FGameplayTag StatusTag)
 	{
@@ -522,7 +571,19 @@ FSGSPlayPhaseRequest USGSGameDriver::MakePlayPhaseRequest()
 		}
 		return false;
 	};
-	const bool bSlashUsed = HasStatus(SGSGameplayTags::Status_SlashUsed.GetTag());
+	const int32 SlashUsedCount = ActiveEffectTimeline.QueryByTag(SGSGameplayTags::Status_SlashUsed.GetTag()).FilterByPredicate(
+		[this](FSGSStableHandle Handle)
+		{
+			const FSGSActiveEffect* Effect = ActiveEffectTimeline.Find(Handle);
+			return Effect != nullptr && Effect->OwnerSeat == CurrentSeatIndex;
+		}).Num();
+	FSGSNumericRuleQuery SlashLimitQuery;
+	SlashLimitQuery.QueryName = SGSRuleQueries::SlashUseLimit();
+	SlashLimitQuery.ActorSeat = CurrentSeatIndex;
+	SlashLimitQuery.CardName = FName(TEXT("Slash"));
+	SlashLimitQuery.BaseValue = 1;
+	const int32 SlashUseLimit = RuleRegistry.ApplyNumericModifiers(RuleQueryContext, SlashLimitQuery);
+	const bool bCanUseSlash = SlashUsedCount < SlashUseLimit;
 	const bool bAnalepticUsed = HasStatus(SGSGameplayTags::Status_AnalepticUsed.GetTag());
 
 	for (const FSGSCardTarget& CardTarget : HandCards.Targets)
@@ -535,7 +596,7 @@ FSGSPlayPhaseRequest USGSGameDriver::MakePlayPhaseRequest()
 		FSGSCardActionOption Option;
 		Option.CardId = CardTarget.CardId;
 		Option.CardName = CardTarget.Card->CardName;
-		if (Option.CardName == TEXT("Slash") && !bSlashUsed)
+		if (Option.CardName == TEXT("Slash") && bCanUseSlash)
 		{
 			for (const FSGSSeatTarget& SeatTarget : SlashTargets.Targets)
 			{
@@ -550,13 +611,45 @@ FSGSPlayPhaseRequest USGSGameDriver::MakePlayPhaseRequest()
 				Option.TargetSeatIndices.Add(CurrentSeatIndex);
 			}
 		}
-		if ((Option.CardName == TEXT("Slash") && !bSlashUsed)
+		bool bAddOption = (Option.CardName == TEXT("Slash") && bCanUseSlash)
 			|| (Option.CardName == TEXT("Peach") && !Option.TargetSeatIndices.IsEmpty())
-			|| (Option.CardName == TEXT("Analeptic") && !bAnalepticUsed))
+			|| (Option.CardName == TEXT("Analeptic") && !bAnalepticUsed);
+		if (!bAddOption)
+		{
+			const FSGSStandardCardDefinition* Definition = SGSStandardCardDefinitions::Find(Option.CardName);
+			if (Definition != nullptr
+				&& Definition->bPlayable
+				&& (Definition->CardType.MatchesTagExact(SGSGameplayTags::CardType_Trick.GetTag())
+					|| Definition->CardType.MatchesTagExact(SGSGameplayTags::CardType_Equipment.GetTag())))
+			{
+				if (Definition->TargetMode == SGSCardTargetModes::Self())
+				{
+					Option.TargetSeatIndices.Add(CurrentSeatIndex);
+				}
+				else if (Definition->TargetMode == SGSCardTargetModes::Other())
+				{
+					FSGSSeatQuery TargetQuery;
+					TargetQuery.SourceSeat = CurrentSeatIndex;
+					TargetQuery.MaxDistance = Definition->MaxDistance;
+					for (const FSGSSeatTarget& Target : Context->QuerySeats(TargetQuery).Targets)
+					{
+						Option.TargetSeatIndices.Add(Target.SeatIndex);
+					}
+				}
+				bAddOption = Definition->TargetMode != SGSCardTargetModes::Other()
+					|| !Option.TargetSeatIndices.IsEmpty();
+			}
+		}
+		if (bAddOption)
 		{
 			Request.Options.Add(MoveTemp(Option));
 		}
 	}
+
+	FSGSSkillOptionQuery SkillQuery;
+	SkillQuery.QueryName = SGSRuleQueries::PlaySkillOptions();
+	SkillQuery.ActorSeat = CurrentSeatIndex;
+	Request.SkillOptions = RuleRegistry.CollectSkillOptions(RuleQueryContext, MoveTemp(SkillQuery));
 
 	return Request;
 }
@@ -587,6 +680,32 @@ FSGSResponseRequest USGSGameDriver::MakeResponseRequest(
 	Request.EffectSourceSeat = EffectSourceSeat;
 	Request.EffectTargetSeat = EffectTargetSeat;
 	Request.SkillOptions.Append(SkillOptions.GetData(), SkillOptions.Num());
+	FSGSRuleQueryContext RuleQueryContext;
+	RuleQueryContext.GameContext = Context;
+	RuleQueryContext.ActiveEffects = &ActiveEffectTimeline;
+	RuleQueryContext.RuleRegistry = &RuleRegistry;
+	RuleQueryContext.Phase = CurrentPhase;
+	RuleQueryContext.ActorSeat = SeatIndex;
+	RuleQueryContext.WindowName = WindowName;
+	RuleQueryContext.RequiredCardName = RequiredCardName;
+	RuleQueryContext.AcceptedCardNames = Request.AcceptedCardNames;
+	FSGSSkillOptionQuery ResponseSkillQuery;
+	ResponseSkillQuery.QueryName = SGSRuleQueries::ResponseSkillOptions();
+	ResponseSkillQuery.ActorSeat = SeatIndex;
+	ResponseSkillQuery.WindowName = WindowName;
+	ResponseSkillQuery.RequiredCardName = RequiredCardName;
+	ResponseSkillQuery.AcceptedCardNames = Request.AcceptedCardNames;
+	for (FSGSDecisionSkillOption& Option : RuleRegistry.CollectSkillOptions(RuleQueryContext, MoveTemp(ResponseSkillQuery)))
+	{
+		if (!Request.SkillOptions.ContainsByPredicate(
+			[&Option](const FSGSDecisionSkillOption& Existing)
+			{
+				return Existing.SkillName == Option.SkillName;
+			}))
+		{
+			Request.SkillOptions.Add(MoveTemp(Option));
+		}
+	}
 
 	FSGSCardQuery Query;
 	Query.Zone = SGSGameplayTags::CardZone_Hand.GetTag();
@@ -667,6 +786,11 @@ FSGSStatus USGSGameDriver::FinishCurrentResolution(FName Reason)
 	{
 		return ResumeResolutionParentAfterChild(CompletedResult.GetValue());
 	}
+	if (bResumeCurrentPhaseAfterResolution)
+	{
+		bResumeCurrentPhaseAfterResolution = false;
+		return MakeValue();
+	}
 
 	CurrentSeatIndex = ActionSeat;
 	if (!bGameOver && !SGSMatchesExactTag(CurrentPhase, SGSGameplayTags::Phase_Play))
@@ -697,7 +821,52 @@ FSGSStatus USGSGameDriver::ResumeResolutionParentAfterChild(const FSGSResolution
 		return ContinueDyingPeachFrame(*ParentFrame);
 	}
 
+	if (ParentFrame->OnChildCompletedContinuation == SGSStandardTrickRules::ResumeContinuation())
+	{
+		return ResumeStandardTrickResolution();
+	}
+
 	return MakeValue();
+}
+
+FSGSStatus USGSGameDriver::ResumeStandardTrickResolution()
+{
+	FSGSResolutionFrame* Frame = ResolutionStack.GetCurrentFrame();
+	if (Frame == nullptr)
+	{
+		return MakeValue();
+	}
+	Frame->OnChildCompletedContinuation = NAME_None;
+
+	FSGSCommand Command;
+	Command.CommandId = Frame->SourceCommandId;
+	Command.RequestId = PendingRequestId > 0 ? PendingRequestId : 1;
+	Command.SeatIndex = Frame->ActorSeat;
+	Command.Type = SGSGameplayTags::PlayAction_UseCard.GetTag();
+	Command.Phase = CurrentPhase;
+	Command.Payload = FInstancedStruct::Make(FSGSPassCommandPayload());
+	Command.SourceChannel = FName(TEXT("ResolutionContinuation"));
+	Command.SourceName = SGSStandardTrickRules::ResumeContinuation();
+
+	FSGSCommandExecutionContext ExecutionContext = MakeCommandExecutionContext();
+	FSGSDriverRuleRuntime Runtime(*this);
+	FSGSRuleExecutionContext RuleContext;
+	RuleContext.GameContext = Context;
+	RuleContext.Command = &Command;
+	RuleContext.CommandExecutionContext = &ExecutionContext;
+	RuleContext.ReplayLog = &ReplayLog;
+	RuleContext.ActiveEffects = &ActiveEffectTimeline;
+	RuleContext.TimingPoint = MakeCurrentTimingPoint(SGSTimingSteps::Resolve());
+	RuleContext.RuleInvocation.RuleKindTag = SGSRuleKinds::GameRule();
+	RuleContext.RuleInvocation.IntentTag = SGSGameplayTags::PlayAction_UseCard.GetTag();
+	RuleContext.RuleInvocation.SubjectName = SGSStandardTrickRules::ResumeContinuation();
+	RuleContext.RuleInvocation.ActorSeat = Frame->ActorSeat;
+	RuleContext.RuleInvocation.SourceCommandId = Frame->SourceCommandId;
+	RuleContext.RuleInvocation.SourceRequestId = Command.RequestId;
+	RuleContext.RuleInvocation.Payload = FInstancedStruct::Make(FSGSPassRulePayload());
+	RuleContext.Runtime = &Runtime;
+	RuleContext.RuleRegistry = &RuleRegistry;
+	return SGSStandardTrickRules::Continue(RuleContext);
 }
 
 bool USGSGameDriver::OpenNextDyingPeachResponseWindow(FSGSResolutionFrame& DyingFrame)
@@ -861,6 +1030,7 @@ FSGSStatus USGSGameDriver::PublishTimingEvent(const FSGSRuleEventPayload& Payloa
 	RuleContext.TimingPoint = DispatchPayload.TimingPoint;
 	RuleContext.RuleInvocation = MoveTemp(Invocation);
 	RuleContext.Runtime = &Runtime;
+	RuleContext.RuleRegistry = &RuleRegistry;
 
 	FSGSStatus Status = RuleRegistry.DispatchAll(RuleContext);
 	SyncReplayLog();
@@ -877,6 +1047,81 @@ void USGSGameDriver::ExecuteDrawPhaseThroughPipeline()
 		UE_LOG(LogSGSTurn, Error, TEXT("Draw phase effect pipeline failed: %s"), *Status.GetError().ToLogString());
 	}
 	SyncReplayLog();
+}
+
+void USGSGameDriver::ExecuteJudgementPhaseThroughRules()
+{
+	TArray<USGSCard*> DelayedTricks = Context->GetCardsInZone(
+		SGSGameplayTags::CardZone_Judgement.GetTag(), CurrentSeatIndex);
+	if (DelayedTricks.IsEmpty())
+	{
+		AdvanceAfterPhase();
+		return;
+	}
+	ResolveJudgementCard(DelayedTricks[0]);
+}
+
+bool USGSGameDriver::ResolveJudgementCard(USGSCard* DelayedTrickCard)
+{
+	if (DelayedTrickCard == nullptr)
+	{
+		return false;
+	}
+
+	FSGSCommand Command;
+	Command.CommandId = AllocateCommandId();
+	Command.RequestId = ++PendingRequestId;
+	Command.SeatIndex = CurrentSeatIndex;
+	Command.Type = SGSGameplayTags::GameEvent_PhaseBegin.GetTag();
+	Command.Phase = CurrentPhase;
+	FSGSJudgementRulePayload Payload;
+	Payload.DelayedTrickCardId = DelayedTrickCard->CardId;
+	Payload.SeatIndex = CurrentSeatIndex;
+	Command.Payload = FInstancedStruct::Make(Payload);
+	Command.SourceChannel = FName(TEXT("JudgementPhase"));
+	Command.SourceName = DelayedTrickCard->CardName;
+
+	FSGSRuleInvocation Invocation;
+	Invocation.RuleKindTag = SGSRuleKinds::GameRule();
+	Invocation.IntentTag = Command.Type;
+	Invocation.SubjectName = DelayedTrickCard->CardName;
+	Invocation.ActorSeat = CurrentSeatIndex;
+	Invocation.WindowName = SGSTimingSteps::Resolve();
+	Invocation.SourceCommandId = Command.CommandId;
+	Invocation.SourceRequestId = Command.RequestId;
+	Invocation.Payload = FInstancedStruct::Make(Payload);
+
+	FSGSCommandExecutionContext ExecutionContext = MakeCommandExecutionContext();
+	ExecutionContext.ExpectedCommandId = Command.CommandId;
+	ExecutionContext.ExpectedRequestId = Command.RequestId;
+	FSGSDriverRuleRuntime Runtime(*this);
+	FSGSRuleExecutionContext RuleContext;
+	RuleContext.GameContext = Context;
+	RuleContext.Command = &Command;
+	RuleContext.CommandExecutionContext = &ExecutionContext;
+	RuleContext.ReplayLog = &ReplayLog;
+	RuleContext.ActiveEffects = &ActiveEffectTimeline;
+	RuleContext.TimingPoint = MakeCurrentTimingPoint(SGSTimingSteps::Resolve());
+	RuleContext.RuleInvocation = MoveTemp(Invocation);
+	RuleContext.Runtime = &Runtime;
+	RuleContext.RuleRegistry = &RuleRegistry;
+	const FSGSStatus Status = RuleRegistry.Resolve(RuleContext);
+	SyncReplayLog();
+	DispatchDeferredResponseRequest();
+	return !Status.HasError();
+}
+
+bool USGSGameDriver::HasStatusEffect(int32 SeatIndex, FGameplayTag StatusTag) const
+{
+	for (const FSGSStableHandle Handle : ActiveEffectTimeline.QueryByTag(StatusTag))
+	{
+		const FSGSActiveEffect* Effect = ActiveEffectTimeline.Find(Handle);
+		if (Effect != nullptr && Effect->OwnerSeat == SeatIndex)
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 FSGSStatus USGSGameDriver::RunEffectStep(FSGSEffectStep Step, FSGSCommandId CommandId)
@@ -904,16 +1149,84 @@ void USGSGameDriver::SyncReplayLog()
 	ViewStateInvalidatedDelegate.Broadcast();
 }
 
+void USGSGameDriver::PublishAIObservation(const FSGSRuleInvocation& Invocation)
+{
+	FSGSAIActionCandidate Candidate;
+	Candidate.CardName = Invocation.SubjectName;
+	Candidate.SkillName = NAME_None;
+	if (const FSGSUseCardRulePayload* UseCardPayload = Invocation.GetPayload<FSGSUseCardRulePayload>())
+	{
+		Candidate.CardName = UseCardPayload->CardName;
+		Candidate.TargetSeatIndices = UseCardPayload->TargetSeatIndices;
+	}
+	else if (const FSGSActivateSkillRulePayload* SkillPayload = Invocation.GetPayload<FSGSActivateSkillRulePayload>())
+	{
+		Candidate.SkillName = SkillPayload->SkillName;
+		Candidate.CardName = SkillPayload->ResultCardName;
+		Candidate.TargetSeatIndices = SkillPayload->TargetSeatIndices;
+	}
+	else if (const FSGSRespondCardRulePayload* ResponsePayload = Invocation.GetPayload<FSGSRespondCardRulePayload>())
+	{
+		Candidate.CardName = ResponsePayload->CardName;
+		Candidate.SkillName = ResponsePayload->SkillName;
+		if (ResponsePayload->EffectTargetSeat != INDEX_NONE)
+		{
+			Candidate.TargetSeatIndices.Add(ResponsePayload->EffectTargetSeat);
+		}
+	}
+	else
+	{
+		return;
+	}
+
+	const FSGSAIBehaviorSemantics* Semantics = AIEvaluatorRegistry.FindSemantics(Candidate);
+	if (Semantics == nullptr || Semantics->TargetAttitude.IsNone())
+	{
+		return;
+	}
+
+	FSGSAIPublicActionObservation Observation;
+	Observation.ActorSeat = Invocation.ActorSeat;
+	Observation.TargetSeatIndices = Candidate.TargetSeatIndices;
+	Observation.TargetAttitude = Semantics->TargetAttitude;
+	Observation.Strength = FMath::Max(5.0, FMath::Abs(Semantics->Effect) + Semantics->Threat * 0.5);
+	int32 LordSeat = INDEX_NONE;
+	for (int32 SeatIndex = 0; SeatIndex < Context->NumSeats(); ++SeatIndex)
+	{
+		const USGSSeat* Seat = Context->GetSeat(SeatIndex);
+		if (Seat != nullptr && Seat->Identity.MatchesTagExact(SGSGameplayTags::Identity_Lord.GetTag()))
+		{
+			LordSeat = SeatIndex;
+			break;
+		}
+	}
+	for (int32 SeatIndex = 0; SeatIndex < Context->NumSeats(); ++SeatIndex)
+	{
+		USGSSeat* Seat = Context->GetSeat(SeatIndex);
+		if (USGSBasicAIAgent* Agent = Seat != nullptr ? Cast<USGSBasicAIAgent>(Seat->DecisionAgent.GetObject()) : nullptr)
+		{
+			Agent->ObservePublicAction(Observation, LordSeat);
+		}
+	}
+}
+
 void USGSGameDriver::AdvanceAfterPhase()
 {
+	PublishPhaseTiming(SGSGameplayTags::GameEvent_PhaseEnd.GetTag(), SGSTimingSteps::End());
 	Broadcast(SGSGameplayTags::GameEvent_PhaseEnded.GetTag());
+	PublishPhaseTiming(SGSGameplayTags::GameEvent_PhaseAfter.GetTag(), SGSTimingSteps::After());
 	if (SGSMatchesExactTag(CurrentPhase, SGSGameplayTags::Phase_Play))
 	{
 		ExpireStatusEffects(CurrentSeatIndex, SGSGameplayTags::Status_SlashUsed.GetTag());
+		ExpireStatusEffects(CurrentSeatIndex, SGSGameplayTags::Status_ZhihengUsed.GetTag());
 	}
 
 	if (SGSMatchesExactTag(CurrentPhase, SGSGameplayTags::Phase_RoundEnd))
 	{
+		if (USGSSeat* EndingSeat = Context->GetSeat(CurrentSeatIndex))
+		{
+			EndingSeat->ResetTurnSkillState();
+		}
 		ExpireStatusEffects(CurrentSeatIndex, SGSGameplayTags::Status_AnalepticUsed.GetTag());
 		ExpireStatusEffects(CurrentSeatIndex, SGSGameplayTags::Status_AnalepticBoost.GetTag());
 		Broadcast(SGSGameplayTags::GameEvent_TurnEnded.GetTag());
@@ -945,6 +1258,18 @@ void USGSGameDriver::AdvanceAfterPhase()
 	}
 
 	CurrentPhase = NextPhase(CurrentPhase);
+	bCurrentPhaseEntered = false;
+}
+
+FSGSStatus USGSGameDriver::PublishPhaseTiming(FGameplayTag EventTag, FName Step)
+{
+	FSGSRuleEventPayload Payload;
+	Payload.EventTag = EventTag;
+	Payload.EventName = FName(*FString::Printf(TEXT("Phase.%s"), *Step.ToString()));
+	Payload.SourceSeat = CurrentSeatIndex;
+	Payload.TargetSeat = CurrentSeatIndex;
+	Payload.TimingPoint = MakeCurrentTimingPoint(Step);
+	return PublishTimingEvent(Payload);
 }
 
 void USGSGameDriver::DiscardAllCards(int32 SeatIndex)

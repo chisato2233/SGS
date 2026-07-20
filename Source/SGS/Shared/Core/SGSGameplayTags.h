@@ -51,6 +51,9 @@ namespace SGSGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_SlashUsed);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_AnalepticUsed);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_AnalepticBoost);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_ZhihengUsed);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_SkipDrawPhase);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Status_SkipPlayPhase);
 
 	// Equipment slots.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(EquipSlot_None);
@@ -75,9 +78,15 @@ namespace SGSGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameEvent_TurnEnded);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameEvent_PhaseBegan);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameEvent_PhaseEnded);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameEvent_PhaseBefore);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameEvent_PhaseBegin);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameEvent_PhaseEnd);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameEvent_PhaseAfter);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameEvent_DamageAfter);
 
 	// Command / decision actions.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(PlayAction_Pass);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(PlayAction_UseCard);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(PlayAction_RespondCard);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(PlayAction_ActivateSkill);
 }

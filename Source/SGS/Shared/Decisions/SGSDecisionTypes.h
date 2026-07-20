@@ -19,9 +19,22 @@ struct FSGSDecisionSkillOption
 {
 	FName SkillName = NAME_None;
 	FName DisplayName = NAME_None;
-	bool bRequiresCard = false;
+	// 该入口最终交给 RuleRegistry 的规则类别。主动技通常为 Action，
+	// 视为技使用 ViewAs；客户端只回传服务器给出的值。
+	FName RuleKindTag = NAME_None;
+	FName ResultCardName = NAME_None;
+	int32 MinCardCount = 0;
+	int32 MaxCardCount = 0;
+	int32 MinTargetCount = 0;
+	int32 MaxTargetCount = 0;
 	TArray<int32> SelectableCardIds;
 	TArray<int32> TargetSeatIndices;
+
+	// 规则包可为 AI 给出少量已验证的组合，避免通用决策层枚举幂集。
+	// 真人仍按上面的数量约束自由选择。
+	TArray<TArray<int32>> CandidateCardSelections;
+
+	bool RequiresCard() const { return MinCardCount > 0; }
 };
 
 // 服务器向某座位发起的「出牌阶段动作」请求。
@@ -38,6 +51,7 @@ struct FSGSPlayPhaseRequest
 	FSGSPhase Phase = SGSGameplayTags::Phase_None.GetTag();
 	bool bAllowPass = true;
 	TArray<FSGSCardActionOption> Options;
+	TArray<FSGSDecisionSkillOption> SkillOptions;
 };
 
 // 座位对「出牌阶段动作」请求的应答。

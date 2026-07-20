@@ -9,6 +9,7 @@ struct SGS_API FSGSTableFeatureBindings
 {
 	TFunction<FSGSTableViewSnapshot()> ReadSnapshot;
 	TFunction<bool(int32 CardId, int32 TargetSeat)> SubmitUseCard;
+	TFunction<bool(FName SkillName, TArray<int32> CardIds, int32 TargetSeat)> SubmitSkill;
 	TFunction<bool(int32 CardId, int32 TargetSeat, FName SkillName)> SubmitResponseCard;
 	TFunction<bool()> SubmitPass;
 };

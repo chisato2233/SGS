@@ -7,6 +7,7 @@
 struct SGS_API FSGSTableUIInteractionState
 {
 	int32 SelectedCardId = INDEX_NONE;
+	TArray<int32> SelectedCardIds;
 	int32 SelectedTargetSeat = INDEX_NONE;
 	FName SelectedSkillName = NAME_None;
 };

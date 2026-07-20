@@ -43,6 +43,7 @@ void USGSBasicAIAgent::BindToSeat(
 	SeatIndex = InSeatIndex;
 	EvaluatorRegistry = InEvaluatorRegistry;
 	ThinkDelaySeconds = InThinkDelaySeconds;
+	BeliefModel.Reset(InContext != nullptr ? InContext->NumSeats() : 0);
 }
 
 void USGSBasicAIAgent::RequestPlayPhaseAction(
@@ -51,7 +52,7 @@ void USGSBasicAIAgent::RequestPlayPhaseAction(
 {
 	const USGSGameContext* GameContext = Context.Get();
 	check(GameContext != nullptr && EvaluatorRegistry != nullptr);
-	const FSGSAIWorldView WorldView = FSGSAIWorldViewBuilder::Build(*GameContext, SeatIndex, Request.Phase);
+	const FSGSAIWorldView WorldView = FSGSAIWorldViewBuilder::Build(*GameContext, SeatIndex, Request.Phase, &BeliefModel);
 	SubmitAfterThinkDelay(
 		this,
 		ThinkDelaySeconds,
@@ -65,10 +66,17 @@ void USGSBasicAIAgent::RequestResponseAction(
 {
 	const USGSGameContext* GameContext = Context.Get();
 	check(GameContext != nullptr && EvaluatorRegistry != nullptr);
-	const FSGSAIWorldView WorldView = FSGSAIWorldViewBuilder::Build(*GameContext, SeatIndex, Request.Phase);
+	const FSGSAIWorldView WorldView = FSGSAIWorldViewBuilder::Build(*GameContext, SeatIndex, Request.Phase, &BeliefModel);
 	SubmitAfterThinkDelay(
 		this,
 		ThinkDelaySeconds,
 		FSGSAIDecisionEngine::DecideResponse(Request, WorldView, *EvaluatorRegistry),
 		MoveTemp(OnDecided));
+}
+
+void USGSBasicAIAgent::ObservePublicAction(
+	const FSGSAIPublicActionObservation& Observation,
+	int32 PublicLordSeat)
+{
+	BeliefModel.Observe(Observation, PublicLordSeat);
 }

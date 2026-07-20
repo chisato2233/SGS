@@ -13,6 +13,7 @@
 #include "Server/Engine/SGSGameContext.h"
 #include "Server/Players/SGSSeat.h"
 #include "Server/UI/SGSTableSnapshotBuilder.h"
+#include "Server/Content/SGSStandardGenerals.h"
 #include "Shared/Decisions/SGSDecisionAgent.h"
 #include "Shared/Game/SGSGameState.h"
 #include "Shared/Game/SGSPlayerState.h"
@@ -151,27 +152,8 @@ void ASGSGameMode::BeginPlay()
 	GameDriver->OnViewStateInvalidated().AddUObject(this, &ASGSGameMode::ScheduleViewSnapshotRefresh);
 	FSGSGameStartConfig Config;
 	Config.RandomSeed = static_cast<int32>(FPlatformTime::Cycles64());
-	Config.InitialDeck = SGSDeckDefinitions::MakeMinimalIdentityDeck();
-	Config.GeneralIdsBySeat = {
-		TEXT("caocao"),
-		TEXT("liubei"),
-		TEXT("sunquan"),
-		TEXT("guanyu"),
-		TEXT("zhangfei"),
-		TEXT("zhaoyun"),
-		TEXT("simayi"),
-		TEXT("diaochan"),
-	};
-	Config.FactionsBySeat = {
-		SGSGameplayTags::Faction_Wei.GetTag(),
-		SGSGameplayTags::Faction_Shu.GetTag(),
-		SGSGameplayTags::Faction_Wu.GetTag(),
-		SGSGameplayTags::Faction_Shu.GetTag(),
-		SGSGameplayTags::Faction_Shu.GetTag(),
-		SGSGameplayTags::Faction_Shu.GetTag(),
-		SGSGameplayTags::Faction_Wei.GetTag(),
-		SGSGameplayTags::Faction_Qun.GetTag(),
-	};
+	Config.InitialDeck = SGSDeckDefinitions::MakeStandardIdentityDeck();
+	Config.GeneralIdsBySeat = SGSStandardGenerals::FirstIdentityRoster();
 	Config.bIdentityMode = true;
 	GameDriver->StartGame(Agents, Config);
 

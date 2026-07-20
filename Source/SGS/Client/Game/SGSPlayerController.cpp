@@ -96,6 +96,17 @@ bool ASGSPlayerController::SubmitUseCard(int32 CardId, int32 TargetSeatIndex)
 	return true;
 }
 
+bool ASGSPlayerController::SubmitSkill(FName SkillName, TArray<int32> CardIds, int32 TargetSeatIndex)
+{
+	if (HasAuthority())
+	{
+		return SubmitSkillOnServer(SkillName, MoveTemp(CardIds), TargetSeatIndex);
+	}
+
+	ServerSubmitSkill(SkillName, CardIds, TargetSeatIndex);
+	return true;
+}
+
 bool ASGSPlayerController::SubmitResponseCard(int32 CardId, int32 TargetSeatIndex, FName SkillName)
 {
 	if (HasAuthority())
@@ -128,6 +139,14 @@ void ASGSPlayerController::ClientAttachLocalHud_Implementation(int32 InViewerSea
 void ASGSPlayerController::ServerSubmitUseCard_Implementation(int32 CardId, int32 TargetSeatIndex)
 {
 	SubmitUseCardOnServer(CardId, TargetSeatIndex);
+}
+
+void ASGSPlayerController::ServerSubmitSkill_Implementation(
+	FName SkillName,
+	const TArray<int32>& CardIds,
+	int32 TargetSeatIndex)
+{
+	SubmitSkillOnServer(SkillName, CardIds, TargetSeatIndex);
 }
 
 void ASGSPlayerController::ServerSubmitResponseCard_Implementation(
@@ -172,6 +191,10 @@ void ASGSPlayerController::AttachLocalHud()
 	Bindings.SubmitUseCard = [WeakThis](int32 CardId, int32 TargetSeat)
 	{
 		return WeakThis.IsValid() && WeakThis->SubmitUseCard(CardId, TargetSeat);
+	};
+	Bindings.SubmitSkill = [WeakThis](FName SkillName, TArray<int32> CardIds, int32 TargetSeat)
+	{
+		return WeakThis.IsValid() && WeakThis->SubmitSkill(SkillName, MoveTemp(CardIds), TargetSeat);
 	};
 	Bindings.SubmitResponseCard = [WeakThis](int32 CardId, int32 TargetSeat, FName SkillName)
 	{
@@ -223,6 +246,24 @@ bool ASGSPlayerController::SubmitUseCardOnServer(int32 CardId, int32 TargetSeatI
 	}
 
 	const bool bSubmitted = DecisionAgent->SubmitUseCard(CardId, TargetSeatIndex);
+	if (bSubmitted)
+	{
+		RefreshAfterServerDecision();
+	}
+	return bSubmitted;
+}
+
+bool ASGSPlayerController::SubmitSkillOnServer(
+	FName SkillName,
+	TArray<int32> CardIds,
+	int32 TargetSeatIndex)
+{
+	if (DecisionAgent == nullptr)
+	{
+		return false;
+	}
+
+	const bool bSubmitted = DecisionAgent->SubmitSkill(SkillName, MoveTemp(CardIds), TargetSeatIndex);
 	if (bSubmitted)
 	{
 		RefreshAfterServerDecision();

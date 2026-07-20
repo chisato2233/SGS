@@ -14,7 +14,49 @@
 
 class USGSCard;
 class USGSGameContext;
+class FSGSRuleRegistry;
 struct FSGSCommandExecutionContext;
+
+struct SGS_API FSGSRuleQueryContext
+{
+	const USGSGameContext* GameContext = nullptr;
+	const FSGSActiveEffectTimeline* ActiveEffects = nullptr;
+	const FSGSRuleRegistry* RuleRegistry = nullptr;
+	FSGSPhase Phase = SGSGameplayTags::Phase_None.GetTag();
+	int32 ActorSeat = INDEX_NONE;
+	FName WindowName = NAME_None;
+	FName RequiredCardName = NAME_None;
+	TConstArrayView<FName> AcceptedCardNames;
+};
+
+struct SGS_API FSGSNumericRuleQuery
+{
+	FName QueryName = NAME_None;
+	int32 ActorSeat = INDEX_NONE;
+	int32 TargetSeat = INDEX_NONE;
+	FName CardName = NAME_None;
+	int32 BaseValue = 0;
+	int32 Value = 0;
+};
+
+struct SGS_API FSGSSkillOptionQuery
+{
+	FName QueryName = NAME_None;
+	int32 ActorSeat = INDEX_NONE;
+	FName WindowName = NAME_None;
+	FName RequiredCardName = NAME_None;
+	TArray<FName> AcceptedCardNames;
+	TArray<FSGSDecisionSkillOption> Options;
+};
+
+namespace SGSRuleQueries
+{
+	inline FName SlashUseLimit() { return FName(TEXT("SGS.RuleQuery.SlashUseLimit")); }
+	inline FName SlashTargetDistance() { return FName(TEXT("SGS.RuleQuery.SlashTargetDistance")); }
+	inline FName RequiredResponseCount() { return FName(TEXT("SGS.RuleQuery.RequiredResponseCount")); }
+	inline FName PlaySkillOptions() { return FName(TEXT("SGS.RuleQuery.PlaySkillOptions")); }
+	inline FName ResponseSkillOptions() { return FName(TEXT("SGS.RuleQuery.ResponseSkillOptions")); }
+}
 
 struct SGS_API FSGSRuleResponseWindowSpec
 {
@@ -42,6 +84,7 @@ public:
 	virtual FSGSResolutionStack& GetResolutionStack() = 0;
 	virtual const FSGSResolutionStack& GetResolutionStack() const = 0;
 	virtual FSGSStatus PublishTimingEvent(const FSGSRuleEventPayload& Payload) = 0;
+	virtual void RequestCurrentPhaseResume() {}
 };
 
 struct SGS_API FSGSRuleExecutionContext
@@ -54,6 +97,7 @@ struct SGS_API FSGSRuleExecutionContext
 	FSGSTimingPoint TimingPoint;
 	FSGSRuleInvocation RuleInvocation;
 	ISGSRuleRuntime* Runtime = nullptr;
+	const FSGSRuleRegistry* RuleRegistry = nullptr;
 
 	bool CheckInvariants() const
 	{
@@ -81,6 +125,19 @@ public:
 	virtual bool CanHandle(const FSGSRuleExecutionContext& Context) const = 0;
 	virtual FSGSStatus Validate(FSGSRuleExecutionContext& Context) const = 0;
 	virtual FSGSStatus Execute(FSGSRuleExecutionContext& Context) const = 0;
+
+	// Modifier / ViewAs 仍是同一 Registry 中的规则部件；查询只读权威状态，
+	// 修改查询结果或追加服务器合法候选，不直接改变对局状态。
+	virtual void ModifyNumericQuery(const FSGSRuleQueryContext& Context, FSGSNumericRuleQuery& Query) const
+	{
+		(void)Context;
+		(void)Query;
+	}
+	virtual void CollectSkillOptions(const FSGSRuleQueryContext& Context, FSGSSkillOptionQuery& Query) const
+	{
+		(void)Context;
+		(void)Query;
+	}
 
 	bool CheckInvariants() const
 	{

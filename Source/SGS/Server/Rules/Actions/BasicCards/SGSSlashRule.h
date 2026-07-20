@@ -21,6 +21,12 @@ struct SGS_API FSGSSlashResolutionState
 	UPROPERTY()
 	int32 DamageAmount = 1;
 
+	UPROPERTY()
+	int32 RequiredDodgeCount = 1;
+
+	UPROPERTY()
+	int32 DodgeCount = 0;
+
 	FString ToLogString() const;
 	bool CheckInvariants() const;
 };

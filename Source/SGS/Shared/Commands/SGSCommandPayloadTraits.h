@@ -37,3 +37,12 @@ struct SGS_API TSGSCommandPayloadTraits<FSGSRespondCardCommandPayload>
 		return SGSGameplayTags::PlayAction_RespondCard.GetTag();
 	}
 };
+
+template <>
+struct SGS_API TSGSCommandPayloadTraits<FSGSActivateSkillCommandPayload>
+{
+	static FGameplayTag GetType()
+	{
+		return SGSGameplayTags::PlayAction_ActivateSkill.GetTag();
+	}
+};
