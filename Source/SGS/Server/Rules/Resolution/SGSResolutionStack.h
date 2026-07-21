@@ -4,6 +4,7 @@
 #include "Shared/Core/SGSError.h"
 #include "Shared/Core/SGSIds.h"
 #include "Shared/Core/SGSIndexedStore.h"
+#include "Shared/Decisions/SGSDecisionTypes.h"
 #include "StructUtils/InstancedStruct.h"
 
 namespace SGSResolutionContinuations
@@ -22,6 +23,15 @@ struct SGS_API FSGSResolutionFrame
 	int32 TargetSeat = INDEX_NONE;
 	FName WindowName = NAME_None;
 	FName RequiredCardName = NAME_None;
+	TArray<FName> AcceptedCardNames;
+	bool bIsCardChoice = false;
+	FName ChoiceName = NAME_None;
+	int32 MinChoiceCount = 0;
+	int32 MaxChoiceCount = 0;
+	TArray<FSGSDecisionCardChoiceOption> CardChoiceOptions;
+	TArray<TArray<int32>> CandidateCardSelections;
+	bool bIsOptionChoice = false;
+	TArray<FSGSDecisionNamedOption> NamedOptions;
 	int32 ProcessingCardId = INDEX_NONE;
 	int32 StackSequence = INDEX_NONE;
 	FName OnChildCompletedContinuation = NAME_None;
@@ -68,7 +78,12 @@ public:
 	FSGSResolutionFrame* GetParentFrame(FSGSStableHandle FrameHandle);
 	const FSGSResolutionFrame* GetParentFrame(FSGSStableHandle FrameHandle) const;
 
-	FSGSStatus OpenResponseWindowOnCurrent(FName WindowName, FName RequiredCardName, int32 EffectSourceSeat, int32 EffectTargetSeat);
+	FSGSStatus OpenResponseWindowOnCurrent(
+		FName WindowName,
+		FName RequiredCardName,
+		TConstArrayView<FName> AcceptedCardNames,
+		int32 EffectSourceSeat,
+		int32 EffectTargetSeat);
 	FSGSStatus ClearResponseWindowOnCurrent();
 
 	template <typename TState>

@@ -173,7 +173,12 @@ const FSGSResolutionFrame* FSGSResolutionStack::GetParentFrame(FSGSStableHandle 
 	return FindFrame(GetParentFrameHandle(FrameHandle));
 }
 
-FSGSStatus FSGSResolutionStack::OpenResponseWindowOnCurrent(FName WindowName, FName RequiredCardName, int32 EffectSourceSeat, int32 EffectTargetSeat)
+FSGSStatus FSGSResolutionStack::OpenResponseWindowOnCurrent(
+	FName WindowName,
+	FName RequiredCardName,
+	TConstArrayView<FName> AcceptedCardNames,
+	int32 EffectSourceSeat,
+	int32 EffectTargetSeat)
 {
 	const FSGSStableHandle CurrentHandle = GetCurrentFrameHandle();
 	if (!CurrentHandle.IsValid())
@@ -183,10 +188,13 @@ FSGSStatus FSGSResolutionStack::OpenResponseWindowOnCurrent(FName WindowName, FN
 			TEXT("Cannot open a response window without a resolution frame.")));
 	}
 
-	return Frames.Modify(CurrentHandle, [WindowName, RequiredCardName, EffectSourceSeat, EffectTargetSeat](FSGSResolutionFrame& Frame)
+	TArray<FName> AcceptedNames;
+	AcceptedNames.Append(AcceptedCardNames.GetData(), AcceptedCardNames.Num());
+	return Frames.Modify(CurrentHandle, [WindowName, RequiredCardName, AcceptedNames = MoveTemp(AcceptedNames), EffectSourceSeat, EffectTargetSeat](FSGSResolutionFrame& Frame)
 	{
 		Frame.WindowName = WindowName;
 		Frame.RequiredCardName = RequiredCardName;
+		Frame.AcceptedCardNames = AcceptedNames;
 		Frame.SourceSeat = EffectSourceSeat;
 		Frame.TargetSeat = EffectTargetSeat;
 	});
@@ -204,6 +212,15 @@ FSGSStatus FSGSResolutionStack::ClearResponseWindowOnCurrent()
 	{
 		Frame.WindowName = NAME_None;
 		Frame.RequiredCardName = NAME_None;
+		Frame.AcceptedCardNames.Reset();
+		Frame.bIsCardChoice = false;
+		Frame.ChoiceName = NAME_None;
+		Frame.MinChoiceCount = 0;
+		Frame.MaxChoiceCount = 0;
+		Frame.CardChoiceOptions.Reset();
+		Frame.CandidateCardSelections.Reset();
+		Frame.bIsOptionChoice = false;
+		Frame.NamedOptions.Reset();
 	});
 }
 

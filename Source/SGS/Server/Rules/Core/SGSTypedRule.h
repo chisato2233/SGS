@@ -83,3 +83,24 @@ template <typename TPayload>
 class FSGSTriggerRuleBase : public TSGSTypedRule<TPayload>
 {
 };
+
+class SGS_API FSGSQueryRuleBase : public ISGSRule
+{
+public:
+	virtual const UScriptStruct* GetExpectedPayloadStruct() const override { return nullptr; }
+	virtual bool CanHandle(const FSGSRuleExecutionContext& Context) const override
+	{
+		(void)Context;
+		return false;
+	}
+	virtual FSGSStatus Validate(FSGSRuleExecutionContext& Context) const override
+	{
+		(void)Context;
+		return MakeValue();
+	}
+	virtual FSGSStatus Execute(FSGSRuleExecutionContext& Context) const override
+	{
+		(void)Context;
+		return MakeValue();
+	}
+};

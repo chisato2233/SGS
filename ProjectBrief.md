@@ -50,28 +50,36 @@
 ### 已完成基线
 
 - `0001` 素材导入、`0002` 核心逻辑路线、`0003` 权威对局骨架、`0004` 对局数据模型、`0005` 基础牌可玩规则、`0012` 基础工具库、`0013` Command -> Rule -> Effect 管线、`0014` Rule 层骨架长期重构均已完成并归档到 `Source/Doc/Plan/Archive/`。
+- `0016` 已完成 NoName 规则引擎与 AI 架构对照并归档：SGS 保留服务器权威、强类型、RandomAudit 与 ReplayLog 优势；后续优先建设信息安全的通用 AI 评价框架，再补通用 Trigger/Modifier 能力与身份认知。
 - `0003` 已通过命令行 smoke，`0004` 已通过自动化验收 `SGS.Plan0004.GameContextPrimitives`。
 - 规则层已有核心地基：Command、RuleRegistry、RandomAudit、IndexedStore/TargetQuery、Timing/ActiveEffect、EffectPipeline、ReplayLog、`USGSGameContext`、`USGSGameDriver`。Plan 0005 已补齐杀 / 闪 / 桃与濒死求桃的最小可玩规则纵切；Plan 0013 已将基础牌结算迁移到 `Command -> Rule -> EffectPipeline` 单一管线。代码细节不要在本文件展开，使用 graphify 查询。
 
 ### 当前工作面
 
+- `Source/Doc/Plan/0017-mature-rules-skills-ai-roadmap.md` — `In Progress`。以标准身份局为闭环，分 M1 通用 AI、M2 技能运行时、M3 完整流程、M4 标准内容、M5 身份策略推进；当前正在实施 M1。
+- `Source/Doc/Plan/0017-M1-information-safe-ai-evaluation.md` — `In Progress`。生产实现已完成：BasicAI 已迁移到只消费合法候选和受限 WorldView 的组合评分框架，基础牌评价器、评分明细与稳定决胜已接入，隐藏身份不进入 AI 视图；AI 动作与 Pass 默认延迟 0.45 秒提交，Development Editor 编译通过，等待 PIE 手工玩法验收。
+- `Source/Doc/Plan/0015-minimal-playable-identity-demo.md` — `In Progress`。固定 `1 真人 + 7 AI` 八人身份局的生产实现已完成：随机座次/身份、身份胜负、完整最小回合、杀闪桃酒、身份 AI 与复用现有 UI 的终局展示已接通，Development Editor 编译通过；按用户要求未新增或运行测试，未新增日志代码，等待 PIE 整局手工验收。
 - `Source/Doc/Plan/0011-native-code-first-ui.md` — `Ready`。UI 长期技术路线父计划。
 - `Source/Doc/Plan/0011-M1-minimal-code-first-table-ui.md` — `In Progress`。最小代码优先牌桌 UI 纵切代码已实现，PIE 默认进入 8 人 Nova 牌桌；摄像机、全视口背景、武将面板和压叠手牌底栏已按 NoName 布局纠偏，1280x720 离屏 UI 截图通过人工检查；`SGS.Plan0011M1.LocalUI.DecisionBridge` 自动化通过，等待 PIE / Standalone 真实点击与主观视觉验收。
 - `Source/Doc/Plan/0011-M2-react-inspired-ui-foundation-events.md` — `In Progress`。M2.2-M2.6 生产实现已完成：业务无关 state/signal/lifetime/context、Table Controller/Shell/叶组件、Host adapter、精准区域更新以及真实 Toast/Focus 消费者已经接入；Development Editor 编译通过。按用户要求未运行自动化，等待独立测试模型完成 Core、交互与多 LocalPlayer 验收。
 - `Source/Doc/Plan/0011-M3-high-performance-hand-interaction.md` — `In Progress`。本地展示牌序、按 CardId 复用的稳定 Hand/Card 树、Slate 原生拖拽、边缘滚动以及单 Active Timer 弹性动画已完成生产接入；Development Editor 构建和 graphify 更新通过，等待独立 PIE / Slate Insights 运行验收。
 - `Source/Doc/Plan/0011-M4-unified-response-ui.md` — `In Progress`。参考 NoName 的统一选择事件，已完成服务器权威响应请求、私有 ViewData、本地技能 / 牌 / 目标选择状态、独立 Slate DecisionPanel、Controller / HUD / RPC / Agent 提交链路；Development Editor 编译与 graphify 更新通过。当前真实纵切为杀→闪、濒死→桃，等待 PIE 交互验收；万箭 / 南蛮、无懈与具体武将技能仍需后续服务端规则计划。
+- `Source/Doc/Plan/0011-M5-authoritative-card-motion.md` — `In Progress`。服务器权威结构化牌移动事件、隐私安全的 64 条公共/私有快照窗口、Table 端有界消费队列、三个牌区锚点和单 Active Timer 全桌摸牌/出牌/弃牌演出已完成；Development Editor 全量构建与 `SGS.Plan0011*` 回归通过，等待 PIE 主观演出验收。
 - 开发日志已从牌桌 UI 和 Table Snapshot 协议中移除；`SGSEditor` 模块会把 `LogSGS*` 分类汇集到 Unreal Message Log 的 `SGS` 专属页，Runtime / Shipping 不加载该工具。
-- 当前主要 `In Progress` 工作面：`0011-M1` 视觉 / 点击验收、`0011-M2` 独立测试验收、`0011-M3` 手牌交互运行验收与 `0011-M4` 统一响应 UI 运行验收。Rule 层骨架已在 `0014` 收束，后续真实玩法逻辑应另起 gameplay / card / skill 计划。
+- 当前主要 `In Progress` gameplay 工作面为 `0015` 最小可玩身份 Demo；`0011-M1` 至 `M4` 保持各自的 UI 运行验收工作面。Rule 层骨架已在 `0014` 收束，0015 直接复用既有规则与 UI 接缝，不扩建平行基础设施。
 - `Source/Doc/Plan/0000-RawRequirements.md` 是原始需求历史，不算活跃 Plan，默认不要全文读取。
 
 ### 下一步建议
 
+- 完成 `0017-M1` 的通用 AI 评价框架并用 PIE 验收信息隔离与基础牌路径；通过后再建立由真实技能驱动的 M2 子计划。
+- 在 PIE 中完成 `0015` 的一名真人加七名 AI 整局手工验收：优先检查随机座次/身份数量、连续出牌与自动弃牌、酒杀两点伤害、淘汰奖惩和三类终局。验收通过后将 0015 标记 Done/归档。
 - 在 PIE / Standalone 中验收 `0011-M1` 的 8 人 Nova HUD、窗口缩放与 Slash / Dodge / Peach / Pass 点击操作；通过后将 `0011-M1` 按流程归档或推进父计划 0011 的下一阶段。
 - 由独立测试模型验收 `0011-M2` 的 observable/batch/selector、lifetime teardown、typed signal、Table 真实操作链和多 LocalPlayer 隔离；通过后再将 M2 标记 Done。Motion 等两个真实消费者出现后再提炼，CommonUI / 菜单栈按明确需求另立计划。
 - 由独立测试模型用 PIE 与 Slate Insights 验收 `0011-M3` 的 20+ 手牌、滚动、缩放、取消路径和 Idle 零计时器；生产实现已经完成 Development 编译与 graphify 更新。任何 UE 画面读取仍须逐次先向用户确认。
 - 在 PIE 中验收 `0011-M4` 的杀→闪、濒死→桃提示、合法牌高亮、确认 / 不响应和请求结束清理；后续用真实服务端规则请求接入万箭 / 南蛮、无懈和首个响应技能，不为它们新增专用 Widget。任何 UE 画面读取仍须逐次先向用户确认。
+- 在 PIE 验收 M5 的开局发牌、双方摸牌、杀/闪/桃/酒、批量弃牌、死亡清牌、目标连线和空闲零 Motion Timer。任何画面读取仍须逐次先向用户确认。
 - 编辑器重启后从 `Window → Developer Tools → Message Log` 选择 `SGS`，确认 PIE 期间 `LogSGS*` 信息、警告和错误按严重度显示，且牌桌中央不再渲染调试文本。
-- 新建真实玩法计划：优先明确距离 / 目标合法性 / 坐骑与技能修正等游戏逻辑边界，再推进更多卡牌、锦囊、装备和首个武将技纵切。
+- 0015 完成后再为距离修正、坐骑、更多卡牌、锦囊、装备和首个武将技分别建立后续真实玩法计划，不把这些范围提前并入最小 Demo。
 
 ---
 
@@ -119,4 +127,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Tools\GraphifyVisualFilter
 - 每次完成实质性 Plan 或改变项目阶段时，更新第 4 节；不要把 Plan README 变成索引表。
 - 如果内容开始像“所有 Agent 必须遵守的规则”，移到 `Rulers.md`；如果内容只服务某个领域，移到 `Source/Doc/Rules/*`；如果内容是一次开发的方案或验收，留在对应 Plan。
 
-Last reviewed: 2026-07-12
+Last reviewed: 2026-07-20

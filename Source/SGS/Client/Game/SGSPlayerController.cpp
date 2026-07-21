@@ -17,16 +17,19 @@ void ASGSPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ASGSPlayerController, PrivateSnapshot);
 	DOREPLIFETIME(ASGSPlayerController, ViewerSeat);
+	DOREPLIFETIME(ASGSPlayerController, InitialMotionSequence);
 }
 
 void ASGSPlayerController::AttachToMatch(
 	USGSLocalHumanDecisionAgent* InDecisionAgent,
 	int32 InViewerSeat,
 	TFunction<FSGSPlayerPrivateSnapshot()> InPrivateSnapshotProvider,
-	TFunction<void()> InServerViewRefreshHandler)
+	TFunction<void()> InServerViewRefreshHandler,
+	int32 InInitialMotionSequence)
 {
 	DecisionAgent = InDecisionAgent;
 	ViewerSeat = InViewerSeat;
+	InitialMotionSequence = InInitialMotionSequence;
 	PrivateSnapshotProvider = MoveTemp(InPrivateSnapshotProvider);
 	ServerViewRefreshHandler = MoveTemp(InServerViewRefreshHandler);
 
@@ -43,7 +46,7 @@ void ASGSPlayerController::AttachToMatch(
 	}
 	else
 	{
-		ClientAttachLocalHud(ViewerSeat);
+		ClientAttachLocalHud(ViewerSeat, InitialMotionSequence);
 	}
 }
 
@@ -84,23 +87,51 @@ FSGSTableViewSnapshot ASGSPlayerController::BuildTableViewSnapshot() const
 
 bool ASGSPlayerController::SubmitUseCard(int32 CardId, int32 TargetSeatIndex)
 {
+	return SubmitUseCard(
+		CardId,
+		TargetSeatIndex == INDEX_NONE ? TArray<int32>() : TArray<int32>{ TargetSeatIndex });
+}
+
+bool ASGSPlayerController::SubmitUseCard(int32 CardId, TArray<int32> TargetSeatIndices)
+{
 	if (HasAuthority())
 	{
-		return SubmitUseCardOnServer(CardId, TargetSeatIndex);
+		return SubmitUseCardOnServer(CardId, MoveTemp(TargetSeatIndices));
 	}
 
-	ServerSubmitUseCard(CardId, TargetSeatIndex);
+	ServerSubmitUseCardTargets(CardId, TargetSeatIndices);
+	return true;
+}
+
+bool ASGSPlayerController::SubmitSkill(FName SkillName, TArray<int32> CardIds, int32 TargetSeatIndex)
+{
+	if (HasAuthority())
+	{
+		return SubmitSkillOnServer(SkillName, MoveTemp(CardIds), TargetSeatIndex);
+	}
+
+	ServerSubmitSkill(SkillName, CardIds, TargetSeatIndex);
 	return true;
 }
 
 bool ASGSPlayerController::SubmitResponseCard(int32 CardId, int32 TargetSeatIndex, FName SkillName)
 {
+	TArray<int32> CardIds;
+	if (CardId != INDEX_NONE)
+	{
+		CardIds.Add(CardId);
+	}
+	return SubmitResponseCards(MoveTemp(CardIds), TargetSeatIndex, SkillName);
+}
+
+bool ASGSPlayerController::SubmitResponseCards(TArray<int32> CardIds, int32 TargetSeatIndex, FName SkillName)
+{
 	if (HasAuthority())
 	{
-		return SubmitResponseCardOnServer(CardId, TargetSeatIndex, SkillName);
+		return SubmitResponseCardsOnServer(MoveTemp(CardIds), TargetSeatIndex, SkillName);
 	}
 
-	ServerSubmitResponseCard(CardId, TargetSeatIndex, SkillName);
+	ServerSubmitResponseCards(CardIds, TargetSeatIndex, SkillName);
 	return true;
 }
 
@@ -115,9 +146,10 @@ bool ASGSPlayerController::SubmitPass()
 	return true;
 }
 
-void ASGSPlayerController::ClientAttachLocalHud_Implementation(int32 InViewerSeat)
+void ASGSPlayerController::ClientAttachLocalHud_Implementation(int32 InViewerSeat, int32 InInitialMotionSequence)
 {
 	ViewerSeat = InViewerSeat;
+	InitialMotionSequence = InInitialMotionSequence;
 	AttachLocalHud();
 }
 
@@ -126,12 +158,27 @@ void ASGSPlayerController::ServerSubmitUseCard_Implementation(int32 CardId, int3
 	SubmitUseCardOnServer(CardId, TargetSeatIndex);
 }
 
-void ASGSPlayerController::ServerSubmitResponseCard_Implementation(
+void ASGSPlayerController::ServerSubmitUseCardTargets_Implementation(
 	int32 CardId,
+	const TArray<int32>& TargetSeatIndices)
+{
+	SubmitUseCardOnServer(CardId, TargetSeatIndices);
+}
+
+void ASGSPlayerController::ServerSubmitSkill_Implementation(
+	FName SkillName,
+	const TArray<int32>& CardIds,
+	int32 TargetSeatIndex)
+{
+	SubmitSkillOnServer(SkillName, CardIds, TargetSeatIndex);
+}
+
+void ASGSPlayerController::ServerSubmitResponseCards_Implementation(
+	const TArray<int32>& CardIds,
 	int32 TargetSeatIndex,
 	FName SkillName)
 {
-	SubmitResponseCardOnServer(CardId, TargetSeatIndex, SkillName);
+	SubmitResponseCardsOnServer(CardIds, TargetSeatIndex, SkillName);
 }
 
 void ASGSPlayerController::ServerSubmitPass_Implementation()
@@ -165,13 +212,17 @@ void ASGSPlayerController::AttachLocalHud()
 			? WeakThis->BuildTableViewSnapshot()
 			: FSGSTableViewSnapshot();
 	};
-	Bindings.SubmitUseCard = [WeakThis](int32 CardId, int32 TargetSeat)
+	Bindings.SubmitUseCard = [WeakThis](int32 CardId, TArray<int32> TargetSeats)
 	{
-		return WeakThis.IsValid() && WeakThis->SubmitUseCard(CardId, TargetSeat);
+		return WeakThis.IsValid() && WeakThis->SubmitUseCard(CardId, MoveTemp(TargetSeats));
 	};
-	Bindings.SubmitResponseCard = [WeakThis](int32 CardId, int32 TargetSeat, FName SkillName)
+	Bindings.SubmitSkill = [WeakThis](FName SkillName, TArray<int32> CardIds, int32 TargetSeat)
 	{
-		return WeakThis.IsValid() && WeakThis->SubmitResponseCard(CardId, TargetSeat, SkillName);
+		return WeakThis.IsValid() && WeakThis->SubmitSkill(SkillName, MoveTemp(CardIds), TargetSeat);
+	};
+	Bindings.SubmitResponseCards = [WeakThis](TArray<int32> CardIds, int32 TargetSeat, FName SkillName)
+	{
+		return WeakThis.IsValid() && WeakThis->SubmitResponseCards(MoveTemp(CardIds), TargetSeat, SkillName);
 	};
 	Bindings.SubmitPass = [WeakThis]()
 	{
@@ -180,7 +231,8 @@ void ASGSPlayerController::AttachLocalHud()
 	TableFeatureController = MakeShared<FSGSTableFeatureController>(
 		ViewerSeat,
 		MoveTemp(Bindings),
-		UIContext.ToSharedRef());
+		UIContext.ToSharedRef(),
+		InitialMotionSequence);
 	TableFeatureController->RefreshFromHost();
 
 	SAssignNew(TableHudWidget, SSGSTableHudWidget)
@@ -211,13 +263,20 @@ void ASGSPlayerController::AttachLocalHud()
 
 bool ASGSPlayerController::SubmitUseCardOnServer(int32 CardId, int32 TargetSeatIndex)
 {
+	return SubmitUseCardOnServer(
+		CardId,
+		TargetSeatIndex == INDEX_NONE ? TArray<int32>() : TArray<int32>{ TargetSeatIndex });
+}
+
+bool ASGSPlayerController::SubmitUseCardOnServer(int32 CardId, TArray<int32> TargetSeatIndices)
+{
 	if (DecisionAgent == nullptr)
 	{
 		UE_LOG(LogSGSUI, Warning, TEXT("SubmitUseCard ignored: no server decision agent is bound."));
 		return false;
 	}
 
-	const bool bSubmitted = DecisionAgent->SubmitUseCard(CardId, TargetSeatIndex);
+	const bool bSubmitted = DecisionAgent->SubmitUseCard(CardId, MoveTemp(TargetSeatIndices));
 	if (bSubmitted)
 	{
 		RefreshAfterServerDecision();
@@ -225,8 +284,26 @@ bool ASGSPlayerController::SubmitUseCardOnServer(int32 CardId, int32 TargetSeatI
 	return bSubmitted;
 }
 
-bool ASGSPlayerController::SubmitResponseCardOnServer(
-	int32 CardId,
+bool ASGSPlayerController::SubmitSkillOnServer(
+	FName SkillName,
+	TArray<int32> CardIds,
+	int32 TargetSeatIndex)
+{
+	if (DecisionAgent == nullptr)
+	{
+		return false;
+	}
+
+	const bool bSubmitted = DecisionAgent->SubmitSkill(SkillName, MoveTemp(CardIds), TargetSeatIndex);
+	if (bSubmitted)
+	{
+		RefreshAfterServerDecision();
+	}
+	return bSubmitted;
+}
+
+bool ASGSPlayerController::SubmitResponseCardsOnServer(
+	TArray<int32> CardIds,
 	int32 TargetSeatIndex,
 	FName SkillName)
 {
@@ -236,7 +313,7 @@ bool ASGSPlayerController::SubmitResponseCardOnServer(
 		return false;
 	}
 
-	const bool bSubmitted = DecisionAgent->SubmitResponseCard(CardId, TargetSeatIndex, SkillName);
+	const bool bSubmitted = DecisionAgent->SubmitResponseCards(MoveTemp(CardIds), TargetSeatIndex, SkillName);
 	if (bSubmitted)
 	{
 		RefreshAfterServerDecision();

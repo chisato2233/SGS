@@ -1,66 +1,82 @@
 #include "Server/AI/SGSBasicAIAgent.h"
 
-#include "Shared/Commands/SGSCommandFactory.h"
-#include "Shared/Commands/SGSCommandPayloads.h"
+#include "Server/AI/SGSAIEvaluation.h"
+#include "Server/Engine/SGSGameContext.h"
+#include "Engine/World.h"
+#include "TimerManager.h"
 
-void USGSBasicAIAgent::RequestPlayPhaseAction(const FSGSPlayPhaseRequest& Request, FSGSPlayPhaseDecisionDelegate OnDecided)
+namespace
 {
-	for (const FSGSCardActionOption& Option : Request.Options)
-	{
-		if (Option.CardName == TEXT("Slash") && Option.TargetSeatIndices.Num() > 0)
-		{
-			FSGSPlayPhaseDecision Decision;
-			Decision.Command = FSGSCommandFactory::Make(
-				FSGSCommandBuildRequest::FromDecisionRequest(Request, FName(TEXT("AI")), FName(TEXT("BasicAI.Slash"))),
-				FSGSUseCardCommandPayload(Option.CardId, TArray<int32>{ Option.TargetSeatIndices[0] }));
-			OnDecided.ExecuteIfBound(Decision);
-			return;
-		}
-	}
-
-	for (const FSGSCardActionOption& Option : Request.Options)
-	{
-		if (Option.CardName == TEXT("Peach"))
-		{
-			FSGSPlayPhaseDecision Decision;
-			Decision.Command = FSGSCommandFactory::Make(
-				FSGSCommandBuildRequest::FromDecisionRequest(Request, FName(TEXT("AI")), FName(TEXT("BasicAI.Peach"))),
-				FSGSUseCardCommandPayload(Option.CardId, TArray<int32>{ Request.SeatIndex }));
-			OnDecided.ExecuteIfBound(Decision);
-			return;
-		}
-	}
-
-	FSGSPlayPhaseDecision Decision;
-	Decision.Command = FSGSCommandFactory::Make(
-		FSGSCommandBuildRequest::FromDecisionRequest(Request, FName(TEXT("AI")), FName(TEXT("BasicAI.Pass"))),
-		FSGSPassCommandPayload());
-	OnDecided.ExecuteIfBound(Decision);
-}
-
-void USGSBasicAIAgent::RequestResponseAction(const FSGSResponseRequest& Request, FSGSResponseDecisionDelegate OnDecided)
+template <typename TDecision, typename TDecisionDelegate>
+void SubmitAfterThinkDelay(
+	USGSBasicAIAgent* Agent,
+	float ThinkDelaySeconds,
+	TDecision Decision,
+	TDecisionDelegate OnDecided)
 {
-	if (Request.ResponseCardIds.Num() > 0 && !Request.RequiredCardName.IsNone())
+	if (ThinkDelaySeconds <= 0.0f)
 	{
-		FSGSResponseDecision Decision;
-		TArray<int32> Targets;
-		if (Request.RequiredCardName == TEXT("Peach") && Request.EffectTargetSeat != INDEX_NONE)
-		{
-			Targets.Add(Request.EffectTargetSeat);
-		}
-		Decision.Command = FSGSCommandFactory::Make(
-			FSGSCommandBuildRequest::FromDecisionRequest(Request, FName(TEXT("AI")), FName(TEXT("BasicAI.Response"))),
-			FSGSRespondCardCommandPayload(Request.ResponseCardIds[0], MoveTemp(Targets), Request.WindowName));
 		OnDecided.ExecuteIfBound(Decision);
 		return;
 	}
 
-	FSGSResponseDecision Decision;
-	Decision.Command = FSGSCommandFactory::Make(
-		FSGSCommandBuildRequest::FromDecisionRequest(
-			Request,
-			FName(TEXT("AI")),
-			Request.WindowName.IsNone() ? FName(TEXT("BasicAI.ResponsePass")) : Request.WindowName),
-		FSGSPassCommandPayload());
-	OnDecided.ExecuteIfBound(Decision);
+	UWorld* World = Agent->GetWorld();
+	check(World != nullptr);
+	FTimerDelegate TimerDelegate = FTimerDelegate::CreateWeakLambda(
+		Agent,
+		[Decision = MoveTemp(Decision), OnDecided = MoveTemp(OnDecided)]() mutable
+		{
+			OnDecided.ExecuteIfBound(Decision);
+		});
+	FTimerHandle TimerHandle;
+	World->GetTimerManager().SetTimer(TimerHandle, MoveTemp(TimerDelegate), ThinkDelaySeconds, false);
+}
+}
+
+void USGSBasicAIAgent::BindToSeat(
+	USGSGameContext* InContext,
+	int32 InSeatIndex,
+	const FSGSAIEvaluatorRegistry* InEvaluatorRegistry,
+	float InThinkDelaySeconds)
+{
+	Context = InContext;
+	SeatIndex = InSeatIndex;
+	EvaluatorRegistry = InEvaluatorRegistry;
+	ThinkDelaySeconds = InThinkDelaySeconds;
+	BeliefModel.Reset(InContext != nullptr ? InContext->NumSeats() : 0);
+}
+
+void USGSBasicAIAgent::RequestPlayPhaseAction(
+	const FSGSPlayPhaseRequest& Request,
+	FSGSPlayPhaseDecisionDelegate OnDecided)
+{
+	const USGSGameContext* GameContext = Context.Get();
+	check(GameContext != nullptr && EvaluatorRegistry != nullptr);
+	const FSGSAIWorldView WorldView = FSGSAIWorldViewBuilder::Build(*GameContext, SeatIndex, Request.Phase, &BeliefModel);
+	SubmitAfterThinkDelay(
+		this,
+		ThinkDelaySeconds,
+		FSGSAIDecisionEngine::DecidePlay(Request, WorldView, *EvaluatorRegistry),
+		MoveTemp(OnDecided));
+}
+
+void USGSBasicAIAgent::RequestResponseAction(
+	const FSGSResponseRequest& Request,
+	FSGSResponseDecisionDelegate OnDecided)
+{
+	const USGSGameContext* GameContext = Context.Get();
+	check(GameContext != nullptr && EvaluatorRegistry != nullptr);
+	const FSGSAIWorldView WorldView = FSGSAIWorldViewBuilder::Build(*GameContext, SeatIndex, Request.Phase, &BeliefModel);
+	SubmitAfterThinkDelay(
+		this,
+		ThinkDelaySeconds,
+		FSGSAIDecisionEngine::DecideResponse(Request, WorldView, *EvaluatorRegistry),
+		MoveTemp(OnDecided));
+}
+
+void USGSBasicAIAgent::ObservePublicAction(
+	const FSGSAIPublicActionObservation& Observation,
+	int32 PublicLordSeat)
+{
+	BeliefModel.Observe(Observation, PublicLordSeat);
 }

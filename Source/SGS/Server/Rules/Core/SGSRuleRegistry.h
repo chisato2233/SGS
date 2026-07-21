@@ -38,8 +38,14 @@ public:
 	void Reset();
 	void RegisterRule(TSharedRef<ISGSRule> Rule);
 	TArray<FName> FindCandidateRuleNames(const FSGSRuleInvocation& Invocation) const;
+	TArray<FName> FindMatchingTriggerRuleNames(FSGSRuleExecutionContext& Context) const;
 	FSGSStatus Resolve(FSGSRuleExecutionContext& Context) const;
 	FSGSStatus DispatchAll(FSGSRuleExecutionContext& Context) const;
+	FSGSStatus DispatchTriggerByName(FSGSRuleExecutionContext& Context, FName RuleName) const;
+	int32 ApplyNumericModifiers(const FSGSRuleQueryContext& Context, FSGSNumericRuleQuery Query) const;
+	TArray<FSGSDecisionSkillOption> CollectSkillOptions(
+		const FSGSRuleQueryContext& Context,
+		FSGSSkillOptionQuery Query) const;
 	bool CheckInvariants() const;
 
 private:
@@ -48,6 +54,7 @@ private:
 	void InitializeStore();
 	TArray<FSGSStableHandle> QueryCandidateHandles(const FSGSRuleInvocation& Invocation) const;
 	TArray<const FSGSRuleEntry*> FindCandidateEntries(const FSGSRuleInvocation& Invocation) const;
+	TArray<const FSGSRuleEntry*> FindQueryEntries(FName RuleKindTag, FName SubjectName) const;
 
 	FRuleStore Rules;
 	TSharedPtr<FRuleStore::TUniqueIndex<FName>> RulesByName;

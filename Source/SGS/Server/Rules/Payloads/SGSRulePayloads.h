@@ -6,4 +6,5 @@
 #include "Server/Rules/Payloads/SGSRuleActionPayloads.h"
 #include "Server/Rules/Payloads/SGSRuleCommonPayloads.h"
 #include "Server/Rules/Payloads/SGSRuleEventPayloads.h"
+#include "Server/Rules/Payloads/SGSRuleGamePayloads.h"
 #include "Server/Rules/Payloads/SGSRuleResponsePayloads.h"

@@ -37,3 +37,30 @@ struct SGS_API TSGSCommandPayloadTraits<FSGSRespondCardCommandPayload>
 		return SGSGameplayTags::PlayAction_RespondCard.GetTag();
 	}
 };
+
+template <>
+struct SGS_API TSGSCommandPayloadTraits<FSGSActivateSkillCommandPayload>
+{
+	static FGameplayTag GetType()
+	{
+		return SGSGameplayTags::PlayAction_ActivateSkill.GetTag();
+	}
+};
+
+template <>
+struct SGS_API TSGSCommandPayloadTraits<FSGSChooseCardsCommandPayload>
+{
+	static FGameplayTag GetType()
+	{
+		return SGSGameplayTags::PlayAction_ChooseCards.GetTag();
+	}
+};
+
+template <>
+struct SGS_API TSGSCommandPayloadTraits<FSGSChooseOptionCommandPayload>
+{
+	static FGameplayTag GetType()
+	{
+		return SGSGameplayTags::PlayAction_ChooseOption.GetTag();
+	}
+};

@@ -24,4 +24,15 @@ public:
 	static FVector2D CardButtonSize();
 	static FVector2D ActionButtonMinSize();
 	static FSlateColor ControlTint(ESGSUIControlTone Tone);
+	static FLinearColor SeatCurrentGlowColor();
+	static float SeatCurrentGlowOuterWidth();
+	static float SeatCurrentGlowInnerWidth();
+	static float SeatCurrentGlowOuterOpacity();
+	static float SeatCurrentGlowInnerOpacity();
+	static float SeatHealthPipSize();
+	static float SeatHealthPipGap();
+	static float SeatHealthRightInset();
+	static float SeatHealthBottomInset();
+	static float SeatPortraitLeftInsetRatio();
+	static float SeatPortraitEdgeInsetRatio();
 };

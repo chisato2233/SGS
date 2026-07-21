@@ -74,10 +74,5 @@ FSGSStatus FSGSDodgeResponseRule::ExecutePayload(FSGSRuleExecutionContext& Conte
 	{
 		return Status;
 	}
-	if (FSGSStatus Status = SGSBasicCardRuleHelpers::DiscardProcessingCard(Context); Status.HasError())
-	{
-		return Status;
-	}
-
-	return SGSBasicCardRuleHelpers::CompleteCurrentFrame(Context, FName(TEXT("SGS.Resolution.SlashDodged")));
+	return SGSBasicCardRuleHelpers::ResolveSuccessfulSlashDodge(Context);
 }

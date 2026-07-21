@@ -2,24 +2,64 @@
 
 #include "Shared/Cards/SGSCard.h"
 #include "Server/Players/SGSSeat.h"
+#include "Server/Content/SGSStandardGenerals.h"
 #include "Shared/Core/SGSLogChannels.h"
 
-void USGSGameContext::Initialize(const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents, int32 RandomSeed)
+void USGSGameContext::Initialize(
+	const TArray<TScriptInterface<ISGSDecisionAgent>>& InAgents,
+	int32 RandomSeed,
+	bool bIdentityMode,
+	TConstArrayView<FName> GeneralIdsBySeat,
+	TConstArrayView<FGameplayTag> FactionsBySeat)
 {
 	RandomAudit.Initialize(RandomSeed);
 	NextCardId = 0;
 	AllCards.Reset();
 	RegisterCardIndexes();
 
+	TArray<TScriptInterface<ISGSDecisionAgent>> SeatAgents = InAgents;
+	TArray<FGameplayTag> Identities;
+	if (bIdentityMode)
+	{
+		check(SeatAgents.Num() == 8);
+		Identities = {
+			SGSGameplayTags::Identity_Lord.GetTag(),
+			SGSGameplayTags::Identity_Loyalist.GetTag(),
+			SGSGameplayTags::Identity_Loyalist.GetTag(),
+			SGSGameplayTags::Identity_Rebel.GetTag(),
+			SGSGameplayTags::Identity_Rebel.GetTag(),
+			SGSGameplayTags::Identity_Rebel.GetTag(),
+			SGSGameplayTags::Identity_Rebel.GetTag(),
+			SGSGameplayTags::Identity_Renegade.GetTag(),
+		};
+		for (int32 Index = SeatAgents.Num() - 1; Index > 0; --Index)
+		{
+			SeatAgents.Swap(Index, RandomAudit.RandRange(
+				TEXT("SGS.Random.SeatAssignment"), 0, Index, TEXT("IdentityMode")));
+			Identities.Swap(Index, RandomAudit.RandRange(
+				TEXT("SGS.Random.IdentityAssignment"), 0, Index, TEXT("IdentityMode")));
+		}
+	}
+
 	Seats.Reset();
-	for (int32 Index = 0; Index < InAgents.Num(); ++Index)
+	for (int32 Index = 0; Index < SeatAgents.Num(); ++Index)
 	{
 		USGSSeat* Seat = NewObject<USGSSeat>(this);
 		Seat->SeatIndex = Index;
 		Seat->DisplayName = FString::Printf(TEXT("Seat%d"), Index);
-		Seat->DecisionAgent = InAgents[Index];
-		Seat->MaxHealth = DefaultMaxHealth;
-		Seat->Health = DefaultMaxHealth;
+		Seat->GeneralId = GeneralIdsBySeat.IsValidIndex(Index) ? GeneralIdsBySeat[Index] : NAME_None;
+		const FSGSGeneralDefinition* General = SGSStandardGenerals::Find(Seat->GeneralId);
+		Seat->Faction = FactionsBySeat.IsValidIndex(Index)
+			? FactionsBySeat[Index]
+			: General != nullptr ? General->Faction : FGameplayTag();
+		Seat->SkillNames = General != nullptr ? General->SkillNames : TArray<FName>();
+		Seat->DecisionAgent = SeatAgents[Index];
+		Seat->Identity = Identities.IsValidIndex(Index) ? Identities[Index] : FGameplayTag();
+		const int32 GeneralMaxHealth = General != nullptr ? General->MaxHealth : DefaultMaxHealth;
+		Seat->MaxHealth = Seat->Identity.MatchesTagExact(SGSGameplayTags::Identity_Lord.GetTag())
+			? GeneralMaxHealth + 1
+			: GeneralMaxHealth;
+		Seat->Health = Seat->MaxHealth;
 		Seat->bIsAlive = true;
 		Seats.Add(Seat);
 	}
@@ -325,6 +365,19 @@ void USGSGameContext::MoveCards(const TArray<USGSCard*>& Cards, FSGSCardZone Fro
 		Info.Cards.Add(Card);
 	}
 
+	if (SGSMatchesExactTag(FromZone, SGSGameplayTags::CardZone_Equipment)
+		&& Seats.IsValidIndex(FromSeat))
+	{
+		USGSSeat* SourceSeat = Seats[FromSeat];
+		for (auto It = SourceSeat->Equipment.CreateIterator(); It; ++It)
+		{
+			if (Info.Cards.Contains(It.Value().Get()))
+			{
+				It.RemoveCurrent();
+			}
+		}
+	}
+
 	NormalizePileOrder(FromKey);
 	NormalizePileOrder(ToKey);
 
@@ -456,7 +509,7 @@ void USGSGameContext::Heal(int32 SeatIndex, int32 Amount)
 	UE_LOG(LogSGSCombat, Log, TEXT("Seat %d healed %d (HP now %d)."), SeatIndex, Amount, Seat->Health);
 }
 
-void USGSGameContext::EliminateSeat(int32 SeatIndex, FName Reason)
+void USGSGameContext::EliminateSeat(int32 SeatIndex, int32 SourceSeat, FName Reason)
 {
 	USGSSeat* Seat = GetSeat(SeatIndex);
 	if (Seat == nullptr || !Seat->bIsAlive)
@@ -469,7 +522,57 @@ void USGSGameContext::EliminateSeat(int32 SeatIndex, FName Reason)
 	RebuildSeatIndexes();
 	UE_LOG(LogSGSCombat, Log, TEXT("Seat %d is eliminated. Reason=%s"), SeatIndex, *Reason.ToString());
 	HealthChangedDelegate.Broadcast(SeatIndex, Seat->Health);
-	SeatEliminatedDelegate.Broadcast(SeatIndex, Reason);
+	SeatEliminatedDelegate.Broadcast(SeatIndex, SourceSeat, Reason);
+}
+
+bool USGSGameContext::AssignGeneral(int32 SeatIndex, FName GeneralId)
+{
+	USGSSeat* Seat = GetSeat(SeatIndex);
+	const FSGSGeneralDefinition* General = SGSStandardGenerals::Find(GeneralId);
+	if (Seat == nullptr || General == nullptr)
+	{
+		return false;
+	}
+	Seat->GeneralId = General->GeneralId;
+	Seat->Faction = General->Faction;
+	Seat->SkillNames = General->SkillNames;
+	Seat->MaxHealth = Seat->Identity.MatchesTagExact(SGSGameplayTags::Identity_Lord.GetTag())
+		? General->MaxHealth + 1
+		: General->MaxHealth;
+	Seat->Health = Seat->MaxHealth;
+	return true;
+}
+
+void USGSGameContext::EquipCard(int32 SeatIndex, USGSCard* Card, FSGSEquipSlot Slot)
+{
+	USGSSeat* Seat = GetSeat(SeatIndex);
+	if (Seat == nullptr || Card == nullptr || !Slot.IsValid())
+	{
+		return;
+	}
+
+	if (TObjectPtr<USGSCard>* Existing = Seat->Equipment.Find(Slot))
+	{
+		USGSCard* ReplacedCard = Existing->Get();
+		Seat->Equipment.Remove(Slot);
+		if (ReplacedCard != nullptr)
+		{
+			MoveCards(
+				{ ReplacedCard },
+				SGSGameplayTags::CardZone_Equipment.GetTag(),
+				SeatIndex,
+				SGSGameplayTags::CardZone_DiscardPile.GetTag(),
+				INDEX_NONE);
+		}
+	}
+
+	MoveCards(
+		{ Card },
+		SGSGameplayTags::CardZone_Hand.GetTag(),
+		SeatIndex,
+		SGSGameplayTags::CardZone_Equipment.GetTag(),
+		SeatIndex);
+	Seat->Equipment.Add(Slot, Card);
 }
 
 int32 USGSGameContext::GetDistance(int32 FromSeat, int32 ToSeat) const

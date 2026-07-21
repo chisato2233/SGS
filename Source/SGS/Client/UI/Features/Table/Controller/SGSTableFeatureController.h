@@ -8,8 +8,9 @@ class FSGSUIContext;
 struct SGS_API FSGSTableFeatureBindings
 {
 	TFunction<FSGSTableViewSnapshot()> ReadSnapshot;
-	TFunction<bool(int32 CardId, int32 TargetSeat)> SubmitUseCard;
-	TFunction<bool(int32 CardId, int32 TargetSeat, FName SkillName)> SubmitResponseCard;
+	TFunction<bool(int32 CardId, TArray<int32> TargetSeats)> SubmitUseCard;
+	TFunction<bool(FName SkillName, TArray<int32> CardIds, int32 TargetSeat)> SubmitSkill;
+	TFunction<bool(TArray<int32> CardIds, int32 TargetSeat, FName SkillName)> SubmitResponseCards;
 	TFunction<bool()> SubmitPass;
 };
 
@@ -21,13 +22,16 @@ public:
 	FSGSTableFeatureController(
 		int32 InViewerSeat,
 		FSGSTableFeatureBindings InBindings,
-		TSharedRef<FSGSUIContext> InUIContext);
+		TSharedRef<FSGSUIContext> InUIContext,
+		int32 InInitialMotionSequence = INDEX_NONE);
 
 	bool RefreshFromHost();
 	bool SelectCard(int32 CardId);
 	bool SelectTarget(int32 SeatIndex);
 	bool SelectSkill(FName SkillName);
 	bool ReorderHand(TConstArrayView<int32> OrderedCardIds);
+	void AcknowledgeMotionCue(int32 Sequence) { State.AcknowledgeMotionCue(Sequence); }
+	void ClearMotionQueueToLatest() { State.ClearMotionQueueToLatest(); }
 	bool Confirm();
 	bool Pass();
 
@@ -46,6 +50,14 @@ public:
 	const TSGSUIObservable<FSGSTableHandPresentationState>& GetHandPresentationState() const
 	{
 		return State.GetHandPresentationState();
+	}
+	const FSGSTableMotionPresentationState& GetMotionPresentation() const
+	{
+		return State.GetMotionPresentation();
+	}
+	const TSGSUIObservable<FSGSTableMotionPresentationState>& GetMotionPresentationState() const
+	{
+		return State.GetMotionPresentationState();
 	}
 
 	TSharedRef<FSGSUIContext> GetUIContext() const { return UIContext; }

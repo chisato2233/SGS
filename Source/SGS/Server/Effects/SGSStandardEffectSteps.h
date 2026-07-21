@@ -10,6 +10,24 @@
 
 class USGSCard;
 
+namespace SGSCardMoveReasons
+{
+	SGS_API FName InitialDeal();
+	SGS_API FName Draw();
+	SGS_API FName RewardDraw();
+	SGS_API FName Use();
+	SGS_API FName Respond();
+	SGS_API FName Discard();
+	SGS_API FName Cleanup();
+	SGS_API FName Gain();
+}
+
+struct SGS_API FSGSCardMoveEventMetadata
+{
+	FName Reason = NAME_None;
+	TArray<int32> RelatedTargetSeatIndices;
+};
+
 namespace SGSStandardEffectSteps
 {
 	SGS_API FSGSEffectStep MakeMoveCardsStep(
@@ -17,13 +35,27 @@ namespace SGSStandardEffectSteps
 		FSGSCardZone FromZone,
 		int32 FromSeat,
 		FSGSCardZone ToZone,
-		int32 ToSeat);
+		int32 ToSeat,
+		FSGSCardMoveEventMetadata Metadata = {});
 
-	SGS_API FSGSEffectStep MakeDrawCardsStep(int32 SeatIndex, int32 Count);
+	SGS_API FSGSEffectStep MakeDrawCardsStep(
+		int32 SeatIndex,
+		int32 Count,
+		FSGSCardMoveEventMetadata Metadata = {});
+	SGS_API FSGSEffectStep MakeRevealTopCardsStep(
+		int32 TemporarySeatIndex,
+		int32 Count,
+		TSharedRef<TArray<TObjectPtr<USGSCard>>> OutCards,
+		TArray<int32> RelatedTargetSeatIndices = {});
 	SGS_API FSGSEffectStep MakeDamageStep(int32 SourceSeat, int32 TargetSeat, int32 Amount);
 	SGS_API FSGSEffectStep MakeHealStep(int32 SeatIndex, int32 Amount);
-	SGS_API FSGSEffectStep MakeEliminateSeatStep(int32 SeatIndex, FName Reason);
+	SGS_API FSGSEffectStep MakeEquipCardStep(int32 SeatIndex, USGSCard* Card, FSGSEquipSlot Slot);
+	SGS_API FSGSEffectStep MakeJudgementDrawStep(
+		int32 SeatIndex,
+		TSharedRef<TObjectPtr<USGSCard>> OutJudgementCard);
+	SGS_API FSGSEffectStep MakeEliminateSeatStep(int32 SeatIndex, int32 SourceSeat, FName Reason);
 	SGS_API FSGSEffectStep MakeJudgementPlaceholderStep(int32 SeatIndex, FName Reason);
 	SGS_API FSGSEffectStep MakeReactionWindowStep(int32 SeatIndex, FName WindowName);
 	SGS_API FSGSEffectStep MakeExpireActiveEffectStep(FSGSStableHandle EffectHandle, FName Reason);
+	SGS_API FSGSEffectStep MakeRuleOutcomeStep(FName EventName, FString Payload);
 }

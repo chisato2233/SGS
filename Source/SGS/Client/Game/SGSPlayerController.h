@@ -26,13 +26,17 @@ public:
 		USGSLocalHumanDecisionAgent* InDecisionAgent,
 		int32 InViewerSeat,
 		TFunction<FSGSPlayerPrivateSnapshot()> InPrivateSnapshotProvider,
-		TFunction<void()> InServerViewRefreshHandler);
+		TFunction<void()> InServerViewRefreshHandler,
+		int32 InInitialMotionSequence = INDEX_NONE);
 
 	void RefreshPrivateSnapshotFromServer();
 	FSGSTableViewSnapshot BuildTableViewSnapshot() const;
 
 	bool SubmitUseCard(int32 CardId, int32 TargetSeatIndex);
+	bool SubmitUseCard(int32 CardId, TArray<int32> TargetSeatIndices);
+	bool SubmitSkill(FName SkillName, TArray<int32> CardIds, int32 TargetSeatIndex);
 	bool SubmitResponseCard(int32 CardId, int32 TargetSeatIndex, FName SkillName = NAME_None);
+	bool SubmitResponseCards(TArray<int32> CardIds, int32 TargetSeatIndex, FName SkillName = NAME_None);
 	bool SubmitPass();
 
 protected:
@@ -40,13 +44,19 @@ protected:
 
 private:
 	UFUNCTION(Client, Reliable)
-	void ClientAttachLocalHud(int32 InViewerSeat);
+	void ClientAttachLocalHud(int32 InViewerSeat, int32 InInitialMotionSequence);
 
 	UFUNCTION(Server, Reliable)
 	void ServerSubmitUseCard(int32 CardId, int32 TargetSeatIndex);
 
 	UFUNCTION(Server, Reliable)
-	void ServerSubmitResponseCard(int32 CardId, int32 TargetSeatIndex, FName SkillName);
+	void ServerSubmitUseCardTargets(int32 CardId, const TArray<int32>& TargetSeatIndices);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSubmitSkill(FName SkillName, const TArray<int32>& CardIds, int32 TargetSeatIndex);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSubmitResponseCards(const TArray<int32>& CardIds, int32 TargetSeatIndex, FName SkillName);
 
 	UFUNCTION(Server, Reliable)
 	void ServerSubmitPass();
@@ -61,7 +71,9 @@ private:
 	void HandlePublicSnapshotChanged();
 	void RefreshTableFeature();
 	bool SubmitUseCardOnServer(int32 CardId, int32 TargetSeatIndex);
-	bool SubmitResponseCardOnServer(int32 CardId, int32 TargetSeatIndex, FName SkillName);
+	bool SubmitUseCardOnServer(int32 CardId, TArray<int32> TargetSeatIndices);
+	bool SubmitSkillOnServer(FName SkillName, TArray<int32> CardIds, int32 TargetSeatIndex);
+	bool SubmitResponseCardsOnServer(TArray<int32> CardIds, int32 TargetSeatIndex, FName SkillName);
 	bool SubmitPassOnServer();
 	void RefreshAfterServerDecision();
 
@@ -70,6 +82,9 @@ private:
 
 	UPROPERTY(Replicated)
 	int32 ViewerSeat = INDEX_NONE;
+
+	UPROPERTY(Replicated)
+	int32 InitialMotionSequence = INDEX_NONE;
 
 	UPROPERTY()
 	TObjectPtr<USGSLocalHumanDecisionAgent> DecisionAgent;

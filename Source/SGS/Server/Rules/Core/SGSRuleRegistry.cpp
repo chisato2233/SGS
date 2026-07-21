@@ -1,6 +1,11 @@
 #include "Server/Rules/Core/SGSRuleRegistry.h"
 
 #include "Server/Rules/BasicCards/SGSBasicCardRules.h"
+#include "Server/Rules/StandardCards/SGSEquipmentRules.h"
+#include "Server/Rules/StandardCards/SGSStandardTrickRules.h"
+#include "Server/Rules/StandardCards/SGSDelayedTrickRules.h"
+#include "Server/Rules/Phases/SGSDiscardPhaseRules.h"
+#include "Server/Rules/Phases/SGSGeneralSelectionRules.h"
 
 namespace
 {
@@ -155,6 +160,33 @@ TArray<FName> FSGSRuleRegistry::FindCandidateRuleNames(const FSGSRuleInvocation&
 	return Names;
 }
 
+TArray<FName> FSGSRuleRegistry::FindMatchingTriggerRuleNames(FSGSRuleExecutionContext& Context) const
+{
+	TArray<FName> Names;
+	if (Context.RuleInvocation.RuleKindTag != SGSRuleKinds::Trigger())
+	{
+		return Names;
+	}
+	for (const FSGSRuleEntry* Entry : FindCandidateEntries(Context.RuleInvocation))
+	{
+		if (Entry == nullptr)
+		{
+			continue;
+		}
+		const UScriptStruct* ExpectedPayloadStruct = Entry->Rule->GetExpectedPayloadStruct();
+		if (ExpectedPayloadStruct != nullptr
+			&& ExpectedPayloadStruct != Context.RuleInvocation.GetPayloadStruct())
+		{
+			continue;
+		}
+		if (Entry->Rule->CanHandle(Context))
+		{
+			Names.Add(Entry->Descriptor.RuleName);
+		}
+	}
+	return Names;
+}
+
 FSGSStatus FSGSRuleRegistry::Resolve(FSGSRuleExecutionContext& Context) const
 {
 	if (!Context.CheckInvariants())
@@ -297,6 +329,74 @@ FSGSStatus FSGSRuleRegistry::DispatchAll(FSGSRuleExecutionContext& Context) cons
 	return MakeValue();
 }
 
+FSGSStatus FSGSRuleRegistry::DispatchTriggerByName(
+	FSGSRuleExecutionContext& Context,
+	FName RuleName) const
+{
+	if (!Context.CheckInvariants()
+		|| Context.RuleInvocation.RuleKindTag != SGSRuleKinds::Trigger())
+	{
+		return MakeError(FSGSError::Make(
+			FName(TEXT("SGS.Rule.InvalidTriggerDispatch")),
+			TEXT("Named trigger dispatch requires a valid trigger execution context.")));
+	}
+	const FSGSStableHandle Handle = RulesByName.IsValid()
+		? RulesByName->Find(RuleName)
+		: FSGSStableHandle();
+	const FSGSRuleEntry* Entry = Rules.Find(Handle);
+	if (Entry == nullptr || !DescriptorMatchesInvocation(Entry->Descriptor, Context.RuleInvocation))
+	{
+		return MakeError(FSGSError::Make(
+			FName(TEXT("SGS.Rule.TriggerNotFound")),
+			FString::Printf(TEXT("Timing event trigger %s is no longer registered for this invocation."), *RuleName.ToString())));
+	}
+	const UScriptStruct* ExpectedPayloadStruct = Entry->Rule->GetExpectedPayloadStruct();
+	if (ExpectedPayloadStruct != nullptr
+		&& ExpectedPayloadStruct != Context.RuleInvocation.GetPayloadStruct())
+	{
+		return MakeError(FSGSError::Make(
+			FName(TEXT("SGS.Rule.PayloadTypeMismatch")),
+			FString::Printf(TEXT("Timing event trigger %s received payload %s."),
+				*RuleName.ToString(), *Context.RuleInvocation.GetPayloadTypeName())));
+	}
+	if (!Entry->Rule->CanHandle(Context))
+	{
+		return MakeValue();
+	}
+	if (FSGSStatus Status = Entry->Rule->Validate(Context); Status.HasError())
+	{
+		return Status;
+	}
+	return Entry->Rule->Execute(Context);
+}
+
+int32 FSGSRuleRegistry::ApplyNumericModifiers(
+	const FSGSRuleQueryContext& Context,
+	FSGSNumericRuleQuery Query) const
+{
+	Query.Value = Query.BaseValue;
+	for (const FSGSRuleEntry* Entry : FindQueryEntries(SGSRuleKinds::Modifier(), Query.QueryName))
+	{
+		Entry->Rule->ModifyNumericQuery(Context, Query);
+	}
+	return Query.Value;
+}
+
+TArray<FSGSDecisionSkillOption> FSGSRuleRegistry::CollectSkillOptions(
+	const FSGSRuleQueryContext& Context,
+	FSGSSkillOptionQuery Query) const
+{
+	for (const FSGSRuleEntry* Entry : FindQueryEntries(SGSRuleKinds::ViewAs(), NAME_None))
+	{
+		Entry->Rule->CollectSkillOptions(Context, Query);
+	}
+	for (const FSGSRuleEntry* Entry : FindQueryEntries(SGSRuleKinds::Action(), NAME_None))
+	{
+		Entry->Rule->CollectSkillOptions(Context, Query);
+	}
+	return MoveTemp(Query.Options);
+}
+
 bool FSGSRuleRegistry::CheckInvariants() const
 {
 	bool bOk = true;
@@ -405,7 +505,43 @@ TArray<const FSGSRuleEntry*> FSGSRuleRegistry::FindCandidateEntries(const FSGSRu
 	return Entries;
 }
 
+TArray<const FSGSRuleEntry*> FSGSRuleRegistry::FindQueryEntries(FName RuleKindTag, FName SubjectName) const
+{
+	TArray<const FSGSRuleEntry*> Entries;
+	if (!RulesByKind.IsValid())
+	{
+		return Entries;
+	}
+
+	for (const FSGSStableHandle& Handle : RulesByKind->FindCopy(RuleKindTag))
+	{
+		const FSGSRuleEntry* Entry = Rules.Find(Handle);
+		if (Entry != nullptr
+			&& (SubjectName.IsNone()
+				|| Entry->Descriptor.bWildcardSubject
+				|| Entry->Descriptor.SubjectName == SubjectName))
+		{
+			Entries.Add(Entry);
+		}
+	}
+
+	Entries.Sort([](const FSGSRuleEntry& Left, const FSGSRuleEntry& Right)
+	{
+		if (Left.Descriptor.Priority != Right.Descriptor.Priority)
+		{
+			return Left.Descriptor.Priority > Right.Descriptor.Priority;
+		}
+		return Left.RegistrationOrder < Right.RegistrationOrder;
+	});
+	return Entries;
+}
+
 void SGSRules::RegisterDefaultRules(FSGSRuleRegistry& Registry)
 {
 	SGSBasicCardRules::Register(Registry);
+	SGSEquipmentRules::Register(Registry);
+	SGSStandardTrickRules::Register(Registry);
+	SGSDelayedTrickRules::Register(Registry);
+	SGSDiscardPhaseRules::Register(Registry);
+	SGSGeneralSelectionRules::Register(Registry);
 }

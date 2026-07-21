@@ -4,6 +4,62 @@
 #include "Server/Engine/SGSGameContext.h"
 #include "Server/Players/SGSSeat.h"
 #include "Server/Rules/BasicCards/SGSBasicCardRuleHelpers.h"
+#include "Server/Rules/Core/SGSRuleRegistry.h"
+
+namespace
+{
+FSGSStatus ExecuteDyingHeal(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload& Payload,
+	FName CardName)
+{
+	FSGSResolutionFrame* DyingFrame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
+	const FSGSDyingPeachResolutionState* DyingState = DyingFrame != nullptr
+		? DyingFrame->GetState<FSGSDyingPeachResolutionState>()
+		: nullptr;
+	if (DyingState == nullptr)
+	{
+		return SGSBasicCardRuleHelpers::MakeRuleError(
+			FName(TEXT("SGS.Rule.MissingResolutionFrame")),
+			TEXT("Dying heal response requires the current DyingPeach frame."));
+	}
+
+	const int32 DyingSeatIndex = DyingState->DyingSeat;
+	FSGSNumericRuleQuery HealQuery;
+	HealQuery.QueryName = SGSRuleQueries::PeachHealAmount();
+	HealQuery.ActorSeat = Context.RuleInvocation.ActorSeat;
+	HealQuery.TargetSeat = DyingSeatIndex;
+	HealQuery.CardName = CardName;
+	HealQuery.BaseValue = 1;
+	FSGSRuleQueryContext QueryContext;
+	QueryContext.GameContext = Context.GameContext;
+	QueryContext.ActiveEffects = Context.ActiveEffects;
+	QueryContext.RuleRegistry = Context.RuleRegistry;
+	QueryContext.Phase = Context.TimingPoint.Phase;
+	QueryContext.ActorSeat = Context.RuleInvocation.ActorSeat;
+	const int32 HealAmount = Context.RuleRegistry != nullptr
+		? Context.RuleRegistry->ApplyNumericModifiers(QueryContext, HealQuery)
+		: 1;
+	if (FSGSStatus Status = SGSBasicCardRuleHelpers::ExecuteHealCard(
+		Context,
+		Payload.CardId,
+		CardName,
+		DyingSeatIndex,
+		HealAmount);
+		Status.HasError())
+	{
+		return Status;
+	}
+
+	const USGSSeat* DyingSeat = Context.GameContext->GetSeat(DyingSeatIndex);
+	if (DyingSeat != nullptr && DyingSeat->Health > 0)
+	{
+		return SGSBasicCardRuleHelpers::CompleteCurrentFrame(Context, FName(TEXT("SGS.Resolution.DyingPeachResolved")));
+	}
+
+	return SGSBasicCardRuleHelpers::ContinueDyingPeachOrEliminate(Context);
+}
+}
 
 FString FSGSDyingPeachResolutionState::ToLogString() const
 {
@@ -96,26 +152,59 @@ FSGSStatus FSGSDyingPeachRule::ValidatePayload(FSGSRuleExecutionContext& Context
 
 FSGSStatus FSGSDyingPeachRule::ExecutePayload(FSGSRuleExecutionContext& Context, const FSGSRespondCardRulePayload& Payload) const
 {
-	FSGSResolutionFrame* DyingFrame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
-	const FSGSDyingPeachResolutionState* DyingState = DyingFrame != nullptr ? DyingFrame->GetState<FSGSDyingPeachResolutionState>() : nullptr;
-	if (DyingFrame == nullptr || DyingState == nullptr)
+	return ExecuteDyingHeal(Context, Payload, FName(TEXT("Peach")));
+}
+
+FName FSGSDyingAnalepticRule::GetRuleName() const
+{
+	return FName(TEXT("SGS.Rule.DyingAnaleptic"));
+}
+
+FSGSRuleDescriptor FSGSDyingAnalepticRule::GetDescriptor() const
+{
+	return SGSBasicCardRuleHelpers::MakeBasicRuleDescriptor(
+		GetRuleName(),
+		SGSRuleKinds::Response(),
+		SGSGameplayTags::PlayAction_RespondCard.GetTag(),
+		FName(TEXT("Analeptic")),
+		SGSBasicCardRuleHelpers::DyingPeachWindowName(),
+		200);
+}
+
+bool FSGSDyingAnalepticRule::CanHandlePayload(
+	const FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	return SGSBasicCardRuleHelpers::IsIntent(Context, SGSGameplayTags::PlayAction_RespondCard)
+		&& SGSBasicCardRuleHelpers::IsWindow(Payload.WindowName, SGSBasicCardRuleHelpers::DyingPeachWindowName())
+		&& Payload.CardName == TEXT("Analeptic");
+}
+
+FSGSStatus FSGSDyingAnalepticRule::ValidatePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	USGSCard* Card = SGSBasicCardRuleHelpers::FindPayloadCard(Context, Payload.CardId);
+	const FSGSResolutionFrame* DyingFrame = Context.Runtime->GetResolutionStack().GetCurrentFrame();
+	const FSGSDyingPeachResolutionState* DyingState = DyingFrame != nullptr
+		? DyingFrame->GetState<FSGSDyingPeachResolutionState>()
+		: nullptr;
+	if (Card == nullptr
+		|| Card->CardName != TEXT("Analeptic")
+		|| DyingState == nullptr
+		|| SGSBasicCardRuleHelpers::GetCommandSeat(Context) != DyingState->DyingSeat)
 	{
 		return SGSBasicCardRuleHelpers::MakeRuleError(
-			FName(TEXT("SGS.Rule.MissingResolutionFrame")),
-			TEXT("Dying.Peach response requires the current DyingPeach frame."));
+			FName(TEXT("SGS.Rule.InvalidDyingAnaleptic")),
+			TEXT("Only the dying seat may respond with Analeptic."));
 	}
 
-	const int32 DyingSeatIndex = DyingState->DyingSeat;
-	if (FSGSStatus Status = SGSBasicCardRuleHelpers::ExecutePeachHeal(Context, Payload.CardId, DyingSeatIndex); Status.HasError())
-	{
-		return Status;
-	}
+	return MakeValue();
+}
 
-	const USGSSeat* DyingSeat = Context.GameContext->GetSeat(DyingSeatIndex);
-	if (DyingSeat != nullptr && DyingSeat->Health > 0)
-	{
-		return SGSBasicCardRuleHelpers::CompleteCurrentFrame(Context, FName(TEXT("SGS.Resolution.DyingPeachResolved")));
-	}
-
-	return SGSBasicCardRuleHelpers::ContinueDyingPeachOrEliminate(Context);
+FSGSStatus FSGSDyingAnalepticRule::ExecutePayload(
+	FSGSRuleExecutionContext& Context,
+	const FSGSRespondCardRulePayload& Payload) const
+{
+	return ExecuteDyingHeal(Context, Payload, FName(TEXT("Analeptic")));
 }

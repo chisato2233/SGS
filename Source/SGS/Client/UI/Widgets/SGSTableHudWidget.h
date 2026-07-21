@@ -8,6 +8,7 @@ class FSGSTableAssetCatalog;
 class FSGSTableFeatureController;
 class SSGSTableShellWidget;
 struct FSGSTableHandPresentationState;
+struct FSGSTableMotionPresentationState;
 struct FSGSTableUIInteractionState;
 enum class ESGSTableViewChange : uint8;
 
@@ -33,6 +34,8 @@ private:
 	void HandlePrivateRevision(int32 Revision);
 	void HandleInteraction(const FSGSTableUIInteractionState& Interaction);
 	void HandleHandPresentation(const FSGSTableHandPresentationState& Presentation);
+	void HandleMotionPresentation(const FSGSTableMotionPresentationState& Presentation);
+	void OnMotionCueFinished(int32 Sequence);
 
 	FReply OnCardClicked(int32 CardId);
 	bool OnHandReordered(const TArray<int32>& OrderedCardIds);

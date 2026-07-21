@@ -21,8 +21,16 @@ struct SGS_API FSGSCommandExecutionContext
 	FSGSPhase ExpectedPhase = SGSGameplayTags::Phase_None.GetTag();
 	FName ExpectedWindowName = NAME_None;
 	FName RequiredCardName = NAME_None;
+	TArray<FName> AcceptedCardNames;
 	int32 EffectSourceSeatIndex = INDEX_NONE;
 	int32 EffectTargetSeatIndex = INDEX_NONE;
+	bool bIsCardChoice = false;
+	FName ExpectedChoiceName = NAME_None;
+	int32 MinChoiceCount = 0;
+	int32 MaxChoiceCount = 0;
+	TArray<int32> SelectableChoiceCardIds;
+	bool bIsOptionChoice = false;
+	TArray<FName> SelectableNamedOptions;
 };
 
 class SGS_API ISGSCommandType

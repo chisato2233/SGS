@@ -1,7 +1,8 @@
 #pragma once
 
+#include "Client/UI/Features/Table/Components/SGSTableSeatWidget.h"
+#include "Client/UI/Features/Table/Components/SGSTableCardMotionWidget.h"
 #include "CoreMinimal.h"
-#include "Input/Reply.h"
 #include "Widgets/SCompoundWidget.h"
 
 struct FSlateBrush;
@@ -11,7 +12,6 @@ class SSGSTableDecisionPanelWidget;
 class SSGSTableHandWidget;
 
 DECLARE_DELEGATE_RetVal_OneParam(FReply, FSGSOnTableCardClicked, int32);
-DECLARE_DELEGATE_RetVal_OneParam(FReply, FSGSOnTableSeatClicked, int32);
 DECLARE_DELEGATE_RetVal_OneParam(FReply, FSGSOnTableSkillClicked, FName);
 DECLARE_DELEGATE_RetVal_OneParam(bool, FSGSOnTableHandReordered, const TArray<int32>&);
 
@@ -25,20 +25,6 @@ struct SGS_API FSGSTableCardProps
 	bool bSelectable = false;
 	bool bSelected = false;
 	bool bDimmed = false;
-};
-
-struct SGS_API FSGSTableSeatProps
-{
-	int32 SeatIndex = INDEX_NONE;
-	FText NameText;
-	FText StatusText;
-	FVector2D Size = FVector2D::ZeroVector;
-	const FSlateBrush* PortraitBrush = nullptr;
-	bool bAlive = true;
-	bool bSelectable = false;
-	bool bSelected = false;
-	bool bCurrent = false;
-	bool bViewer = false;
 };
 
 struct SGS_API FSGSTableHandProps
@@ -68,6 +54,7 @@ struct SGS_API FSGSTableDecisionBarProps
 	float LayoutScale = 1.0f;
 	bool bHasPrompt = false;
 	bool bIsResponse = false;
+	bool bShowActions = true;
 	bool bCanConfirm = false;
 	bool bCanPass = false;
 };
@@ -78,11 +65,24 @@ struct SGS_API FSGSTablePositionedSeatProps
 	FSGSTableSeatProps Seat;
 };
 
+struct SGS_API FSGSTablePileProps
+{
+	FSlateRect Area = FSlateRect(0.0f, 0.0f, 0.0f, 0.0f);
+	const FSlateBrush* CardBrush = nullptr;
+	FText Label;
+	int32 Count = 0;
+	bool bShowCard = false;
+};
+
 struct SGS_API FSGSTableShellProps
 {
 	const FSlateBrush* BackgroundBrush = nullptr;
 	FSlateRect ControlArea = FSlateRect(0.0f, 0.0f, 0.0f, 0.0f);
 	FSlateRect HandArea = FSlateRect(0.0f, 0.0f, 0.0f, 0.0f);
+	FSGSTablePileProps DrawPile;
+	FSGSTablePileProps PlayArea;
+	FSGSTablePileProps DiscardPile;
+	FSGSTableMotionProps Motion;
 	TArray<FSGSTablePositionedSeatProps> Seats;
 	FSGSTableDecisionBarProps DecisionBar;
 	FSGSTableHandProps Hand;
@@ -96,26 +96,10 @@ enum class ESGSTableViewChange : uint8
 	PrivateState = 1 << 2,
 	Interaction = 1 << 3,
 	HandPresentation = 1 << 4,
-	All = Layout | PublicState | PrivateState | Interaction | HandPresentation
+	Motion = 1 << 5,
+	All = Layout | PublicState | PrivateState | Interaction | HandPresentation | Motion
 };
 ENUM_CLASS_FLAGS(ESGSTableViewChange);
-
-class SGS_API SSGSTableSeatWidget : public SCompoundWidget
-{
-public:
-	SLATE_BEGIN_ARGS(SSGSTableSeatWidget) {}
-		SLATE_ARGUMENT(FSGSTableSeatProps, Props)
-		SLATE_EVENT(FSGSOnTableSeatClicked, OnSeatClicked)
-	SLATE_END_ARGS()
-
-	void Construct(const FArguments& InArgs);
-
-private:
-	FReply HandleClicked() const;
-
-	int32 SeatIndex = INDEX_NONE;
-	FSGSOnTableSeatClicked OnSeatClicked;
-};
 
 // Table 的纯组合壳。它只解释矩形、props 和回调，不读取快照、Store、
 // PlayerController 或资源路径。
@@ -130,6 +114,7 @@ public:
 		SLATE_EVENT(FSGSOnTableSkillClicked, OnSkillClicked)
 		SLATE_EVENT(FOnClicked, OnConfirmClicked)
 		SLATE_EVENT(FOnClicked, OnPassClicked)
+		SLATE_EVENT(FSGSOnTableMotionCueFinished, OnMotionCueFinished)
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs);
@@ -140,6 +125,7 @@ private:
 	void RebuildSeats();
 	void RebuildDecisionBar();
 	void RebuildHand();
+	void RebuildPiles();
 
 	FSGSTableShellProps Props;
 	FSGSOnTableCardClicked OnCardClicked;
@@ -148,9 +134,15 @@ private:
 	FSGSOnTableSkillClicked OnSkillClicked;
 	FOnClicked OnConfirmClicked;
 	FOnClicked OnPassClicked;
+	FSGSOnTableMotionCueFinished OnMotionCueFinished;
 	TMap<int32, TSharedPtr<SBox>> SeatHosts;
+	TMap<int32, TSharedPtr<SSGSTableSeatWidget>> SeatWidgets;
 	TSharedPtr<SBox> DecisionHost;
 	TSharedPtr<SBox> HandHost;
+	TSharedPtr<SBox> DrawPileHost;
+	TSharedPtr<SBox> PlayAreaHost;
+	TSharedPtr<SBox> DiscardPileHost;
+	TSharedPtr<SSGSTableCardMotionWidget> MotionWidget;
 	TSharedPtr<SSGSTableHandWidget> HandWidget;
 	TWeakPtr<SBox> MountedHandHost;
 };

@@ -32,10 +32,11 @@ FString SeatDisplayName(const FSGSTableViewSnapshot& Snapshot, int32 SeatIndex)
 FSGSTableFeatureController::FSGSTableFeatureController(
 	int32 InViewerSeat,
 	FSGSTableFeatureBindings InBindings,
-	TSharedRef<FSGSUIContext> InUIContext)
+	TSharedRef<FSGSUIContext> InUIContext,
+	int32 InInitialMotionSequence)
 	: Bindings(MoveTemp(InBindings))
 	, UIContext(MoveTemp(InUIContext))
-	, State(InViewerSeat)
+	, State(InViewerSeat, InInitialMotionSequence)
 {
 }
 
@@ -94,13 +95,19 @@ bool FSGSTableFeatureController::Confirm()
 	const FSGSTableViewSnapshot& Snapshot = State.GetSnapshot();
 	const FSGSTableUIInteractionState& Interaction = State.GetInteractionState();
 	const bool bSubmitted = Snapshot.Prompt.bIsResponse
-		? Bindings.SubmitResponseCard
-			&& Bindings.SubmitResponseCard(
-				Interaction.SelectedCardId,
+		? Bindings.SubmitResponseCards
+			&& Bindings.SubmitResponseCards(
+				Interaction.SelectedCardIds,
 				Interaction.SelectedTargetSeat,
 				Interaction.SelectedSkillName)
-		: Bindings.SubmitUseCard
-			&& Bindings.SubmitUseCard(Interaction.SelectedCardId, Interaction.SelectedTargetSeat);
+		: !Interaction.SelectedSkillName.IsNone()
+			? Bindings.SubmitSkill
+				&& Bindings.SubmitSkill(
+					Interaction.SelectedSkillName,
+					Interaction.SelectedCardIds,
+					Interaction.SelectedTargetSeat)
+			: Bindings.SubmitUseCard
+				&& Bindings.SubmitUseCard(Interaction.SelectedCardId, Interaction.SelectedTargetSeatIndices);
 	if (!bSubmitted)
 	{
 		PublishToast(FText::FromString(TEXT("The action was rejected.")), false);
@@ -142,6 +149,10 @@ FString FSGSTableFeatureController::GetPromptTitle() const
 	{
 		return FString();
 	}
+	if (Snapshot.Prompt.bIsOptionChoice && Snapshot.Prompt.ChoiceName == TEXT("GeneralSelection"))
+	{
+		return TEXT("选择武将");
+	}
 	return Snapshot.Prompt.bIsResponse ? TEXT("响应请求") : TEXT("出牌阶段");
 }
 
@@ -154,6 +165,18 @@ FString FSGSTableFeatureController::GetPromptText() const
 	}
 	if (Snapshot.Prompt.bIsResponse)
 	{
+		if (Snapshot.Prompt.bIsCardChoice)
+		{
+			return FString::Printf(
+				TEXT("请选择 %d 至 %d 张牌：%s"),
+				Snapshot.Prompt.MinChoiceCount,
+				Snapshot.Prompt.MaxChoiceCount,
+				*DisplayDecisionName(Snapshot.Prompt.ContextName));
+		}
+		if (Snapshot.Prompt.bIsOptionChoice)
+		{
+			return FString::Printf(TEXT("请选择：%s"), *DisplayDecisionName(Snapshot.Prompt.ContextName));
+		}
 		const FString RequiredName = DisplayDecisionName(Snapshot.Prompt.RequiredCardName);
 		const FString ContextName = DisplayDecisionName(Snapshot.Prompt.ContextName);
 		const bool bUseVerb = Snapshot.Prompt.RequiredCardName == TEXT("Nullification")
@@ -197,6 +220,10 @@ FString FSGSTableFeatureController::GetPromptContextText() const
 
 FString FSGSTableFeatureController::GetConfirmLabel() const
 {
+	if (State.GetSnapshot().Prompt.bIsCardChoice || State.GetSnapshot().Prompt.bIsOptionChoice)
+	{
+		return TEXT("确认选择");
+	}
 	if (!State.GetInteractionState().SelectedSkillName.IsNone())
 	{
 		return TEXT("发动技能");

@@ -31,6 +31,19 @@ namespace SGSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Faction_Wu, "SGS.Faction.Wu", "Wu faction.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Faction_Qun, "SGS.Faction.Qun", "Qun faction.");
 
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Identity_Lord, "SGS.Identity.Lord", "Lord identity.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Identity_Loyalist, "SGS.Identity.Loyalist", "Loyalist identity.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Identity_Rebel, "SGS.Identity.Rebel", "Rebel identity.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Identity_Renegade, "SGS.Identity.Renegade", "Renegade identity.");
+
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Status_SlashUsed, "SGS.Status.SlashUsed", "Slash was used in this play phase.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Status_AnalepticUsed, "SGS.Status.AnalepticUsed", "Analeptic was used this turn.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Status_AnalepticBoost, "SGS.Status.AnalepticBoost", "The next Slash deals one additional damage.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Status_ZhihengUsed, "SGS.Status.ZhihengUsed", "Zhiheng was used in this play phase.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Status_JijiangFailed, "SGS.Status.JijiangFailed", "Jijiang received no Slash and cannot be retried in this play phase.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Status_SkipDrawPhase, "SGS.Status.SkipDrawPhase", "Skip the next draw phase this turn.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Status_SkipPlayPhase, "SGS.Status.SkipPlayPhase", "Skip the next play phase this turn.");
+
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(EquipSlot_None, "SGS.EquipSlot.None", "No equipment slot.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(EquipSlot_Weapon, "SGS.EquipSlot.Weapon", "Weapon equipment slot.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(EquipSlot_Armor, "SGS.EquipSlot.Armor", "Armor equipment slot.");
@@ -51,8 +64,17 @@ namespace SGSGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameEvent_TurnEnded, "SGS.GameEvent.TurnEnded", "Turn ended event.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameEvent_PhaseBegan, "SGS.GameEvent.PhaseBegan", "Phase began event.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameEvent_PhaseEnded, "SGS.GameEvent.PhaseEnded", "Phase ended event.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameEvent_PhaseBefore, "SGS.GameEvent.Phase.Before", "Before entering a phase.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameEvent_PhaseBegin, "SGS.GameEvent.Phase.Begin", "Begin resolving a phase.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameEvent_PhaseEnd, "SGS.GameEvent.Phase.End", "End resolving a phase.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameEvent_PhaseAfter, "SGS.GameEvent.Phase.After", "After leaving a phase.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameEvent_DamageAfter, "SGS.GameEvent.DamageAfter", "Damage has changed health and post-damage triggers may resolve.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameEvent_JudgementRevealed, "SGS.GameEvent.JudgementRevealed", "A judgement card is revealed and may be replaced before its result is applied.");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(PlayAction_Pass, "SGS.PlayAction.Pass", "Pass the current play action request.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(PlayAction_UseCard, "SGS.PlayAction.UseCard", "Use a card from hand during an active decision.");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(PlayAction_RespondCard, "SGS.PlayAction.RespondCard", "Respond to a reaction or rescue window with a card.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(PlayAction_ActivateSkill, "SGS.PlayAction.ActivateSkill", "Activate a server-listed character skill.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(PlayAction_ChooseCards, "SGS.PlayAction.ChooseCards", "Choose cards from a server-authorized decision set.");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(PlayAction_ChooseOption, "SGS.PlayAction.ChooseOption", "Choose one named option from a server-authorized decision set.");
 }

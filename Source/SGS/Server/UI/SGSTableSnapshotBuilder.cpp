@@ -4,6 +4,7 @@
 #include "Client/UI/Bridge/SGSLocalHumanDecisionAgent.h"
 #include "Server/Engine/SGSGameContext.h"
 #include "Server/Engine/SGSGameDriver.h"
+#include "Server/Effects/SGSStandardEffectSteps.h"
 #include "Server/Players/SGSSeat.h"
 #include "Shared/Decisions/SGSDecisionTypes.h"
 
@@ -26,12 +27,95 @@ FString FormatCard(const USGSCard& Card)
 	return FString::Printf(TEXT("%s %s%d"), *Card.CardName.ToString(), *SnapshotTagLeaf(Card.Suit), Card.Number);
 }
 
+FSGSCardViewData MakeCardView(const USGSCard& Card)
+{
+	FSGSCardViewData CardView;
+	CardView.CardId = Card.CardId;
+	CardView.CardName = Card.CardName;
+	CardView.DisplayText = FormatCard(Card);
+	CardView.Suit = Card.Suit;
+	CardView.Number = Card.Number;
+	return CardView;
+}
+
+bool IsPublicCardFaceReason(FName Reason)
+{
+	return Reason == SGSCardMoveReasons::Use()
+		|| Reason == SGSCardMoveReasons::Respond()
+		|| Reason == SGSCardMoveReasons::Discard();
+}
+
+FSGSTableCardMotionCueViewData MakeMotionCue(
+	const FSGSCardMoveEventPayload& Move,
+	const USGSGameContext& Context,
+	bool bRevealFaces)
+{
+	FSGSTableCardMotionCueViewData Cue;
+	Cue.Sequence = Move.Sequence;
+	Cue.Reason = Move.Reason;
+	Cue.FromZone = Move.FromZone;
+	Cue.FromSeat = Move.FromSeat;
+	Cue.ToZone = Move.ToZone;
+	Cue.ToSeat = Move.ToSeat;
+	Cue.CardCount = Move.CardIds.Num();
+	Cue.RelatedTargetSeatIndices = Move.RelatedTargetSeatIndices;
+	Cue.bCleanup = Move.Reason == SGSCardMoveReasons::Cleanup();
+	if (bRevealFaces && !Cue.bCleanup)
+	{
+		for (const int32 CardId : Move.CardIds)
+		{
+			if (const USGSCard* Card = Context.FindCardById(CardId))
+			{
+				Cue.VisibleCards.Add(MakeCardView(*Card));
+			}
+		}
+	}
+	return Cue;
+}
+
+TArray<const FSGSCardMoveEventPayload*> GetRecentCardMoves(const USGSGameDriver& Driver)
+{
+	constexpr int32 MaxMotionEvents = 64;
+	TArray<const FSGSCardMoveEventPayload*> Moves;
+	for (const FSGSEventLogEntry& Entry : Driver.GetReplayLog().GetEventLog())
+	{
+		if (Entry.CardMove.IsSet())
+		{
+			Moves.Add(&Entry.CardMove.GetValue());
+		}
+	}
+	if (Moves.Num() > MaxMotionEvents)
+	{
+		Moves.RemoveAt(0, Moves.Num() - MaxMotionEvents, EAllowShrinking::No);
+	}
+	return Moves;
+}
+
 void AddUniqueInts(TArray<int32>& Target, const TArray<int32>& Source)
 {
 	for (int32 Value : Source)
 	{
 		Target.AddUnique(Value);
 	}
+}
+
+FSGSDecisionSkillViewData MakeSkillView(const FSGSDecisionSkillOption& SkillOption)
+{
+	FSGSDecisionSkillViewData SkillView;
+	SkillView.SkillName = SkillOption.SkillName;
+	SkillView.DisplayName = SkillOption.DisplayName.IsNone()
+		? SkillOption.SkillName.ToString()
+		: SkillOption.DisplayName.ToString();
+	SkillView.bRequiresCard = SkillOption.RequiresCard();
+	SkillView.RuleKindTag = SkillOption.RuleKindTag;
+	SkillView.ResultCardName = SkillOption.ResultCardName;
+	SkillView.MinCardCount = SkillOption.MinCardCount;
+	SkillView.MaxCardCount = SkillOption.MaxCardCount;
+	SkillView.MinTargetCount = SkillOption.MinTargetCount;
+	SkillView.MaxTargetCount = SkillOption.MaxTargetCount;
+	SkillView.SelectableCardIds = SkillOption.SelectableCardIds;
+	SkillView.SelectableTargetSeatIndices = SkillOption.TargetSeatIndices;
+	return SkillView;
 }
 
 void ApplyPromptSnapshot(FSGSPlayerPrivateSnapshot& Snapshot, const USGSLocalHumanDecisionAgent* DecisionAgent)
@@ -52,7 +136,21 @@ void ApplyPromptSnapshot(FSGSPlayerPrivateSnapshot& Snapshot, const USGSLocalHum
 		{
 			Snapshot.Prompt.SelectableCardIds.AddUnique(Option.CardId);
 			AddUniqueInts(Snapshot.Prompt.SelectableTargetSeatIndices, Option.TargetSeatIndices);
-			Snapshot.Prompt.SetTargetSeatIndicesForCard(Option.CardId, Option.TargetSeatIndices);
+			Snapshot.Prompt.SetTargetSeatIndicesForCard(
+				Option.CardId,
+				Option.TargetSeatIndices,
+				Option.MinTargetCount,
+				Option.MaxTargetCount);
+		}
+		for (const FSGSDecisionSkillOption& SkillOption : PlayRequest->SkillOptions)
+		{
+			if (SkillOption.SkillName.IsNone())
+			{
+				continue;
+			}
+			FSGSDecisionSkillViewData SkillView = MakeSkillView(SkillOption);
+			AddUniqueInts(Snapshot.Prompt.SelectableTargetSeatIndices, SkillView.SelectableTargetSeatIndices);
+			Snapshot.Prompt.SkillOptions.Add(MoveTemp(SkillView));
 		}
 	}
 	else if (const FSGSResponseRequest* ResponseRequest = DecisionAgent->GetPendingResponseRequest())
@@ -61,11 +159,42 @@ void ApplyPromptSnapshot(FSGSPlayerPrivateSnapshot& Snapshot, const USGSLocalHum
 		Snapshot.Prompt.bIsResponse = true;
 		Snapshot.Prompt.WindowName = ResponseRequest->WindowName;
 		Snapshot.Prompt.RequiredCardName = ResponseRequest->RequiredCardName;
+		Snapshot.Prompt.AcceptedCardNames = ResponseRequest->AcceptedCardNames;
 		Snapshot.Prompt.ContextName = ResponseRequest->ContextName;
 		Snapshot.Prompt.EffectSourceSeat = ResponseRequest->EffectSourceSeat;
 		Snapshot.Prompt.EffectTargetSeat = ResponseRequest->EffectTargetSeat;
 		Snapshot.Prompt.bAllowPass = ResponseRequest->bAllowPass;
+		Snapshot.Prompt.bIsCardChoice = ResponseRequest->bIsCardChoice;
+		Snapshot.Prompt.bIsOptionChoice = ResponseRequest->bIsOptionChoice;
+		Snapshot.Prompt.ChoiceName = ResponseRequest->ChoiceName;
+		Snapshot.Prompt.MinChoiceCount = ResponseRequest->MinChoiceCount;
+		Snapshot.Prompt.MaxChoiceCount = ResponseRequest->MaxChoiceCount;
+		for (const FSGSDecisionCardChoiceOption& Option : ResponseRequest->CardChoiceOptions)
+		{
+			FSGSCardViewData ChoiceCard;
+			ChoiceCard.CardId = Option.CardId;
+			ChoiceCard.CardName = Option.bFaceVisible ? Option.CardName : NAME_None;
+			ChoiceCard.Suit = Option.bFaceVisible ? Option.Suit : SGSGameplayTags::Suit_None.GetTag();
+			ChoiceCard.Number = Option.bFaceVisible ? Option.Number : 0;
+			ChoiceCard.DisplayText = Option.bFaceVisible ? Option.CardName.ToString() : TEXT("Hidden card");
+			ChoiceCard.bSelectable = true;
+			ChoiceCard.bFaceDown = !Option.bFaceVisible;
+			Snapshot.Prompt.ChoiceCards.Add(MoveTemp(ChoiceCard));
+		}
+		for (const FSGSDecisionNamedOption& Option : ResponseRequest->NamedOptions)
+		{
+			FSGSDecisionSkillViewData ChoiceView;
+			ChoiceView.SkillName = Option.OptionName;
+			ChoiceView.DisplayName = Option.DisplayName.IsNone()
+				? Option.OptionName.ToString()
+				: Option.DisplayName.ToString();
+			Snapshot.Prompt.SkillOptions.Add(MoveTemp(ChoiceView));
+		}
 		AddUniqueInts(Snapshot.Prompt.SelectableCardIds, ResponseRequest->ResponseCardIds);
+		for (const FSGSDecisionCardChoiceOption& Option : ResponseRequest->CardChoiceOptions)
+		{
+			Snapshot.Prompt.SelectableCardIds.AddUnique(Option.CardId);
+		}
 
 		TArray<int32> ResponseTargets;
 		if (ResponseRequest->EffectTargetSeat != INDEX_NONE)
@@ -86,14 +215,7 @@ void ApplyPromptSnapshot(FSGSPlayerPrivateSnapshot& Snapshot, const USGSLocalHum
 				continue;
 			}
 
-			FSGSDecisionSkillViewData SkillView;
-			SkillView.SkillName = SkillOption.SkillName;
-			SkillView.DisplayName = SkillOption.DisplayName.IsNone()
-				? SkillOption.SkillName.ToString()
-				: SkillOption.DisplayName.ToString();
-			SkillView.bRequiresCard = SkillOption.bRequiresCard;
-			SkillView.SelectableCardIds = SkillOption.SelectableCardIds;
-			SkillView.SelectableTargetSeatIndices = SkillOption.TargetSeatIndices;
+			FSGSDecisionSkillViewData SkillView = MakeSkillView(SkillOption);
 			if (SkillView.SelectableTargetSeatIndices.IsEmpty()
 				&& ResponseRequest->EffectTargetSeat != INDEX_NONE)
 			{
@@ -118,9 +240,10 @@ FSGSTablePublicSnapshot FSGSTableSnapshotBuilder::BuildPublicSnapshot(const USGS
 	}
 
 	USGSGameContext* Context = Driver->GetContext();
-	Snapshot.CurrentSeatIndex = Driver->GetCurrentSeatIndex();
+	Snapshot.CurrentSeatIndex = Driver->GetTurnSeatIndex();
 	Snapshot.CurrentPhase = Driver->GetCurrentPhase();
 	Snapshot.bGameOver = Driver->IsGameOver();
+	Snapshot.GameResult = Driver->GetGameResult();
 
 	if (Context == nullptr)
 	{
@@ -129,6 +252,25 @@ FSGSTablePublicSnapshot FSGSTableSnapshotBuilder::BuildPublicSnapshot(const USGS
 
 	Snapshot.DrawPileCount = Context->GetCardsInZone(SGSGameplayTags::CardZone_DrawPile.GetTag()).Num();
 	Snapshot.DiscardPileCount = Context->GetCardsInZone(SGSGameplayTags::CardZone_DiscardPile.GetTag()).Num();
+	const TArray<USGSCard*> DiscardPile = Context->GetCardsInZone(SGSGameplayTags::CardZone_DiscardPile.GetTag());
+	if (!DiscardPile.IsEmpty() && DiscardPile.Last() != nullptr)
+	{
+		Snapshot.bHasDiscardTopCard = true;
+		Snapshot.DiscardTopCard = MakeCardView(*DiscardPile.Last());
+	}
+
+	Snapshot.MotionEpoch = Driver->GetMotionEpoch();
+	const TArray<const FSGSCardMoveEventPayload*> RecentMoves = GetRecentCardMoves(*Driver);
+	if (!RecentMoves.IsEmpty())
+	{
+		Snapshot.MotionWindowStartSequence = RecentMoves[0]->Sequence;
+		Snapshot.MotionLatestSequence = RecentMoves.Last()->Sequence;
+		Snapshot.CardMotionCues.Reserve(RecentMoves.Num());
+		for (const FSGSCardMoveEventPayload* Move : RecentMoves)
+		{
+			Snapshot.CardMotionCues.Add(MakeMotionCue(*Move, *Context, IsPublicCardFaceReason(Move->Reason)));
+		}
+	}
 
 	for (int32 SeatIndex = 0; SeatIndex < Context->NumSeats(); ++SeatIndex)
 	{
@@ -143,11 +285,35 @@ FSGSTablePublicSnapshot FSGSTableSnapshotBuilder::BuildPublicSnapshot(const USGS
 		SeatView.DisplayName = Seat->DisplayName.IsEmpty()
 			? FString::Printf(TEXT("Seat %d"), SeatIndex)
 			: Seat->DisplayName;
+		SeatView.GeneralId = Seat->GeneralId;
+		SeatView.Faction = Seat->Faction;
 		SeatView.Health = Seat->Health;
 		SeatView.MaxHealth = Seat->MaxHealth;
 		SeatView.bIsAlive = Seat->bIsAlive;
-		SeatView.bIsCurrent = SeatIndex == Snapshot.CurrentSeatIndex;
+		SeatView.bIsCurrent = !Snapshot.bGameOver && SeatIndex == Snapshot.CurrentSeatIndex;
+		if (Seat->Identity == SGSGameplayTags::Identity_Lord.GetTag()
+			|| !Seat->bIsAlive
+			|| Snapshot.bGameOver)
+		{
+			SeatView.Identity = Seat->Identity;
+		}
 		SeatView.HandCount = Context->GetCardsInZone(SGSGameplayTags::CardZone_Hand.GetTag(), SeatIndex).Num();
+		for (const USGSCard* Card : Context->GetCardsInZone(
+			SGSGameplayTags::CardZone_Equipment.GetTag(), SeatIndex))
+		{
+			if (Card != nullptr)
+			{
+				SeatView.EquipmentCards.Add(MakeCardView(*Card));
+			}
+		}
+		for (const USGSCard* Card : Context->GetCardsInZone(
+			SGSGameplayTags::CardZone_Judgement.GetTag(), SeatIndex))
+		{
+			if (Card != nullptr)
+			{
+				SeatView.JudgementCards.Add(MakeCardView(*Card));
+			}
+		}
 		Snapshot.Seats.Add(MoveTemp(SeatView));
 	}
 
@@ -175,6 +341,22 @@ FSGSPlayerPrivateSnapshot FSGSTableSnapshotBuilder::BuildPrivateSnapshot(
 		return Snapshot;
 	}
 
+	Snapshot.MotionEpoch = Driver->GetMotionEpoch();
+	for (const FSGSCardMoveEventPayload* Move : GetRecentCardMoves(*Driver))
+	{
+		const bool bViewerDraw = Move->ToZone.MatchesTagExact(SGSGameplayTags::CardZone_Hand.GetTag())
+			&& Move->ToSeat == ViewerSeat;
+		if (bViewerDraw)
+		{
+			Snapshot.CardMotionCueOverrides.Add(MakeMotionCue(*Move, *Context, true));
+		}
+	}
+
+	if (const USGSSeat* Viewer = Context->GetSeat(ViewerSeat))
+	{
+		Snapshot.ViewerIdentity = Viewer->Identity;
+	}
+
 	for (USGSCard* Card : Context->GetCardsInZone(SGSGameplayTags::CardZone_Hand.GetTag(), ViewerSeat))
 	{
 		if (Card == nullptr)
@@ -182,13 +364,7 @@ FSGSPlayerPrivateSnapshot FSGSTableSnapshotBuilder::BuildPrivateSnapshot(
 			continue;
 		}
 
-		FSGSCardViewData CardView;
-		CardView.CardId = Card->CardId;
-		CardView.CardName = Card->CardName;
-		CardView.DisplayText = FormatCard(*Card);
-		CardView.Suit = Card->Suit;
-		CardView.Number = Card->Number;
-		Snapshot.HandCards.Add(MoveTemp(CardView));
+		Snapshot.HandCards.Add(MakeCardView(*Card));
 	}
 
 	ApplyPromptSnapshot(Snapshot, DecisionAgent);

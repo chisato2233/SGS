@@ -1,24 +1,41 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "UObject/Object.h"
 #include "UObject/ScriptInterface.h"
 #include "Shared/Core/SGSError.h"
 #include "Shared/Core/SGSTypes.h"
 #include "Shared/Cards/SGSDeckTypes.h"
 #include "Server/Commands/SGSCommandRouter.h"
+#include "Server/AI/SGSAIEvaluation.h"
 #include "Server/Effects/SGSEffectPipeline.h"
 #include "Server/Engine/SGSGameEvents.h"
 #include "Server/Rules/Core/SGSRuleRegistry.h"
 #include "Server/Rules/Resolution/SGSResolutionStack.h"
 #include "Server/Timing/SGSActiveEffectTimeline.h"
 #include "Shared/Decisions/SGSDecisionAgent.h"
+#include "Shared/Game/SGSGameResult.h"
 #include "SGSGameDriver.generated.h"
 
 class USGSGameContext;
 class USGSCard;
 class FSGSDriverRuleRuntime;
 struct FSGSRuleEventPayload;
+
+DECLARE_MULTICAST_DELEGATE(FSGSOnViewStateInvalidated);
+
+enum class ESGSPhaseProgress : uint8
+{
+	Before,
+	Begin,
+	BroadcastBegin,
+	Content,
+	End,
+	BroadcastEnd,
+	After,
+	Commit
+};
 
 struct SGS_API FSGSGameStartConfig
 {
@@ -27,7 +44,12 @@ struct SGS_API FSGSGameStartConfig
 	bool bShuffleInitialDeck = true;
 	int32 StartingHandSize = 4;
 	int32 MaxTurns = 8;
+	float BasicAIThinkDelaySeconds = 0.45f;
 	TMap<int32, int32> InitialHealthBySeat;
+	TArray<FName> GeneralIdsBySeat;
+	TArray<FGameplayTag> FactionsBySeat;
+	bool bIdentityMode = false;
+	bool bChooseGenerals = false;
 };
 
 // 服务器权威的对局驱动器：推进回合/阶段、在出牌阶段向决策代理请求动作。
@@ -49,15 +71,19 @@ public:
 
 	// 事件总线：观察者在此订阅对局生命周期事件。
 	FSGSOnGameEvent& OnGameEvent() { return GameEventDelegate; }
+	FSGSOnViewStateInvalidated& OnViewStateInvalidated() { return ViewStateInvalidatedDelegate; }
 
 	USGSGameContext* GetContext() const { return Context; }
 	int32 GetCurrentSeatIndex() const { return CurrentSeatIndex; }
+	int32 GetTurnSeatIndex() const { return TurnSeatIndex; }
 	FSGSPhase GetCurrentPhase() const { return CurrentPhase; }
 
 	bool IsGameOver() const { return bGameOver; }
 	int32 GetTurnsPlayed() const { return TurnsPlayed; }
 	const TArray<FSGSCommandLogEntry>& GetCommandLog() const { return CommandRouter.GetLogEntries(); }
 	const FSGSReplayLog& GetReplayLog() const { return ReplayLog; }
+	int32 GetMotionEpoch() const { return MotionEpoch; }
+	const FSGSGameResult& GetGameResult() const { return GameResult; }
 
 private:
 	// 蹦床循环：连续推进所有「同步完成」的阶段，遇到挂起（等待决策）或对局结束即停。
@@ -68,10 +94,20 @@ private:
 
 	// 结束当前阶段并推进到下一阶段 / 下一回合 / 结束对局。
 	void AdvanceAfterPhase();
+	void CommitPhaseAdvance();
 
 	void BeginTurn();
+	void BeginGeneralSelection();
+	FSGSStatus ContinueGeneralSelection();
+	void CompleteInitialSetup();
 	void EndGame();
+	void HandleSeatEliminated(int32 SeatIndex, int32 SourceSeat, FName Reason);
+	void EvaluateIdentityVictory();
+	void DiscardAllCards(int32 SeatIndex);
+	void ExecuteDiscardPhase();
+	void ExpireStatusEffects(int32 SeatIndex, FGameplayTag StatusTag);
 	void Broadcast(FSGSGameEvent Event);
+	FSGSStatus PublishPhaseTiming(FGameplayTag EventTag, FName Step);
 
 	// 出牌阶段动作的应答回调（可能同步或跨帧触发）。
 	void OnPlayActionDecided(const FSGSPlayPhaseDecision& Decision);
@@ -93,18 +129,33 @@ private:
 		FName ContextName,
 		int32 EffectSourceSeat,
 		int32 EffectTargetSeat,
-		TConstArrayView<FSGSDecisionSkillOption> SkillOptions = {});
+		TConstArrayView<FSGSDecisionSkillOption> SkillOptions = {},
+		TConstArrayView<FName> AcceptedCardNames = {},
+		bool bAllowPass = true);
 	void DeferResponseRequest(const FSGSResponseRequest& Request, const TScriptInterface<ISGSDecisionAgent>& Agent);
 	void DispatchDeferredResponseRequest();
 	FSGSStatus FinishCurrentResolution(FName Reason = FName(TEXT("SGS.Resolution.Complete")));
 	FSGSStatus ResumeResolutionParentAfterChild(const FSGSResolutionFrame& CompletedFrame);
+	FSGSStatus ResumeDamageAfterTriggers();
+	FSGSStatus ResumeJudgementAfterTriggers();
+	FSGSStatus ResumeGanglieAfterJudgement(int32 ResultCardId);
+	FSGSStatus ResumeBaguaAfterJudgement(int32 ResultCardId);
+	FSGSStatus ResumeDelayedTrickAfterJudgement(int32 ResultCardId);
+	FSGSStatus ResumeLordAssistParent(const struct FSGSLordAssistResolutionState& State);
+	FSGSStatus ResumeSlashAfterDamageTriggers();
+	FSGSStatus ResumeStandardTrickResolution();
 	bool OpenNextDyingPeachResponseWindow(FSGSResolutionFrame& DyingFrame);
 	FSGSStatus ContinueDyingPeachFrame(FSGSResolutionFrame& DyingFrame);
 	void ClearDeferredResponseRequest();
 	FSGSStatus PublishTimingEvent(const FSGSRuleEventPayload& Payload);
+	FSGSStatus ContinueTimingEventDispatch(bool bResumeParentOnComplete);
 	void ExecuteDrawPhaseThroughPipeline();
+	void ExecuteJudgementPhaseThroughRules();
+	bool ResolveJudgementCard(USGSCard* DelayedTrickCard);
+	bool HasStatusEffect(int32 SeatIndex, FGameplayTag StatusTag) const;
 	FSGSStatus RunEffectStep(FSGSEffectStep Step, FSGSCommandId CommandId = FSGSCommandId());
 	void SyncReplayLog();
+	void PublishAIObservation(const FSGSRuleInvocation& Invocation);
 
 	static FSGSPhase NextPhase(FSGSPhase Phase);
 	FSGSCommandId AllocateCommandId();
@@ -113,6 +164,7 @@ private:
 	TObjectPtr<USGSGameContext> Context;
 
 	int32 CurrentSeatIndex = INDEX_NONE;
+	int32 TurnSeatIndex = INDEX_NONE;
 	FSGSPhase CurrentPhase = SGSGameplayTags::Phase_None.GetTag();
 	int32 TurnsPlayed = 0;
 	int32 PendingRequestId = 0;
@@ -124,20 +176,30 @@ private:
 	bool bHasDeferredResponseRequest = false;
 	int32 CurrentMaxTurns = 8;
 	int32 CurrentStartingHandSize = 4;
+	bool bIdentityMode = false;
+	TArray<FSGSDeckCardSpec> PendingInitialDeck;
+	bool bPendingShuffleInitialDeck = true;
+	TMap<int32, int32> PendingInitialHealthBySeat;
+	FSGSGameResult GameResult;
 
 	bool bGameOver = false;
 	bool bWaitingForDecision = false;
+	ESGSPhaseProgress PhaseProgress = ESGSPhaseProgress::Before;
+	bool bResumeCurrentPhaseAfterResolution = false;
 
 	// 防止应答同步回调时重入 Pump（AI 立即应答的常见情形）。
 	bool bPumping = false;
 
 	FSGSOnGameEvent GameEventDelegate;
+	FSGSOnViewStateInvalidated ViewStateInvalidatedDelegate;
 	FSGSCommandRouter CommandRouter;
+	FSGSAIEvaluatorRegistry AIEvaluatorRegistry;
 	FSGSRuleRegistry RuleRegistry;
 	FSGSResolutionStack ResolutionStack;
 	FSGSEffectPipeline EffectPipeline;
 	FSGSActiveEffectTimeline ActiveEffectTimeline;
 	FSGSReplayLog ReplayLog;
+	int32 MotionEpoch = 0;
 
 	// 摸牌阶段固定摸牌数（标准规则）。
 	static constexpr int32 DrawCountPerTurn = 2;

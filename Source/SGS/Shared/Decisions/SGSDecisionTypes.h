@@ -11,6 +11,26 @@ struct FSGSCardActionOption
 	int32 CardId = INDEX_NONE;
 	FName CardName = NAME_None;
 	TArray<int32> TargetSeatIndices;
+	int32 MinTargetCount = 0;
+	int32 MaxTargetCount = 0;
+	TArray<TArray<int32>> CandidateTargetSelections;
+};
+
+// 服务器已经裁剪可见性的通用选牌项。CardName 仅在观察者有权看到牌面时填写；
+// 不可见项仍可用不透明 CardId 选择，但不会向代理泄露牌面。
+struct FSGSDecisionCardChoiceOption
+{
+	int32 CardId = INDEX_NONE;
+	FName CardName = NAME_None;
+	FGameplayTag Suit;
+	int32 Number = 0;
+	bool bFaceVisible = false;
+};
+
+struct FSGSDecisionNamedOption
+{
+	FName OptionName = NAME_None;
+	FName DisplayName = NAME_None;
 };
 
 // 规则层已经判定可用于当前响应窗口的技能入口。UI 只选择其中一个选项，
@@ -19,9 +39,22 @@ struct FSGSDecisionSkillOption
 {
 	FName SkillName = NAME_None;
 	FName DisplayName = NAME_None;
-	bool bRequiresCard = false;
+	// 该入口最终交给 RuleRegistry 的规则类别。主动技通常为 Action，
+	// 视为技使用 ViewAs；客户端只回传服务器给出的值。
+	FName RuleKindTag = NAME_None;
+	FName ResultCardName = NAME_None;
+	int32 MinCardCount = 0;
+	int32 MaxCardCount = 0;
+	int32 MinTargetCount = 0;
+	int32 MaxTargetCount = 0;
 	TArray<int32> SelectableCardIds;
 	TArray<int32> TargetSeatIndices;
+
+	// 规则包可为 AI 给出少量已验证的组合，避免通用决策层枚举幂集。
+	// 真人仍按上面的数量约束自由选择。
+	TArray<TArray<int32>> CandidateCardSelections;
+
+	bool RequiresCard() const { return MinCardCount > 0; }
 };
 
 // 服务器向某座位发起的「出牌阶段动作」请求。
@@ -38,6 +71,7 @@ struct FSGSPlayPhaseRequest
 	FSGSPhase Phase = SGSGameplayTags::Phase_None.GetTag();
 	bool bAllowPass = true;
 	TArray<FSGSCardActionOption> Options;
+	TArray<FSGSDecisionSkillOption> SkillOptions;
 };
 
 // 座位对「出牌阶段动作」请求的应答。
@@ -58,12 +92,22 @@ struct FSGSResponseRequest
 	FSGSPhase Phase = SGSGameplayTags::Phase_None.GetTag();
 	FName WindowName = NAME_None;
 	FName RequiredCardName = NAME_None;
+	TArray<FName> AcceptedCardNames;
 	FName ContextName = NAME_None;
 	int32 EffectSourceSeat = INDEX_NONE;
 	int32 EffectTargetSeat = INDEX_NONE;
 	bool bAllowPass = true;
 	TArray<int32> ResponseCardIds;
 	TArray<FSGSDecisionSkillOption> SkillOptions;
+
+	bool bIsCardChoice = false;
+	FName ChoiceName = NAME_None;
+	int32 MinChoiceCount = 0;
+	int32 MaxChoiceCount = 0;
+	TArray<FSGSDecisionCardChoiceOption> CardChoiceOptions;
+	TArray<TArray<int32>> CandidateCardSelections;
+	bool bIsOptionChoice = false;
+	TArray<FSGSDecisionNamedOption> NamedOptions;
 };
 
 struct FSGSResponseDecision

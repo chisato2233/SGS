@@ -27,6 +27,9 @@ struct SGS_API FSGSTableLayoutMetrics
 	FSlateRect HandArea = FSlateRect(0.0f, 0.0f, 0.0f, 0.0f);
 	FSlateRect ControlArea = FSlateRect(0.0f, 0.0f, 0.0f, 0.0f);
 	FSlateRect CenterArea = FSlateRect(0.0f, 0.0f, 0.0f, 0.0f);
+	FSlateRect DrawPileArea = FSlateRect(0.0f, 0.0f, 0.0f, 0.0f);
+	FSlateRect PlayArea = FSlateRect(0.0f, 0.0f, 0.0f, 0.0f);
+	FSlateRect DiscardPileArea = FSlateRect(0.0f, 0.0f, 0.0f, 0.0f);
 	TArray<FSGSTableSeatLayout> Seats;
 
 	static FSGSTableLayoutMetrics Make(FVector2D InViewSize, int32 SeatCount, int32 ViewerSeat);
@@ -35,4 +38,5 @@ struct SGS_API FSGSTableLayoutMetrics
 
 	const FSGSTableSeatLayout* FindSeat(int32 SeatIndex) const;
 	FSlateRect GetSeatRect(const FSGSTableSeatLayout& Seat) const;
+	FSlateRect GetSeatRect(int32 SeatIndex) const;
 };

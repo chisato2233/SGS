@@ -60,3 +60,59 @@ FSlateColor FSGSUITheme::ControlTint(ESGSUIControlTone Tone)
 		return FSlateColor(FLinearColor(0.10f, 0.11f, 0.12f, 0.85f));
 	}
 }
+
+FLinearColor FSGSUITheme::SeatCurrentGlowColor()
+{
+	return FLinearColor::FromSRGBColor(FColor(217, 152, 62));
+}
+
+float FSGSUITheme::SeatCurrentGlowOuterWidth()
+{
+	return 3.0f;
+}
+
+float FSGSUITheme::SeatCurrentGlowInnerWidth()
+{
+	return 1.0f;
+}
+
+float FSGSUITheme::SeatCurrentGlowOuterOpacity()
+{
+	return 0.32f;
+}
+
+float FSGSUITheme::SeatCurrentGlowInnerOpacity()
+{
+	return 0.95f;
+}
+
+float FSGSUITheme::SeatHealthPipSize()
+{
+	// NoName 十周年 UI：13px 体力珠 / 120px 玩家面板宽度。
+	return 18.2f;
+}
+
+float FSGSUITheme::SeatHealthPipGap()
+{
+	return 1.4f;
+}
+
+float FSGSUITheme::SeatHealthRightInset()
+{
+	return 7.0f;
+}
+
+float FSGSUITheme::SeatHealthBottomInset()
+{
+	return 28.0f;
+}
+
+float FSGSUITheme::SeatPortraitLeftInsetRatio()
+{
+	return 24.0f / 120.0f;
+}
+
+float FSGSUITheme::SeatPortraitEdgeInsetRatio()
+{
+	return 2.0f / 180.0f;
+}
